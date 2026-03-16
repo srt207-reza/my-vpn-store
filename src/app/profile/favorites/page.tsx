@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { HeartCrack, Loader2 } from "lucide-react";
 import { useFavorites } from "@/services/useFavorites";
-import { ProductCard } from "@/components/products/ProductCard";
+import { ProductCard } from "@/components/shared/ProductsCard";
 import { Favorite } from "@/types/api";
 
 export default function FavoritesPage() {

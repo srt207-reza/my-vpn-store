@@ -58,7 +58,26 @@ const config: Config = {
             },
         },
     },
-    plugins: [require("tailwindcss-animate")],
+    // plugins: [require("tailwindcss-animate")],
+
+    plugins: [
+        require("tailwindcss-animate"),
+        function ({ addUtilities }) {
+            addUtilities({
+                ".scrollbar-hide": {
+                    "-ms-overflow-style": "none",
+                    "scrollbar-width": "none",
+                    "&::-webkit-scrollbar": { display: "none" },
+                },
+                ".text-shadow-white": {
+                    textShadow: '4px -2px 4px #fff, 2px 2px 4px #fff',
+                },
+                ".text-shadow-gray": {
+                    textShadow: '4px -2px 4px rgba(0,0,0,0.2), 2px 2px 4px rgba(0,0,0,0.2)',
+                },
+            });
+        },
+    ],
 };
 
 export default config;

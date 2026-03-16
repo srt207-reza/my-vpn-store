@@ -6,7 +6,7 @@ import { ArrowLeft, Sparkles, TrendingUp } from "lucide-react";
 import { useCategories } from "@/services/useCategories";
 import { useProducts } from "@/services/useProducts";
 import { useFavorites } from "@/services/useFavorites"; // اضافه شدن هوک علاقه‌مندی‌ها
-import { ProductCard } from "@/components/products/ProductCard";
+import { ProductCard } from "@/components/shared/ProductsCard";
 import { Category, Product } from "@/types/api";
 
 export default function HomePage() {
@@ -16,14 +16,16 @@ export default function HomePage() {
         per_page: 8,
     });
 
+    const user = JSON.parse(localStorage.getItem('user'))
+
     // دریافت لیست علاقه‌مندی‌ها برای تطبیق با محصولات صفحه اصلی
-    const { data: favoritesData } = useFavorites();
+    const { data: favoritesData } = useFavorites(!!user);
 
     return (
         <div className="space-y-16 pb-16">
             {/* 1. Hero Section */}
             <section className="container mt-6">
-                <div className="bg-salona-50 rounded-3xl overflow-hidden flex flex-col md:flex-row items-center justify-between min-h-100 relative">
+                <div className="bg-salona-100 rounded-3xl overflow-hidden flex flex-col md:flex-row items-center justify-between min-h-100 relative">
                     <div className="p-8 md:p-16 flex-1 z-10">
                         <span className="inline-block py-1 px-3 rounded-full bg-salona-100 text-salona-600 text-sm font-bold mb-4 animate-fade-in">
                             جشنواره بهاره سالونا
@@ -45,7 +47,8 @@ export default function HomePage() {
                         </Link>
                     </div>
 
-                    <div className="flex-1 w-full h-full min-h-75 bg-linear-to-tr from-salona-200 to-salona-100 relative">
+                    {/* bg-linear-to-tr from-salona-200 to-salona-100 */}
+                    <div className="flex-1 w-full h-full min-h-75 relative">
                         <div className="absolute inset-0 flex items-center justify-center text-salona-500/20">
                             <Sparkles className="w-32 h-32" />
                         </div>

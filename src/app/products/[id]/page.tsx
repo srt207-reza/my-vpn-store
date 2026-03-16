@@ -16,37 +16,40 @@ import {
     Loader2, // اضافه شدن لودر برای دکمه قلب
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { Product } from "@/types/api";
 import { addToCart, removeFromCart } from "@/store/slices/cartSlice";
 // پیشنهاد: برای پرفورمنس بهتر در Next.js از next/image استفاده کنید
 import Image from "next/image";
+import ProductComments from "@/components/shared/ProductComments";
 
 export default function ProductDetailPage() {
     const params = useParams();
     const router = useRouter();
     const productId = Number(params.id);
 
-    // راه‌اندازی Redux
     const dispatch = useDispatch();
 
-    // دریافت اطلاعات محصول در سبد خرید از استیت گلوبال
     const cartItem = useSelector((state: any) => state.cart.items.find((item: any) => item.id === String(productId)));
     const quantityInCart = cartItem ? cartItem.quantity : 0;
 
-    // واکشی اطلاعات محصول از API
     const { data: response, isLoading, isError } = useProductDetail(productId);
 
     //@ts-ignore
     const product: Product | undefined = response?.product;
 
-    // --- بخش مربوط به علاقه‌مندی‌ها (Favorites) ---
-    const { data: favoritesData } = useFavorites();
+    // دریافت وضعیت کاربر به صورت ایمن
+    const [user, setUser] = useState<any>(null);
+    useEffect(() => {
+        const storedUser = localStorage.getItem("user");
+        if (storedUser) setUser(JSON.parse(storedUser));
+    }, []);
+
+    const { data: favoritesData } = useFavorites(!!user);
     const { mutate: addFavorite, isPending: isAddingFavorite } = useAddFavorite();
     const { mutate: deleteFavorite, isPending: isDeletingFavorite } = useDeleteFavorite();
 
-    // بررسی اینکه آیا این محصول در لیست علاقه‌مندی‌های کاربر وجود دارد یا خیر
     const favoriteRecord = favoritesData?.favorites?.find(
         (fav: any) => fav.product_id === product?.id || (fav.product && fav.product.id === product?.id),
     );
@@ -54,22 +57,17 @@ export default function ProductDetailPage() {
     const favoriteId = favoriteRecord?.id;
     const isFavoriteLoading = isAddingFavorite || isDeletingFavorite;
 
-    // تابع هندل کردن کلیک روی دکمه قلب
     const handleToggleFavorite = () => {
         if (!product) return;
-
         if (isFavorited && favoriteId) {
             deleteFavorite(favoriteId);
         } else {
             addFavorite(product.id);
         }
     };
-    // ----------------------------------------------
 
-    // استیت برای مدیریت تصویری که کاربر در گالری انتخاب کرده است
     const [selectedImage, setSelectedImage] = useState<number>(0);
 
-    // توابع مدیریت سبد خرید
     const handleAddToCart = () => {
         if (!product) return;
         dispatch(
@@ -87,7 +85,6 @@ export default function ProductDetailPage() {
         dispatch(removeFromCart(String(productId)));
     };
 
-    // کامپوننت اسکلتون برای حالت لودینگ
     if (isLoading) {
         return (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 animate-pulse pb-16">
@@ -115,7 +112,7 @@ export default function ProductDetailPage() {
 
     if (isError || !product) {
         return (
-            <div className="flex flex-col items-center justify-center py-32 text-center bg-gray-50 rounded-3xl border border-gray-100">
+            <div className="flex flex-col items-center justify-center py-32 text-center bg-gray-50 rounded-3xl border border-gray-200">
                 <AlertCircle className="w-16 h-16 text-gray-400 mb-4" />
                 <h2 className="text-2xl font-bold text-gray-800 mb-4">محصول مورد نظر یافت نشد!</h2>
                 <button
@@ -131,12 +128,16 @@ export default function ProductDetailPage() {
 
     const isOutOfStock = product.stock === 0;
     const brandName = product.attributes?.["برند"];
+    const averageRating = Math.round(product.average_rating || 0);
 
     return (
         <div className="space-y-8 pb-20">
-            {/* مسیر راهنما */}
+            {/* ... کد اصلی بخش نمایش اطلاعات محصول (کد قبلی شما بدون تغییر) ... */}
             <nav className="flex items-center text-sm text-gray-500 gap-2 overflow-x-auto whitespace-nowrap pb-2">
-                <button onClick={() => router.push("/")} className="hover:text-salona-500 transition-colors">
+                <button
+                    onClick={() => router.push("/")}
+                    className="cursor-pointer hover:text-salona-500 transition-colors"
+                >
                     سالونا
                 </button>
                 <ChevronRight className="w-4 h-4 text-gray-300" />
@@ -148,7 +149,6 @@ export default function ProductDetailPage() {
             </nav>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16">
-                {/* بخش گالری تصاویر محصول */}
                 <div className="lg:col-span-5 flex flex-col gap-4">
                     <div className="bg-white border border-gray-100 rounded-3xl overflow-hidden aspect-square relative p-8 shadow-sm flex items-center justify-center">
                         <Image
@@ -189,27 +189,56 @@ export default function ProductDetailPage() {
                     )}
                 </div>
 
-                {/* بخش اطلاعات محصول */}
                 <div className="lg:col-span-7 flex flex-col">
                     <div className="grow">
                         {brandName && <div className="text-salona-500 font-bold text-sm mb-2">{brandName}</div>}
-                        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 leading-snug mb-5">
-                            {product.name}
-                        </h1>
+                        <div className="flex items-center gap-4 w-full sm:w-auto mb-5">
+                            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 leading-snug mt-2">
+                                {product.name}
+                            </h1>
+                            
+                            <button
+                                onClick={handleToggleFavorite}
+                                disabled={isFavoriteLoading}
+                                className={`flex-1 sm:flex-none w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-300 border 
+                                    ${isFavoriteLoading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
+                                    ${
+                                        isFavorited
+                                            ? "bg-red-50 text-red-500 border-red-100 hover:bg-red-100"
+                                            : "bg-gray-50 text-gray-500 hover:bg-salona-50 hover:text-salona-500 border-gray-100 hover:border-salona-100"
+                                    }`}
+                            >
+                                {isFavoriteLoading ? (
+                                    <Loader2 className="w-6 h-6 animate-spin" />
+                                ) : (
+                                    <Heart className={`w-6 h-6 ${isFavorited ? "fill-current" : ""}`} />
+                                )}
+                            </button>
+                        </div>
 
                         <div className="flex flex-wrap items-center gap-6 mb-8 border-b border-gray-100 pb-6">
-                            <div className="flex items-center gap-1.5 text-amber-400">
-                                <Star
-                                    className={`w-5 h-5 ${product.total_ratings > 0 ? "fill-current" : "text-gray-300"}`}
-                                />
-                                <span className="text-sm font-medium text-gray-700 mt-1 ml-1">
-                                    {product.total_ratings > 0 ? product.average_rating : "بدون امتیاز"}
-                                    {product.total_ratings > 0 && (
-                                        <span className="text-gray-400 font-normal mr-1">
+                            {/* NEW: بخش امتیازدهی با 5 ستاره */}
+                            <div className="flex items-center gap-2">
+                                <div className="flex">
+                                    {[...Array(5)].map((_, i) => (
+                                        <Star
+                                            key={i}
+                                            className={`w-5 h-5 ${
+                                                i < averageRating ? "text-amber-400 fill-current" : "text-gray-300"
+                                            }`}
+                                        />
+                                    ))}
+                                </div>
+                                {product.total_ratings > 0 ? (
+                                    <span className="text-sm font-medium text-gray-700 mt-0.5">
+                                        {product.average_rating} از ۵
+                                        <span className="text-gray-400 font-normal mr-1.5">
                                             ({product.total_ratings} دیدگاه)
                                         </span>
-                                    )}
-                                </span>
+                                    </span>
+                                ) : (
+                                    <span className="text-sm text-gray-500 mt-0.5">بدون امتیاز</span>
+                                )}
                             </div>
 
                             <div className="flex items-center gap-2 text-sm">
@@ -257,14 +286,20 @@ export default function ProductDetailPage() {
                             </div>
                         )}
 
+                        {/* NEW: بخش ویژگی‌ها با استایل جدید */}
                         {product.specifications && Object.keys(product.specifications).length > 0 && (
                             <div className="mb-10">
-                                <h3 className="text-lg font-bold text-gray-800 mb-4">ویژگی‌های اصلی</h3>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-6 bg-gray-50/50 p-5 rounded-2xl border border-gray-100">
-                                    {Object.entries(product.specifications).map(([key, value], idx) => (
-                                        <div key={idx} className="flex items-start gap-2 text-sm">
-                                            <span className="text-gray-500 min-w-25">{key}:</span>
-                                            <span className="text-gray-900 font-medium">{String(value)}</span>
+                                <h3 className="text-lg font-bold text-gray-800 mb-4">ویژگی‌ها</h3>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                                    {Object.entries(product.specifications).map(([key, value]) => (
+                                        <div
+                                            key={key}
+                                            className="bg-gray-100 rounded-xl px-4 text-start flex flex-col justify-center min-h-20"
+                                        >
+                                            <p className="text-sm text-gray-500 mb-2">{key}</p>
+                                            <p className="text-sm font-bold text-gray-900 wrap-break-word">
+                                                {String(value)}
+                                            </p>
                                         </div>
                                     ))}
                                 </div>
@@ -272,7 +307,6 @@ export default function ProductDetailPage() {
                         )}
                     </div>
 
-                    {/* بخش قیمت و عملیات سبد خرید */}
                     <div className="bg-white border border-gray-100 rounded-3xl p-5 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.05)] sticky bottom-4 flex flex-col sm:flex-row items-center justify-between gap-6 z-20 mt-4">
                         <div className="flex flex-col w-full sm:w-auto">
                             {isOutOfStock ? (
@@ -289,26 +323,6 @@ export default function ProductDetailPage() {
                         </div>
 
                         <div className="flex items-center gap-3 w-full sm:w-auto">
-                            {/* دکمه علاقه‌مندی (اصلاح شده) */}
-                            <button
-                                onClick={handleToggleFavorite}
-                                disabled={isFavoriteLoading}
-                                className={`flex-1 sm:flex-none w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-300 border 
-                                    ${isFavoriteLoading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
-                                    ${
-                                        isFavorited
-                                            ? "bg-red-50 text-red-500 border-red-100 hover:bg-red-100"
-                                            : "bg-gray-50 text-gray-500 hover:bg-salona-50 hover:text-salona-500 border-gray-100 hover:border-salona-100"
-                                    }`}
-                            >
-                                {isFavoriteLoading ? (
-                                    <Loader2 className="w-6 h-6 animate-spin" />
-                                ) : (
-                                    <Heart className={`w-6 h-6 ${isFavorited ? "fill-current" : ""}`} />
-                                )}
-                            </button>
-
-                            {/* مدیریت وضعیت‌های مختلف دکمه سبد خرید */}
                             {isOutOfStock ? (
                                 <button
                                     disabled
@@ -318,7 +332,6 @@ export default function ProductDetailPage() {
                                     ناموجود
                                 </button>
                             ) : quantityInCart > 0 ? (
-                                // حالت نمایش شمارنده (زمانی که حداقل 1 عدد در سبد خرید وجود دارد)
                                 <div className="grow sm:grow-0 sm:min-w-55 h-14 flex items-center justify-between bg-salona-50 border border-salona-200 rounded-2xl px-2 shadow-sm">
                                     <button
                                         onClick={handleAddToCart}
@@ -339,7 +352,6 @@ export default function ProductDetailPage() {
                                     </button>
                                 </div>
                             ) : (
-                                // حالت پیش‌فرض افزودن به سبد خرید
                                 <button
                                     onClick={handleAddToCart}
                                     className="grow sm:grow-0 sm:min-w-55 h-14 cursor-pointer rounded-2xl font-bold flex items-center justify-center gap-2 transition-all duration-300 bg-salona-500 hover:bg-salona-600 text-white shadow-lg shadow-salona-500/30 hover:shadow-salona-500/50 active:scale-95"
@@ -352,6 +364,9 @@ export default function ProductDetailPage() {
                     </div>
                 </div>
             </div>
+
+            {/* فراخوانی کامپوننت نظرات در انتهای صفحه */}
+            <ProductComments productId={productId} currentUser={user} />
         </div>
     );
 }

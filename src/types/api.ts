@@ -19,7 +19,7 @@ export interface Category {
     level: number;
     full_path: string;
     product_count: number;
-    image_url: string | null; 
+    image_url: string | null;
     is_active: boolean;
     children?: Category[];
 }
@@ -48,17 +48,21 @@ export interface Product {
     specifications?: Record<string, string>;
 }
 
-export interface PaginationMeta {
-    page: number;
-    per_page: number;
-    total_pages: number;
-    total_items: number;
-}
+// export interface PaginationMeta {
+//     page: number;
+//     per_page: number;
+//     total_pages: number;
+//     total_items: number;
+// }
 
 // ایجاد اینترفیس اختصاصی برای ریسپانس لیست محصولات
 export interface ProductsResponse {
     products: Product[];
-    pagination: PaginationMeta;
+    // pagination: PaginationMeta;
+    page: number;
+    per_page: number;
+    total_pages: number;
+    total_items: number;
 }
 
 // سایر تایپ‌های شما ...
@@ -88,4 +92,30 @@ export interface Ticket {
 export interface ReplyTicketPayload {
     ticket_id: number;
     content: string;
+}
+
+// تایپ مربوط به پارامترهای ارسالی به API
+export interface SearchProductsParams {
+    page?: number;
+    q?: string;
+    min_price?: number;
+    max_price?: number;
+    category_id?: number | string;
+    is_active?: boolean;
+    is_digital?: boolean;
+    in_stock?: boolean;
+    sort_by?: "price_asc" | "price_desc" | "rating_desc" | "new";
+    page_per?: number;
+}
+
+// تایپ پاسخ دریافتی از سرور
+export interface SearchProductsResponse {
+    products: Product[];
+    total: number;
+    pages: number;
+    current_page: number;
+    per_page: number; // یا page_per (بر اساس متن فایل در صفحات مختلف دوگانگی وجود دارد)
+    has_next: boolean; // یا next_has
+    has_prev: boolean; // یا prev_has
+    query: Record<string, any>;
 }

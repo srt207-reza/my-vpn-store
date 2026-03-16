@@ -8,13 +8,14 @@ interface FavoritesResponse {
 }
 
 // 1. دریافت لیست علاقه‌مندی‌ها
-export const useFavorites = () => {
+export const useFavorites = (isAuthenticated: boolean = true) => {
     return useQuery({
         queryKey: ["favorites"],
         queryFn: async () => {
             const { data } = await axiosInstance.get<FavoritesResponse>("/api/users/me/favorites");
             return data;
         },
+        enabled: isAuthenticated,
         retry:false
     });
 };

@@ -7,7 +7,7 @@ export const useTickets = (page: number = 1) => {
     return useQuery({
         queryKey: ["tickets", page],
         queryFn: async () => {
-            const { data } = await axiosInstance.get("/api/tickets", { params: { page } });
+            const { data } = await axiosInstance.get(`/api/tickets/${page}`);
             return data;
         },
         retry:false

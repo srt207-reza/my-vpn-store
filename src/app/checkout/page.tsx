@@ -16,7 +16,8 @@ import {
     ShieldCheck,
     CreditCard,
     Edit2,
-    Trash2
+    Trash2,
+    Star
 } from "lucide-react";
 import { useUpdateUserProfile, useUserProfile } from "@/services/useUser";
 import { 
@@ -26,11 +27,140 @@ import {
     useDeleteAddress 
 } from "@/services/useAddresses";
 
-// تعریف تایپ پروفایل کاربر (بر اساس نیاز پروژه خود آپدیت کنید)
+// === Types ===
 interface UserProfile {
     name: string;
 }
 
+interface Address {
+    id: number;
+    address: string;
+    postal_code: string;
+    is_default: boolean;
+    latitude?: number;
+    longitude?: number;
+}
+
+// ==========================================
+// کامپوننت کارت آدرس (برای مدیریت مستقل هوک هر آدرس)
+// ==========================================
+const AddressCard = ({
+    addr,
+    selectedAddressId,
+    setSelectedAddressId,
+    handleOpenEditForm,
+    handleDeleteAddress,
+    isDeletingAddress,
+    deletingId
+}: {
+    addr: Address;
+    selectedAddressId: number | null;
+    setSelectedAddressId: (id: number) => void;
+    handleOpenEditForm: (id: number, address: string, postalCode: string) => void;
+    handleDeleteAddress: (id: number) => void;
+    isDeletingAddress: boolean;
+    deletingId: number | null;
+}) => {
+    // هوک آپدیت اختصاصی برای همین آدرس جهت تنظیم به عنوان پیش‌فرض
+    const { mutate: setAsDefault, isPending: isSettingDefault } = useUpdateAddress(addr.id);
+
+    const handleMakeDefault = (e: React.MouseEvent) => {
+        e.stopPropagation(); // جلوگیری از انتخاب شدن آدرس هنگام کلیک روی دکمه
+        setAsDefault(
+            {
+                address: addr.address,
+                postal_code: addr.postal_code,
+                is_default: true,
+            },
+            {
+                onSuccess: () => toast.success("آدرس پیش‌فرض با موفقیت تغییر کرد"),
+                onError: () => toast.error("خطا در تغییر آدرس پیش‌فرض"),
+            }
+        );
+    };
+
+    return (
+        <div
+            onClick={() => setSelectedAddressId(addr.id)}
+            className={`relative flex flex-col sm:flex-row justify-between p-5 rounded-2xl border-2 cursor-pointer transition-all ${
+                selectedAddressId === addr.id
+                    ? "border-salona-500 bg-salona-50/30"
+                    : "border-gray-100 hover:border-salona-200"
+            }`}
+        >
+            <div className="flex-1 pr-10">
+                {selectedAddressId === addr.id && (
+                    <CheckCircle2 className="absolute top-5 right-4 w-6 h-6 text-salona-500" />
+                )}
+                
+                {/* نشانگر آدرس پیش‌فرض */}
+                <div className="mb-2">
+                    {addr.is_default ? (
+                        <span className="inline-flex items-center gap-1 bg-salona-100 text-salona-600 px-2.5 py-1 rounded-lg text-xs font-bold">
+                            <Star className="w-3.5 h-3.5 fill-current" />
+                            آدرس پیش‌فرض
+                        </span>
+                    ) : (
+                        <button
+                            type="button"
+                            onClick={handleMakeDefault}
+                            disabled={isSettingDefault}
+                            className="inline-flex cursor-pointer items-center gap-1 text-xs text-gray-500 hover:text-salona-600 hover:bg-salona-50 px-2.5 py-1 rounded-lg transition-colors border border-gray-200 hover:border-salona-300 disabled:opacity-50"
+                        >
+                            {isSettingDefault ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                                "تنظیم به عنوان پیش‌فرض"
+                            )}
+                        </button>
+                    )}
+                </div>
+
+                <p className="text-gray-800 leading-loose font-medium">{addr.address}</p>
+                <div className="mt-4 flex items-center gap-2 text-sm text-gray-500">
+                    <span className="bg-gray-100 px-3 py-1 rounded-lg">
+                        کد پستی: {addr.postal_code}
+                    </span>
+                </div>
+            </div>
+            
+            {/* اکشن‌های ویرایش و حذف */}
+            <div className="flex sm:flex-col justify-end gap-2 mt-4 sm:mt-0 sm:mr-4 border-t sm:border-t-0 sm:border-r border-gray-100 pt-4 sm:pt-0 sm:pr-4">
+                <button
+                    type="button"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenEditForm(addr.id, addr.address, addr.postal_code);
+                    }}
+                    className="p-2 cursor-pointer text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors flex items-center justify-center"
+                    title="ویرایش آدرس"
+                >
+                    <Edit2 className="w-5 h-5" />
+                </button>
+                <button
+                    type="button"
+                    disabled={isDeletingAddress && deletingId === addr.id}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteAddress(addr.id);
+                    }}
+                    className="p-2 cursor-pointer text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors flex items-center justify-center disabled:opacity-50"
+                    title="حذف آدرس"
+                >
+                    {isDeletingAddress && deletingId === addr.id ? (
+                        <Loader2 className="w-5 h-5 animate-spin text-red-500" />
+                    ) : (
+                        <Trash2 className="w-5 h-5" />
+                    )}
+                </button>
+            </div>
+        </div>
+    );
+};
+
+// ==========================================
+// کامپوننت اصلی صفحه
+// ==========================================
 export default function CheckoutPage() {
     // === Redux State ===
     const { totalAmount, totalQuantity, items } = useSelector((state: RootState) => state.cart);
@@ -47,7 +177,7 @@ export default function CheckoutPage() {
     
     // === Local States ===
     const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
-    const [deletingId, setDeletingId] = useState<number | null>(null); // برای نمایش لودینگ روی دکمه حذف خاص
+    const [deletingId, setDeletingId] = useState<number | null>(null);
 
     // استیت‌های فرم نام گیرنده
     const [recipientName, setRecipientName] = useState("");
@@ -61,7 +191,7 @@ export default function CheckoutPage() {
         postal_code: "",
     });
 
-    // Hook ویرایش آدرس (چون آیدی نیاز دارد، آیدی آدرس در حال ویرایش یا 0 را پاس می‌دهیم)
+    // Hook ویرایش آدرس برای فرم (استفاده مجزا از فرم)
     const { mutate: updateAddress, isPending: isUpdatingAddress } = useUpdateAddress(editingAddressId || 0);
 
     // === Effects ===
@@ -73,10 +203,14 @@ export default function CheckoutPage() {
         }
     }, [userProfile, isProfileLoading]);
 
+    // انتخاب خودکار آدرس پیش‌فرض برای صورتحساب
     useEffect(() => {
-        if (addressesData?.addresses && addressesData.addresses.length > 0 && !selectedAddressId) {
-            const defaultAddress = addressesData.addresses.find((a) => a.is_default);
-            setSelectedAddressId(defaultAddress ? defaultAddress.id : addressesData.addresses[0].id);
+        if (addressesData?.addresses && addressesData.addresses.length > 0) {
+            const defaultAddress = addressesData.addresses.find((a: Address) => a.is_default);
+            // اگر کاربر به صورت دستی آدرسی انتخاب نکرده بود، آدرس پیش‌فرض را انتخاب کن
+            if (!selectedAddressId) {
+                setSelectedAddressId(defaultAddress ? defaultAddress.id : addressesData.addresses[0].id);
+            }
         }
     }, [addressesData, selectedAddressId]);
 
@@ -98,28 +232,24 @@ export default function CheckoutPage() {
         );
     };
 
-    // باز کردن فرم برای افزودن آدرس جدید
     const handleOpenAddForm = () => {
         setEditingAddressId(null);
         setAddressForm({ address: "", postal_code: "" });
         setIsAddressFormOpen(true);
     };
 
-    // باز کردن فرم برای ویرایش آدرس موجود
     const handleOpenEditForm = (addressId: number, currentAddress: string, currentPostalCode: string) => {
         setEditingAddressId(addressId);
         setAddressForm({ address: currentAddress, postal_code: currentPostalCode });
         setIsAddressFormOpen(true);
     };
 
-    // بستن فرم آدرس
     const handleCloseAddressForm = () => {
         setIsAddressFormOpen(false);
         setEditingAddressId(null);
         setAddressForm({ address: "", postal_code: "" });
     };
 
-    // ارسال فرم آدرس (تصمیم‌گیری بین افزودن یا ویرایش)
     const handleAddressSubmit = (e: FormEvent) => {
         e.preventDefault();
         if (!addressForm.address || !addressForm.postal_code) {
@@ -128,11 +258,12 @@ export default function CheckoutPage() {
         }
 
         if (editingAddressId) {
-            // منطق ویرایش
             updateAddress(
                 {
                     address: addressForm.address,
                     postal_code: addressForm.postal_code,
+                    // حفظ وضعیت پیش‌فرض قبلی هنگام ویرایش متن
+                    is_default: addressesData?.addresses?.find((a: Address) => a.id === editingAddressId)?.is_default || false
                 },
                 {
                     onSuccess: () => {
@@ -143,14 +274,14 @@ export default function CheckoutPage() {
                 }
             );
         } else {
-            // منطق افزودن
             addAddress(
                 {
                     address: addressForm.address,
                     postal_code: addressForm.postal_code,
                     latitude: 0,
                     longitude: 0,
-                    is_default: false,
+                    // اگر اولین آدرس است، خودکار پیش‌فرض شود
+                    is_default: (addressesData?.addresses?.length || 0) === 0,
                 },
                 {
                     onSuccess: () => {
@@ -163,14 +294,13 @@ export default function CheckoutPage() {
         }
     };
 
-    // منطق حذف آدرس
     const handleDeleteAddress = (addressId: number) => {
         setDeletingId(addressId);
         deleteAddress(addressId, {
             onSuccess: () => {
                 toast.success("آدرس با موفقیت حذف شد");
                 if (selectedAddressId === addressId) {
-                    setSelectedAddressId(null); // ریست کردن آدرس انتخاب شده اگر همان آدرس حذف شود
+                    setSelectedAddressId(null);
                 }
                 setDeletingId(null);
             },
@@ -278,59 +408,17 @@ export default function CheckoutPage() {
 
                         {/* لیست آدرس‌های موجود */}
                         <div className="space-y-4 mb-6">
-                            {addressesData?.addresses?.map((addr) => (
-                                <div
+                            {addressesData?.addresses?.map((addr: Address) => (
+                                <AddressCard
                                     key={addr.id}
-                                    onClick={() => setSelectedAddressId(addr.id)}
-                                    className={`relative flex flex-col sm:flex-row justify-between p-5 rounded-2xl border-2 cursor-pointer transition-all ${
-                                        selectedAddressId === addr.id
-                                            ? "border-salona-500 bg-salona-50/30"
-                                            : "border-gray-100 hover:border-salona-200"
-                                    }`}
-                                >
-                                    <div className="flex-1 pr-10">
-                                        {selectedAddressId === addr.id && (
-                                            <CheckCircle2 className="absolute top-5 right-4 w-6 h-6 text-salona-500" />
-                                        )}
-                                        <p className="text-gray-800 leading-loose font-medium">{addr.address}</p>
-                                        <div className="mt-4 flex items-center gap-2 text-sm text-gray-500">
-                                            <span className="bg-gray-100 px-3 py-1 rounded-lg">
-                                                کد پستی: {addr.postal_code}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    
-                                    {/* اکشن‌های ویرایش و حذف */}
-                                    <div className="flex sm:flex-col justify-end gap-2 mt-4 sm:mt-0 sm:mr-4 border-t sm:border-t-0 sm:border-r border-gray-100 pt-4 sm:pt-0 sm:pr-4">
-                                        <button
-                                            type="button"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleOpenEditForm(addr.id, addr.address, addr.postal_code);
-                                            }}
-                                            className="p-2 cursor-pointer text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors flex items-center justify-center"
-                                            title="ویرایش آدرس"
-                                        >
-                                            <Edit2 className="w-5 h-5" />
-                                        </button>
-                                        <button
-                                            type="button"
-                                            disabled={isDeletingAddress && deletingId === addr.id}
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleDeleteAddress(addr.id);
-                                            }}
-                                            className="p-2 cursor-pointer text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors flex items-center justify-center disabled:opacity-50"
-                                            title="حذف آدرس"
-                                        >
-                                            {isDeletingAddress && deletingId === addr.id ? (
-                                                <Loader2 className="w-5 h-5 animate-spin text-red-500" />
-                                            ) : (
-                                                <Trash2 className="w-5 h-5" />
-                                            )}
-                                        </button>
-                                    </div>
-                                </div>
+                                    addr={addr}
+                                    selectedAddressId={selectedAddressId}
+                                    setSelectedAddressId={setSelectedAddressId}
+                                    handleOpenEditForm={handleOpenEditForm}
+                                    handleDeleteAddress={handleDeleteAddress}
+                                    isDeletingAddress={isDeletingAddress}
+                                    deletingId={deletingId}
+                                />
                             ))}
                         </div>
 

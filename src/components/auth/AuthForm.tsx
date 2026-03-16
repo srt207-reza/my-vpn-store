@@ -1,310 +1,359 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
-import Link from "next/link";
-import { useSelector } from "react-redux";
-import { Search, ShoppingCart, Heart, User, Menu, X, ChevronDown, MapPin } from "lucide-react";
 
-// ایمپورت هوک دریافت اطلاعات کاربر (مسیر ایمپورت را بر اساس ساختار پروژه خود اصلاح کنید)
-// import { useUserProfile } from "@/hooks/useUserProfile"; 
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { motion, AnimatePresence } from "framer-motion";
+import { OTPInput } from "input-otp";
+import toast from "react-hot-toast";
+import { Smartphone, ShieldCheck, Loader2, UserPlus, LogIn, ArrowLeft } from "lucide-react";
+import { AxiosError, isAxiosError } from "axios";
+import { useRouter } from "next/navigation";
+import { setAuthCookie } from "@/app/actions";
+import { useLoginOtp, useRegister, useVerifyLogin } from "@/services/useAuth";
 
-// تعریف اینترفیس برای آدرس کاربر
-interface UserAddress {
-    id: number;
-    address: string;
-    is_default: boolean;
-    latitude: number;
-    longitude: number;
-    postal_code: string;
+type Step = "PHONE" | "OTP";
+type AuthMode = "LOGIN" | "REGISTER";
+
+interface PhoneFormValues {
+    phoneNumber: string;
 }
 
-// تعریف اینترفیس برای ساختار دیتای کاربر بر اساس API
-interface UserProfile {
-    id: number;
-    user_id: string;
-    name: string | null;
-    phone_number: string;
-    active: boolean;
-    confirmed: boolean;
-    default_address: UserAddress | null;
-    favorites_count: number;
-    orders_count: number;
-    wallet_balance: number;
-}
+const getErrorMessage = (error: unknown): string => {
+    if (isAxiosError(error)) {
+        return (
+            error.response?.data?.message ||
+            error.response?.data?.detail ||
+            error.response?.data?.error ||
+            "خطایی در ارتباط با سرور رخ داد"
+        );
+    }
+    return "خطای ناشناخته‌ای رخ داده است";
+};
 
-export const Header = () => {
-    const [isScrolled, setIsScrolled] = useState(false);
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    
-    // استیت برای دراپ‌دون پروفایل
-    const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
-    const dropdownRef = useRef<HTMLDivElement>(null);
-    
-    // استیت برای حل مشکل Hydration سبد خرید
-    const [isMounted, setIsMounted] = useState(false);
+export default function AuthForm() {
+    const router = useRouter();
+    const [step, setStep] = useState<Step>("PHONE");
+    const [mode, setMode] = useState<AuthMode>("LOGIN");
+    const [phoneNumber, setPhoneNumber] = useState("");
+    const [otpCode, setOtpCode] = useState("");
+    const [countdown, setCountdown] = useState(120);
 
-    // دریافت اطلاعات کاربر از هوک اختصاصی
-    // فرض بر این است که هوک شما مقادیر دیتا و وضعیت لودینگ را برمی‌گرداند
-    // const { data, isLoading: isUserLoading } = useUserProfile();
-    
-    // Mock Data برای جلوگیری از خطا در کپی کردن کد (این بخش را با کامنت بالا جایگزین کنید)
-    const data = { user: null }; 
-    const isUserLoading = false;
-    
-    const userData: UserProfile | null = data?.user || null;
+    const { mutate: loginOtp, isPending: isLoginPending } = useLoginOtp();
+    const { mutate: registerUser, isPending: isRegisterPending } = useRegister();
+    const { mutate: verifyOtp, isPending: isVerifyPending } = useVerifyLogin();
 
-    // دریافت لیست محصولات سبد خرید از Redux
-    const cartItems = useSelector((state: any) => state.cart.items);
-    const uniqueProductCount = cartItems?.length || 0;
+    const {
+        register,
+        handleSubmit,
+    } = useForm<PhoneFormValues>();
 
     useEffect(() => {
-        setIsMounted(true);
-
-        // منطق اسکرول هدر
-        const handleScroll = () => {
-            setIsScrolled(window.scrollY > 20);
-        };
-        window.addEventListener("scroll", handleScroll);
-        
-        return () => window.removeEventListener("scroll", handleScroll);
-    }, []);
-
-    // مدیریت کلیک خارج از دراپ‌دون پروفایل
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-                setIsProfileDropdownOpen(false);
-            }
-        };
-
-        if (isProfileDropdownOpen) {
-            document.addEventListener("mousedown", handleClickOutside);
+        let timer: NodeJS.Timeout;
+        if (step === "OTP" && countdown > 0) {
+            timer = setInterval(() => setCountdown((prev) => prev - 1), 1000);
         }
-        
-        return () => {
-            document.removeEventListener("mousedown", handleClickOutside);
-        };
-    }, [isProfileDropdownOpen]);
+        return () => clearInterval(timer);
+    }, [step, countdown]);
 
-    // تعیین عبارتی که باید به کاربر نمایش داده شود (نام یا شماره تلفن)
-    const displayName = userData?.name || userData?.phone_number;
+    const formatTime = (seconds: number) => {
+        const m = Math.floor(seconds / 60)
+            .toString()
+            .padStart(2, "0");
+        const s = (seconds % 60).toString().padStart(2, "0");
+        return `${m}:${s}`;
+    };
 
-    // متغیری برای بررسی وضعیت کلی بارگذاری بخش کاربری
-    const isProfileSectionLoading = !isMounted || isUserLoading;
+    const onPhoneSubmit = (data: PhoneFormValues) => {
+        const phone = data.phoneNumber;
+
+        if (!/^09\d{9}$/.test(phone)) {
+            toast.error("شماره موبایل معتبر نیست. مثال: 09123456789");
+            return;
+        }
+
+        setPhoneNumber(phone);
+
+        if (mode === "LOGIN") {
+            loginOtp(phone, {
+                onSuccess: () => {
+                    toast.success("کد تایید برای شما ارسال شد");
+                    setStep("OTP");
+                    setCountdown(120);
+                },
+                onError: (error: AxiosError) => {
+                    toast.error(getErrorMessage(error));
+                },
+            });
+        } else {
+            registerUser(phone, {
+                onSuccess: () => {
+                    toast.success("کد تایید ثبت‌نام ارسال شد");
+                    setStep("OTP");
+                    setCountdown(120);
+                },
+                onError: (error: AxiosError) => {
+                    toast.error(getErrorMessage(error));
+                },
+            });
+        }
+    };
+
+    const onOtpSubmit = () => {
+        // تغییر طول اعتبارسنجی از ۵ به ۶
+        if (otpCode.length !== 6) {
+            toast.error("لطفا کد تایید ۶ رقمی را به صورت کامل وارد کنید");
+            return;
+        }
+
+        verifyOtp(
+            { phone_number: phoneNumber, otp_code: otpCode },
+            {
+                onSuccess: async (data) => {
+                    try {
+                        const token = data.token;
+
+                        if (!token) throw new Error("توکنی از سمت سرور دریافت نشد");
+
+                        await setAuthCookie(token);
+                        localStorage.setItem('user',JSON.stringify(data))
+
+                        toast.success(
+                            mode === "REGISTER"
+                                ? "ثبت‌نام شما با موفقیت انجام شد!"
+                                : "خوش آمدید! ورود موفقیت‌آمیز بود.",
+                        );
+
+                        router.push("/");
+                        router.refresh(); 
+                    } catch (err) {
+                        toast.error("خطا در ذخیره‌سازی اطلاعات ورود");
+                        console.error(err);
+                    }
+                },
+                onError: (error) => {
+                    toast.error(getErrorMessage(error));
+                    setOtpCode("");
+                },
+            },
+        );
+    };
+
+    const isLoading = isLoginPending || isRegisterPending || isVerifyPending;
 
     return (
-        <header
-            className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-                isScrolled ? "bg-white shadow-md py-3" : "bg-white/80 backdrop-blur-md py-4 border-b border-gray-100"
-            }`}
-        >
-            <div className="container mx-auto px-4">
-                <div className="flex items-center justify-between">
-                    {/* لوگو و دکمه منوی موبایل */}
-                    <div className="flex items-center gap-4">
-                        <button
-                            className="lg:hidden text-gray-700 hover:text-primary transition"
-                            onClick={() => setIsMobileMenuOpen(true)}
-                            aria-label="باز کردن منو"
-                        >
-                            <Menu className="w-6 h-6" />
-                        </button>
-                        <Link href="/" className="text-2xl font-black text-primary tracking-tighter">
-                            SALONA<span className="text-gray-900">.</span>
-                        </Link>
-                    </div>
-
-                    {/* نوار جستجو (فقط در دسکتاپ) */}
-                    <div className="hidden lg:flex flex-1 max-w-xl mx-8 relative">
-                        <input
-                            type="text"
-                            placeholder="جستجو در محصولات سالونا..."
-                            className="w-full bg-gray-100 text-gray-800 text-sm rounded-full py-3 px-6 pr-12 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-                        />
-                        <Search className="w-5 h-5 text-gray-400 absolute right-4 top-1/2 -translate-y-1/2" />
-                    </div>
-
-                    {/* آیکون‌های اکشن */}
-                    <div className="flex items-center gap-3 sm:gap-5">
-                        <Link
-                            href="/profile/favorites"
-                            className="text-gray-600 hover:text-primary transition hidden sm:block"
-                        >
-                            <Heart className="w-6 h-6" />
-                        </Link>
-                        
-                        {/* آیکون سبد خرید */}
-                        <Link href="/cart" className="relative text-gray-600 hover:text-primary transition">
-                            <ShoppingCart className="w-6 h-6" />
-                            {isMounted && uniqueProductCount > 0 && (
-                                <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
-                                    {uniqueProductCount}
-                                </span>
-                            )}
-                        </Link>
-                        
-                        {/* بخش ورود / پروفایل کاربر */}
-                        <div className="relative" ref={dropdownRef}>
-                            {isProfileSectionLoading ? (
-                                // حالت لودینگ اولیه (اسکلتون)
-                                <div className="hidden sm:flex items-center gap-2">
-                                    <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse"></div>
-                                    <div className="w-24 h-8 bg-gray-200 rounded-full animate-pulse"></div>
-                                </div>
-                            ) : userData ? (
-                                // حالت لاگین شده: نمایش بج پروفایل و دراپ‌دون
-                                <div>
-                                    <button 
-                                        onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
-                                        className="hidden cursor-pointer sm:flex items-center gap-2 py-1.5 pl-2 pr-3 border border-gray-200 rounded-full hover:border-primary hover:bg-primary/5 transition-all focus:outline-none"
-                                    >
-                                        <div className="bg-primary/10 py-1.5 rounded-full text-primary">
-                                            <User className="w-4 h-4" />
-                                        </div>
-                                        <span className="font-medium text-sm text-gray-700 dir-ltr tracking-wide">
-                                            {displayName}
-                                        </span>
-                                        <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${isProfileDropdownOpen ? "rotate-180 text-primary" : ""}`} />
-                                    </button>
-                                    
-                                    {/* دکمه موبایل (فقط آیکون) */}
-                                    <button 
-                                        onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
-                                        className="sm:hidden flex items-center justify-center bg-primary/10 text-primary p-2 rounded-full"
-                                    >
-                                        <User className="w-5 h-5" />
-                                    </button>
-
-                                    {/* دراپ‌دون */}
-                                    <div 
-                                        className={`absolute top-full left-0 mt-3 w-56 rounded-xl bg-white shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] border border-gray-200 overflow-hidden transition-all duration-200 origin-top-left ${
-                                            isProfileDropdownOpen ? "opacity-100 scale-100 visible" : "opacity-0 scale-95 invisible"
-                                        }`}
-                                    >
-                                        {/* هدر دراپ‌دون */}
-                                        <div className="sm:hidden px-4 py-3 border-b border-gray-50 bg-gray-50/50">
-                                            <span className="block text-xs text-gray-500 mb-1">کاربر سالونا</span>
-                                            <span className="block font-semibold text-gray-800 text-sm dir-ltr text-left">{displayName}</span>
-                                        </div>
-                                        
-                                        <div className="py-2">
-                                            <Link 
-                                                href="/checkout" 
-                                                className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-slate-100 hover:text-primary transition-colors"
-                                                onClick={() => setIsProfileDropdownOpen(false)}
-                                            >
-                                                <MapPin className="w-4 h-4" />
-                                                <span className="font-medium">ثبت آدرس</span>
-                                            </Link>
-                                        </div>
-                                    </div>
-                                </div>
-                            ) : (
-                                // حالت لاگین نشده: دکمه ورود/ثبت‌نام
-                                <Link
-                                    href="/login"
-                                    className="flex items-center gap-2 text-gray-600 hover:text-primary transition"
-                                >
-                                    <User className="w-6 h-6" />
-                                    <span className="hidden sm:block text-sm font-medium">ورود | ثبت‌نام</span>
-                                </Link>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* منوی موبایل (Mobile Drawer) */}
-            <div
-                className={`fixed inset-0 bg-black/50 z-50 lg:hidden transition-opacity duration-300 ${
-                    isMobileMenuOpen ? "opacity-100 visible" : "opacity-0 invisible"
-                }`}
-                onClick={() => setIsMobileMenuOpen(false)}
-            >
-                <div
-                    className={`fixed top-0 right-0 h-full w-3/4 max-w-sm bg-white shadow-2xl transition-transform duration-300 ease-in-out transform ${
-                        isMobileMenuOpen ? "translate-x-0" : "translate-x-full"
-                    }`}
-                    onClick={(e) => e.stopPropagation()}
+        <div className="w-full max-w-md mx-auto p-8 bg-white/80 backdrop-blur-xl rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-salona-100">
+            <div className="text-center mb-8">
+                <motion.div
+                    key={mode}
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className={`inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 shadow-inner transition-colors duration-300
+                        ${mode === "REGISTER" ? "bg-emerald-50 text-emerald-500" : "bg-salona-50 text-salona-500"}`}
                 >
-                    <div className="flex items-center justify-between p-5 border-b border-gray-100">
-                        <span className="text-xl font-black text-primary">SALONA</span>
-                        <button
-                            onClick={() => setIsMobileMenuOpen(false)}
-                            className="p-2 text-gray-500 hover:text-red-500 bg-gray-50 rounded-full transition"
-                        >
-                            <X className="w-5 h-5" />
-                        </button>
-                    </div>
+                    {step === "OTP" ? (
+                        <ShieldCheck className="w-8 h-8" />
+                    ) : mode === "REGISTER" ? (
+                        <UserPlus className="w-8 h-8" />
+                    ) : (
+                        <LogIn className="w-8 h-8" />
+                    )}
+                </motion.div>
 
-                    <div className="p-5 overflow-y-auto max-h-[calc(100vh-80px)]">
-                        {/* نمایش اطلاعات کاربر در بالای منوی موبایل */}
-                        {isProfileSectionLoading ? (
-                            <div className="flex items-center gap-3 mb-6 p-4 bg-gray-50 rounded-2xl border border-gray-100 animate-pulse">
-                                <div className="w-11 h-11 bg-gray-200 rounded-full"></div>
-                                <div className="flex flex-col gap-2">
-                                    <div className="w-16 h-3 bg-gray-200 rounded"></div>
-                                    <div className="w-24 h-4 bg-gray-200 rounded"></div>
-                                </div>
-                            </div>
-                        ) : userData ? (
-                            <div className="flex items-center gap-3 mb-6 p-4 bg-primary/5 rounded-2xl border border-primary/10">
-                                <div className="bg-white p-2.5 rounded-full shadow-sm text-primary">
-                                    <User className="w-6 h-6" />
-                                </div>
-                                <div className="flex flex-col">
-                                    <span className="text-xs text-gray-500 mb-1">خوش آمدید،</span>
-                                    <span className="font-bold text-gray-800 dir-ltr text-left tracking-wider">{displayName}</span>
-                                </div>
-                            </div>
-                        ) : (
-                            <Link
-                                href="/login"
-                                className="flex items-center justify-center gap-2 mb-6 p-3 bg-primary text-white rounded-xl font-medium hover:bg-primary/90 transition shadow-lg shadow-primary/20"
-                                onClick={() => setIsMobileMenuOpen(false)}
+                <h2 className="text-2xl font-bold text-gray-800 font-vazir">
+                    {step === "OTP"
+                        ? "تایید شماره موبایل"
+                        : mode === "REGISTER"
+                          ? "عضویت در سالونا"
+                          : "ورود به حساب کاربری"}
+                </h2>
+                <p className="text-sm text-gray-500 mt-2 font-vazir">
+                    {step === "PHONE"
+                        ? mode === "LOGIN"
+                            ? "برای ورود، شماره موبایل خود را وارد کنید"
+                            : "برای ایجاد حساب جدید، شماره خود را وارد کنید"
+                        : "کد تایید پیامک شده را وارد کنید"}
+                </p>
+            </div>
+
+            <AnimatePresence mode="wait">
+                {step === "PHONE" && (
+                    <motion.div
+                        key="phone-step"
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 20 }}
+                        transition={{ duration: 0.3 }}
+                    >
+                        <div className="flex p-1 mb-8 bg-gray-100/80 rounded-2xl">
+                            <button
+                                type="button"
+                                onClick={() => setMode("LOGIN")}
+                                className={`flex-1 cursor-pointer py-2.5 text-sm font-medium rounded-xl transition-all duration-300 ${
+                                    mode === "LOGIN"
+                                        ? "bg-white text-salona-600 shadow-sm"
+                                        : "text-gray-500 hover:text-gray-700"
+                                }`}
                             >
-                                <User className="w-5 h-5" />
-                                ورود به حساب کاربری
-                            </Link>
-                        )}
-
-                        <div className="relative mb-6">
-                            <input
-                                type="text"
-                                placeholder="جستجو..."
-                                className="w-full bg-gray-100 rounded-lg py-3 px-4 pr-10 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-                            />
-                            <Search className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2" />
+                                ورود
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setMode("REGISTER")}
+                                className={`flex-1 cursor-pointer py-2.5 text-sm font-medium rounded-xl transition-all duration-300 ${
+                                    mode === "REGISTER"
+                                        ? "bg-white text-emerald-600 shadow-sm"
+                                        : "text-gray-500 hover:text-gray-700"
+                                }`}
+                            >
+                                ثبت‌نام
+                            </button>
                         </div>
 
-                        <nav className="flex flex-col gap-4">
-                            <Link href="/" className="text-gray-700 font-medium hover:text-primary transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
-                                صفحه اصلی
-                            </Link>
-                            <Link href="/products" className="text-gray-700 font-medium hover:text-primary transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
-                                محصولات
-                            </Link>
-                            <Link href="/categories" className="text-gray-700 font-medium hover:text-primary transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
-                                دسته‌بندی‌ها
-                            </Link>
-                            
-                            <div className="h-px bg-gray-100 my-2"></div>
-                            
-                            {/* لینک ثبت آدرس در منوی موبایل */}
-                            {userData && (
-                                <Link href="/checkout" className="flex items-center gap-3 text-gray-700 font-medium hover:text-primary transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
-                                    <MapPin className="w-5 h-5 text-gray-400" />
-                                    ثبت آدرس
-                                </Link>
+                        <form onSubmit={handleSubmit(onPhoneSubmit)} className="space-y-6">
+                            <div className="relative">
+                                <label className="block text-sm font-medium text-gray-700 mb-2 font-vazir">
+                                    شماره موبایل
+                                </label>
+                                <div className="relative flex items-center">
+                                    <Smartphone className="absolute right-4 text-gray-400 w-5 h-5" />
+                                    <input
+                                        type="tel"
+                                        dir="ltr"
+                                        placeholder="0912 345 6789"
+                                        className={`w-full bg-gray-50 border border-gray-200 text-gray-800 text-left rounded-2xl py-3.5 pl-4 pr-12 focus:ring-2 transition-all font-sans text-lg outline-none
+                                            ${mode === "REGISTER" ? "focus:ring-emerald-500 focus:border-emerald-500" : "focus:ring-salona-500 focus:border-salona-500"}
+                                        `}
+                                        {...register("phoneNumber", { required: true })}
+                                    />
+                                </div>
+                            </div>
+
+                            <button
+                                type="submit"
+                                disabled={isLoading}
+                                className={`w-full cursor-pointer flex items-center justify-center gap-2 text-white py-3.5 rounded-2xl font-medium transition-all shadow-lg disabled:opacity-70 disabled:cursor-not-allowed
+                                    ${
+                                        mode === "REGISTER"
+                                            ? "bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/30"
+                                            : "bg-salona-500 hover:bg-salona-600 shadow-salona-500/30"
+                                    }
+                                `}
+                            >
+                                {isLoading ? (
+                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                ) : mode === "REGISTER" ? (
+                                    "دریافت کد ثبت‌نام"
+                                ) : (
+                                    "دریافت کد ورود"
+                                )}
+                            </button>
+                        </form>
+                    </motion.div>
+                )}
+
+                {step === "OTP" && (
+                    <motion.div
+                        key="otp-step"
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 20 }}
+                        transition={{ duration: 0.3 }}
+                        className="flex flex-col items-center"
+                    >
+                        <div className="w-full flex justify-between items-center mb-6">
+                            <span className="text-sm font-medium text-gray-600 dir-ltr">{phoneNumber}</span>
+                            <button
+                                onClick={() => setStep("PHONE")}
+                                className="text-xs text-salona-500 hover:text-salona-700 flex items-center gap-1"
+                            >
+                                ویرایش شماره <ArrowLeft className="w-3 h-3" />
+                            </button>
+                        </div>
+
+                        <div className="mb-8" dir="ltr">
+                            <OTPInput
+                                maxLength={6} // تغییر طول ورودی از ۵ به ۶
+                                value={otpCode}
+                                onChange={setOtpCode}
+                                render={({ slots }) => (
+                                    <div className="flex gap-2 sm:gap-3 justify-center"> {/* اصلاح فاصله برای جاگیری بهتر ۶ رقم */}
+                                        {slots.map((slot, idx) => (
+                                            <div
+                                                key={idx}
+                                                className={`relative w-10 h-12 sm:w-12 sm:h-14 text-xl sm:text-2xl font-bold flex items-center justify-center rounded-xl border-2 transition-all duration-300
+                                                    ${
+                                                        slot.isActive
+                                                            ? mode === "REGISTER"
+                                                                ? "border-emerald-500 ring-4 ring-emerald-100 shadow-md"
+                                                                : "border-salona-500 ring-4 ring-salona-100 shadow-md"
+                                                            : "border-gray-200 bg-gray-50"
+                                                    }
+                                                    ${
+                                                        slot.char
+                                                            ? mode === "REGISTER"
+                                                                ? "text-emerald-600 bg-emerald-50 border-emerald-300"
+                                                                : "text-salona-600 bg-salona-50 border-salona-300"
+                                                            : "text-gray-400"
+                                                    }
+                                                `}
+                                            >
+                                                {slot.char}
+                                                {slot.isActive && (
+                                                    <div
+                                                        className={`absolute bottom-2 w-4 h-0.5 animate-pulse rounded-full ${mode === "REGISTER" ? "bg-emerald-500" : "bg-salona-500"}`}
+                                                    />
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            />
+                        </div>
+
+                        <button
+                            onClick={onOtpSubmit}
+                            disabled={isLoading || otpCode.length !== 6} // تغییر غیرفعال شدن از ۵ به ۶
+                            className={`w-full cursor-pointer flex items-center justify-center gap-2 text-white py-3.5 rounded-2xl font-medium transition-all shadow-lg disabled:opacity-70 disabled:cursor-not-allowed
+                                ${
+                                    mode === "REGISTER"
+                                        ? "bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/30"
+                                        : "bg-salona-500 hover:bg-salona-600 shadow-salona-500/30"
+                                }
+                            `}
+                        >
+                            {isLoading ? (
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                            ) : (
+                                <>
+                                    {mode === "REGISTER" ? "تایید و تکمیل ثبت‌نام" : "تایید و ورود"}{" "}
+                                    <ShieldCheck className="w-5 h-5" />
+                                </>
                             )}
-                            
-                            <Link href="/profile/favorites" className="flex items-center gap-3 text-gray-700 font-medium hover:text-primary transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
-                                <Heart className="w-5 h-5 text-gray-400" />
-                                علاقه‌مندی‌ها
-                            </Link>
-                        </nav>
-                    </div>
-                </div>
-            </div>
-        </header>
+                        </button>
+
+                        <div className="mt-6 text-center w-full">
+                            {countdown > 0 ? (
+                                <p className="text-sm text-gray-500 font-medium flex items-center justify-center gap-2">
+                                    ارسال مجدد کد تا{" "}
+                                    <span
+                                        className={`font-bold tracking-widest ${mode === "REGISTER" ? "text-emerald-600" : "text-salona-600"}`}
+                                    >
+                                        {formatTime(countdown)}
+                                    </span>
+                                </p>
+                            ) : (
+                                <button
+                                    onClick={() => onPhoneSubmit({ phoneNumber })}
+                                    className={`text-sm font-bold transition-colors ${mode === "REGISTER" ? "text-emerald-500 hover:text-emerald-600" : "text-salona-500 hover:text-salona-600"}`}
+                                    disabled={isLoading}
+                                >
+                                    ارسال مجدد کد تایید
+                                </button>
+                            )}
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
     );
-};
+}

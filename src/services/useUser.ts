@@ -12,7 +12,8 @@ export type UpdateProfilePayload = {
 };
 
 // 1. دریافت اطلاعات کاربر فعلی (GET)
-export const useUserProfile = () => {
+// پارامتر isAuthenticated اضافه شد تا اجرای ریکوئست را کنترل کند
+export const useUserProfile = (isAuthenticated: boolean = true) => {
     return useQuery({
         // استفاده از یک کلید یکتا برای کش کردن اطلاعات کاربر
         queryKey: ["userProfile"],
@@ -20,7 +21,9 @@ export const useUserProfile = () => {
             const { data } = await axiosInstance.get<UserProfile>("/api/users/me");
             return data;
         },
-        retry:false
+        // تا زمانی که isAuthenticated برابر با false باشد، این ریکوئست به سمت سرور ارسال نمی‌شود
+        enabled: isAuthenticated,
+        retry: false
     });
 };
 
@@ -38,6 +41,6 @@ export const useUpdateUserProfile = () => {
             // تا اطلاعات جدید بلافاصله از سرور دریافت و در رابط کاربری (UI) بروزرسانی شود
             queryClient.invalidateQueries({ queryKey: ["userProfile"] });
         },
-        retry:false
+        retry: false
     });
 };
