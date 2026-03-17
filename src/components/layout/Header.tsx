@@ -560,7 +560,7 @@ export const Header = () => {
                     >
                         <button
                             onClick={() => setIsProfilePicModalOpen(false)}
-                            className="absolute top-4 left-4 text-gray-400 hover:text-gray-700 transition-colors bg-gray-50 hover:bg-gray-100 p-1.5 rounded-full"
+                            className="absolute cursor-pointer top-4 left-4 text-gray-400 hover:text-gray-700 transition-colors bg-gray-50 hover:bg-gray-100 p-1.5 rounded-full"
                         >
                             <X className="w-5 h-5" />
                         </button>
