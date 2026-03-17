@@ -35,3 +35,35 @@
         scroll-behavior: smooth;
     }
 }
+
+/* تنظیمات اسکرول‌بار برای فایرفاکس */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: #f472b6 #fdf2f8; /* رنگ درگ‌کننده (salona-400) و پس‌زمینه (salona-50) */
+}
+
+/* تنظیمات اسکرول‌بار برای کروم، اج و سافاری */
+*::-webkit-scrollbar {
+    width: 8px; /* عرض اسکرول‌بار عمودی */
+    height: 8px; /* ارتفاع اسکرول‌بار افقی */
+}
+
+/* پس‌زمینه مسیر اسکرول‌بار */
+*::-webkit-scrollbar-track {
+    background: #fdf2f8; /* معادل salona-50 */
+    border-radius: 10px;
+}
+
+/* دستگیره (Thumb) اسکرول‌بار */
+*::-webkit-scrollbar-thumb {
+    background-color: #f9a8d4; /* معادل salona-300 */
+    border-radius: 10px;
+    /* حاشیه همرنگ پس‌زمینه برای ایجاد افکت فاصله (Padding) تمیزتر */
+    border: 2px solid #fdf2f8;
+    transition: background-color 0.3s ease;
+}
+
+/* حالت هاور (Hover) دستگیره اسکرول‌بار */
+*::-webkit-scrollbar-thumb:hover {
+    background-color: #ec4899; /* معادل salona-500 (رنگ اصلی برند) */
+}
