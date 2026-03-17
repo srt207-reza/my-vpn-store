@@ -117,7 +117,7 @@ export default function ProductDetailPage() {
                 <h2 className="text-2xl font-bold text-gray-800 mb-4">محصول مورد نظر یافت نشد!</h2>
                 <button
                     onClick={() => router.back()}
-                    className="text-salona-500 hover:text-salona-600 font-medium flex items-center gap-2 bg-salona-50 px-6 py-3 rounded-xl transition-colors"
+                    className="text-salona-500 cursor-pointer hover:text-salona-600 font-medium flex items-center gap-2 bg-salona-50 px-6 py-3 rounded-xl transition-colors"
                 >
                     <ChevronRight className="w-5 h-5" />
                     بازگشت به صفحه محصولات

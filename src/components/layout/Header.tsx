@@ -22,6 +22,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import Swal from "sweetalert2";
 import { useUserProfile } from "@/services/useUser";
 import { removeAuthCookie } from "@/app/actions";
+import Image from "next/image";
+import LOGO from "@/../public/assets/images/logo/logo.png"
 
 // تعریف اینترفیس برای آدرس کاربر
 interface UserAddress {
@@ -189,6 +191,9 @@ export const Header = () => {
                             >
                                 <Menu className="w-6 h-6" />
                             </button>
+                            {/* <Link href="/">
+                                <Image src={LOGO} className="w-50" alt="logo" />
+                            </Link> */}
                             <Link href="/" className="text-2xl font-black text-primary tracking-tighter">
                                 SALONA<span className="text-gray-900">.</span>
                             </Link>
