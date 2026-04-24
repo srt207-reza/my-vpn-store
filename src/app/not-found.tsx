@@ -7,9 +7,9 @@ import { SearchX, Home, ArrowLeft } from "lucide-react";
 export default function NotFound() {
     return (
         <main className="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden bg-store-base" dir="rtl">
-            {/* هاله‌های نورانی پس‌زمینه */}
-            <div className="absolute top-1/4 right-1/3 w-[500px] h-[500px] bg-spotify/10 rounded-full blur-[120px] pointer-events-none" />
-            <div className="absolute bottom-1/4 left-1/3 w-[400px] h-[400px] bg-emerald-500/10 rounded-full blur-[100px] pointer-events-none" />
+            {/* هاله‌های نورانی پس‌زمینه - جایگزین رنگ اسپاتیفای با رنگ‌های پرایمری */}
+            <div className="absolute top-1/4 right-1/3 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] pointer-events-none" />
+            <div className="absolute bottom-1/4 left-1/3 w-[400px] h-[400px] bg-blue-500/10 rounded-full blur-[100px] pointer-events-none" />
 
             <div className="relative z-10 w-full max-w-lg text-center">
                 {/* انیمیشن عدد 404 */}
@@ -29,7 +29,7 @@ export default function NotFound() {
                         transition={{ delay: 0.3, type: "spring" }}
                         className="absolute inset-0 flex items-center justify-center"
                     >
-                        <div className="bg-store-card p-4 rounded-full border-4 border-store-base shadow-[0_0_50px_rgba(29,185,84,0.3)] mt-4 text-spotify">
+                        <div className="bg-store-card p-4 rounded-full border-4 border-store-base shadow-[0_0_50px_rgba(59,130,246,0.3)] mt-4 text-primary">
                             <SearchX className="w-16 h-16" />
                         </div>
                     </motion.div>
@@ -53,14 +53,14 @@ export default function NotFound() {
                 >
                     <Link
                         href="/"
-                        className="group w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3.5 bg-spotify hover:bg-spotify-light text-white rounded-xl shadow-lg shadow-spotify/20 transition-all duration-300 active:scale-95 font-medium"
+                        className="group w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3.5 bg-primary hover:bg-primary-light text-white rounded-xl shadow-lg shadow-primary/20 transition-all duration-300 active:scale-95 font-medium"
                     >
                         <Home className="w-5 h-5" />
                         <span>بازگشت به خانه</span>
                     </Link>
 
                     <Link
-                        href="https://t.me/getSpotify_Support"
+                        href="https://t.me/GetPremium_support"
                         target="_blank"
                         className="group w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3.5 bg-store-panel hover:bg-store-hover border border-store-border text-slate-300 hover:text-white rounded-xl transition-all duration-300 active:scale-95 font-medium"
                     >

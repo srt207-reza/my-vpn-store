@@ -2,30 +2,37 @@
 
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-    User, Users, Mail, Clock, CreditCard, AlertCircle, 
-    LayoutDashboard, Search, Filter, Lock, Calendar, Trash2 
+import {
+    User,
+    Phone,
+    Clock,
+    CreditCard,
+    AlertCircle,
+    LayoutDashboard,
+    Search,
+    Filter,
+    Trash2,
+    ShieldCheck,
+    CheckCircle2,
+    Activity,
 } from "lucide-react";
 
-type Order = {
+// ساختار داده‌ای همگام با بک‌اند جدید
+type VpnOrder = {
     id: string;
-    planType: "individual" | "family";
-    planId?: string; // اختیاری شده تا خطای تایپ در صورت عدم وجود ندهد
-    planTitle?: string;
+    type: string;
+    volume: number;
+    fullName: string;
+    contactInfo: string;
     price: number;
-    fullNameEn: string;
-    password?: string;
-    dateOfBirth: string;
-    spotifyEmail: string;
-    status: string;
+    status: "pending_payment" | "awaiting_receipt" | "processing" | "completed";
     createdAt: string;
 };
 
-export default function ClientOrders({ orders }: { orders: Order[] }) {
-    // انتقال دیتای پراپ به استیت محلی برای امکان حذف بلادرنگ
-    const [orderList, setOrderList] = useState<Order[]>(orders);
+export default function ClientOrders({ orders }: { orders: VpnOrder[] }) {
+    const [orderList, setOrderList] = useState<VpnOrder[]>(orders);
     const [searchTerm, setSearchTerm] = useState("");
-    const [activeFilter, setActiveFilter] = useState<"all" | "individual" | "family">("all");
+    const [activeFilter, setActiveFilter] = useState<"all" | "pending_payment" | "completed">("all");
     const [isDeleting, setIsDeleting] = useState<string | null>(null);
 
     const formatJalali = (dateString: string) => {
@@ -40,28 +47,31 @@ export default function ClientOrders({ orders }: { orders: Order[] }) {
         }).format(date);
     };
 
-    // محاسبات بر اساس استیت محلی (orderList) انجام می‌شود
     const totalOrders = orderList.length;
     const totalIncome = orderList.reduce((acc, order) => acc + (order.price || 0), 0);
 
     const filteredOrders = useMemo(() => {
         return orderList.filter((order) => {
-            const matchFilter = activeFilter === "all" || order.planType === activeFilter;
+            // فیلتر بر اساس وضعیت سفارش
+            let matchFilter = true;
+            if (activeFilter === "pending_payment") {
+                matchFilter = order.status === "pending_payment";
+            } else if (activeFilter === "completed") {
+                matchFilter = order.status === "completed";
+            }
 
             if (!searchTerm.trim()) return matchFilter;
 
             const searchLower = searchTerm.toLowerCase().trim();
             const matchSearch =
                 (order.id || "").toLowerCase().includes(searchLower) ||
-                (order.fullNameEn || "").toLowerCase().includes(searchLower) ||
-                (order.spotifyEmail || "").toLowerCase().includes(searchLower) ||
-                (order.planTitle || "").toLowerCase().includes(searchLower);
+                (order.fullName || "").toLowerCase().includes(searchLower) ||
+                (order.contactInfo || "").toLowerCase().includes(searchLower);
 
             return matchFilter && matchSearch;
         });
     }, [orderList, searchTerm, activeFilter]);
 
-    // تابع مدیریت حذف سفارش
     const handleDelete = async (id: string) => {
         if (!window.confirm("آیا از حذف این سفارش اطمینان دارید؟ این عمل غیرقابل بازگشت است.")) {
             return;
@@ -69,7 +79,6 @@ export default function ClientOrders({ orders }: { orders: Order[] }) {
 
         setIsDeleting(id);
         try {
-            // نکته: آدرس درخواست را بر اساس مسیر API خود تنظیم کنید (مثلا /api/orders)
             const response = await fetch(`/api/order?id=${id}`, {
                 method: "DELETE",
             });
@@ -77,7 +86,6 @@ export default function ClientOrders({ orders }: { orders: Order[] }) {
             const data = await response.json();
 
             if (data.success) {
-                // حذف سفارش از استیت محلی برای آپدیت UI
                 setOrderList((prev) => prev.filter((order) => order.id !== id));
             } else {
                 alert(data.message || "خطا در حذف سفارش");
@@ -90,6 +98,52 @@ export default function ClientOrders({ orders }: { orders: Order[] }) {
         }
     };
 
+    // تابع کمکی برای رنگ‌بندی و متون وضعیت سفارشات
+    const getStatusDisplay = (status: string) => {
+        switch (status) {
+            case "pending_payment":
+                return {
+                    text: "در انتظار پرداخت",
+                    icon: AlertCircle,
+                    color: "text-amber-500",
+                    bg: "bg-amber-500/10",
+                    border: "border-amber-500/20",
+                };
+            case "awaiting_receipt":
+                return {
+                    text: "بررسی رسید",
+                    icon: Activity,
+                    color: "text-blue-500",
+                    bg: "bg-blue-500/10",
+                    border: "border-blue-500/20",
+                };
+            case "processing":
+                return {
+                    text: "در حال آماده‌سازی",
+                    icon: Clock,
+                    color: "text-purple-500",
+                    bg: "bg-purple-500/10",
+                    border: "border-purple-500/20",
+                };
+            case "completed":
+                return {
+                    text: "تکمیل شده",
+                    icon: CheckCircle2,
+                    color: "text-emerald-500",
+                    bg: "bg-emerald-500/10",
+                    border: "border-emerald-500/20",
+                };
+            default:
+                return {
+                    text: status,
+                    icon: AlertCircle,
+                    color: "text-slate-400",
+                    bg: "bg-slate-400/10",
+                    border: "border-slate-400/20",
+                };
+        }
+    };
+
     return (
         <div className="min-h-screen bg-store-base text-white p-4 md:p-8 lg:p-12 font-sans" dir="rtl">
             <div className="max-w-7xl mx-auto space-y-8">
@@ -99,15 +153,15 @@ export default function ClientOrders({ orders }: { orders: Order[] }) {
                     animate={{ opacity: 1, y: 0 }}
                     className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 bg-store-panel border border-store-border p-6 md:p-8 rounded-[2rem] shadow-2xl relative overflow-hidden"
                 >
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-spotify/5 rounded-full blur-3xl pointer-events-none" />
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
 
                     <div className="flex items-center gap-5 relative z-10">
-                        <div className="bg-gradient-to-br from-spotify/20 to-emerald-500/20 p-4 rounded-2xl text-spotify-light border border-spotify/20 shadow-inner">
+                        <div className="bg-gradient-to-br from-primary/20 to-blue-500/20 p-4 rounded-2xl text-primary border border-primary/20 shadow-inner">
                             <LayoutDashboard className="w-8 h-8" />
                         </div>
                         <div>
                             <h1 className="text-2xl md:text-3xl font-black bg-clip-text text-transparent bg-gradient-to-l from-white to-slate-400">
-                                داشبورد سفارشات اسپاتیفای
+                                داشبورد سفارشات
                             </h1>
                             <p className="text-slate-400 text-sm mt-1.5 font-medium">
                                 مدیریت، پیگیری و گزارش‌گیری یکپارچه
@@ -120,7 +174,7 @@ export default function ClientOrders({ orders }: { orders: Order[] }) {
                             <p className="text-slate-400 text-xs mb-1.5 font-semibold uppercase tracking-wider">
                                 کل درآمد (تومان)
                             </p>
-                            <p className="font-black text-xl text-spotify">{totalIncome.toLocaleString("fa-IR")}</p>
+                            <p className="font-black text-xl text-primary">{totalIncome.toLocaleString("fa-IR")}</p>
                         </div>
                         <div className="bg-store-card px-6 py-4 rounded-2xl border border-store-border flex-1 min-w-[140px] text-center shadow-lg">
                             <p className="text-slate-400 text-xs mb-1.5 font-semibold uppercase tracking-wider">
@@ -140,14 +194,14 @@ export default function ClientOrders({ orders }: { orders: Order[] }) {
                 >
                     <div className="relative w-full md:w-96 group">
                         <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
-                            <Search className="w-5 h-5 text-slate-400 group-focus-within:text-spotify transition-colors" />
+                            <Search className="w-5 h-5 text-slate-400 group-focus-within:text-primary transition-colors" />
                         </div>
                         <input
                             type="text"
-                            placeholder="جستجو نام، ایمیل یا پلن..."
+                            placeholder="جستجو نام، شماره یا شناسه..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full bg-store-card border border-store-border text-white text-sm rounded-xl py-3.5 pr-12 pl-4 focus:outline-none focus:ring-2 focus:ring-spotify/50 focus:border-spotify/50 transition-all placeholder:text-slate-500 shadow-inner"
+                            className="w-full bg-store-card border border-store-border text-white text-sm rounded-xl py-3.5 pr-12 pl-4 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all placeholder:text-slate-500 shadow-inner"
                         />
                     </div>
 
@@ -157,25 +211,25 @@ export default function ClientOrders({ orders }: { orders: Order[] }) {
                             <span className="text-sm font-medium">فیلتر:</span>
                         </div>
                         <div className="flex gap-1 bg-store-card p-1.5 rounded-xl border border-store-border">
-                            {(["all", "individual", "family"] as const).map((type) => (
+                            {(["all", "pending_payment", "completed"] as const).map((type) => (
                                 <button
                                     key={type}
                                     onClick={() => setActiveFilter(type)}
                                     className={`px-4 cursor-pointer py-2 rounded-lg text-sm font-bold transition-all duration-300 whitespace-nowrap ${
                                         activeFilter === type
-                                            ? type === "individual"
-                                                ? "bg-spotify/20 text-spotify-light shadow-sm"
-                                                : type === "family"
+                                            ? type === "pending_payment"
+                                                ? "bg-amber-500/20 text-amber-500 shadow-sm"
+                                                : type === "completed"
                                                   ? "bg-emerald-500/20 text-emerald-400 shadow-sm"
-                                                  : "bg-white/10 text-white shadow-sm"
+                                                  : "bg-primary/20 text-primary shadow-sm"
                                             : "text-slate-400 hover:text-white hover:bg-store-hover"
                                     }`}
                                 >
                                     {type === "all"
-                                        ? "همه پلن‌ها"
-                                        : type === "individual"
-                                          ? "شخصی (Individual)"
-                                          : "فمیلی (Family)"}
+                                        ? "همه سفارش‌ها"
+                                        : type === "pending_payment"
+                                          ? "در انتظار پرداخت"
+                                          : "تکمیل شده"}
                                 </button>
                             ))}
                         </div>
@@ -193,19 +247,14 @@ export default function ClientOrders({ orders }: { orders: Order[] }) {
                             <Search className="w-8 h-8 text-slate-500" />
                         </div>
                         <h3 className="text-xl font-bold text-slate-300 mb-2">نتیجه‌ای یافت نشد!</h3>
-                        <p className="text-slate-500">سفارشی با این مشخصات در سیستم ثبت نشده است.</p>
+                        <p className="text-slate-500">سفارشی با این مشخصات در سیستم یافت نشد.</p>
                     </motion.div>
                 ) : (
                     <motion.div layout className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                         <AnimatePresence mode="popLayout">
                             {filteredOrders.map((order) => {
-                                const isFamily = order.planType === "family";
-                                const themeColor = isFamily ? "text-emerald-400" : "text-spotify-light";
-                                const bgGradient = isFamily
-                                    ? "from-emerald-500/10 to-transparent"
-                                    : "from-spotify/10 to-transparent";
-                                const borderTheme = isFamily ? "border-emerald-500/20" : "border-spotify/20";
-                                const ProductIcon = isFamily ? Users : User;
+                                const statusInfo = getStatusDisplay(order.status);
+                                const StatusIcon = statusInfo.icon;
 
                                 return (
                                     <motion.div
@@ -217,28 +266,26 @@ export default function ClientOrders({ orders }: { orders: Order[] }) {
                                         transition={{ duration: 0.3, layout: { duration: 0.3 } }}
                                         className="group flex flex-col h-full bg-store-panel border border-store-border rounded-[1.5rem] overflow-hidden hover:border-store-hover transition-all duration-300 hover:shadow-2xl hover:-translate-y-1"
                                     >
-                                        <div
-                                            className={`bg-gradient-to-b ${bgGradient} border-b ${borderTheme} p-5 flex justify-between items-center relative overflow-hidden`}
-                                        >
+                                        <div className="bg-gradient-to-b from-primary/10 to-transparent border-b border-primary/20 p-5 flex justify-between items-center relative overflow-hidden">
                                             <div className="flex items-center gap-3 relative z-10">
-                                                <div
-                                                    className={`p-2.5 rounded-xl bg-store-card shadow-sm border border-store-border ${themeColor}`}
-                                                >
-                                                    <ProductIcon className="w-5 h-5" />
+                                                <div className="p-2.5 rounded-xl bg-store-card shadow-sm border border-store-border text-primary">
+                                                    <ShieldCheck className="w-5 h-5" />
                                                 </div>
                                                 <div>
                                                     <span className="block text-[11px] font-bold tracking-wider text-slate-400 mb-0.5">
-                                                        ID: {(order.id || "").slice(-8).toUpperCase()}
+                                                        ID: {(order.id || "").toUpperCase()}
                                                     </span>
-                                                    <span className={`text-sm font-black tracking-wide ${themeColor}`}>
-                                                        {isFamily ? "اسپاتیفای فمیلی" : "اسپاتیفای شخصی"}
+                                                    <span className="text-sm font-black tracking-wide text-primary">
+                                                        ترافیک ({order.volume} GB)
                                                     </span>
                                                 </div>
                                             </div>
 
-                                            <div className="flex items-center gap-1.5 bg-amber-500/10 text-amber-500 px-3 py-1.5 rounded-xl text-xs font-bold border border-amber-500/20 relative z-10 shadow-sm">
-                                                <AlertCircle className="w-3.5 h-3.5" />
-                                                {order.status === "pending_payment" ? "در انتظار پرداخت" : order.status}
+                                            <div
+                                                className={`flex items-center gap-1.5 ${statusInfo.bg} ${statusInfo.color} px-3 py-1.5 rounded-xl text-xs font-bold border ${statusInfo.border} relative z-10 shadow-sm`}
+                                            >
+                                                <StatusIcon className="w-3.5 h-3.5" />
+                                                {statusInfo.text}
                                             </div>
                                         </div>
 
@@ -246,9 +293,7 @@ export default function ClientOrders({ orders }: { orders: Order[] }) {
                                             <div className="bg-store-base p-4 rounded-2xl border border-store-border flex justify-between items-center shadow-inner group-hover:border-store-hover transition-colors">
                                                 <div className="flex items-center gap-2.5 text-slate-300 font-medium text-sm">
                                                     <CreditCard className="w-4 h-4 text-slate-500" />
-                                                    <span className="truncate max-w-[120px] sm:max-w-max">
-                                                        {order.planTitle || "ثبت نشده"}
-                                                    </span>
+                                                    <span>مبلغ پرداختی</span>
                                                 </div>
                                                 <div className="font-black text-white bg-store-card px-3 py-1 rounded-lg border border-store-border">
                                                     {(order.price || 0).toLocaleString("fa-IR")}{" "}
@@ -263,44 +308,20 @@ export default function ClientOrders({ orders }: { orders: Order[] }) {
                                                     <div className="w-8 h-8 rounded-full bg-store-card flex items-center justify-center border border-store-border">
                                                         <User className="w-4 h-4 text-slate-400" />
                                                     </div>
-                                                    <span className="text-slate-200 font-medium" dir="ltr">
-                                                        {order.fullNameEn || "ثبت نشده"}
+                                                    <span className="text-slate-200 font-medium">
+                                                        {order.fullName || "ثبت نشده"}
                                                     </span>
                                                 </div>
 
                                                 <div className="flex items-center gap-3 text-sm">
                                                     <div className="w-8 h-8 rounded-full bg-store-card flex items-center justify-center border border-store-border">
-                                                        <Calendar className="w-4 h-4 text-slate-400" />
+                                                        <Phone className="w-4 h-4 text-slate-400" />
                                                     </div>
                                                     <span
                                                         className="text-slate-300 tracking-widest text-xs md:text-sm"
                                                         dir="ltr"
                                                     >
-                                                        {order.dateOfBirth || "ثبت نشده"}
-                                                    </span>
-                                                </div>
-
-                                                <div className="flex items-center gap-3 text-sm">
-                                                    <div className="w-8 h-8 rounded-full bg-store-card flex items-center justify-center border border-store-border">
-                                                        <Mail className="w-4 h-4 text-spotify-light" />
-                                                    </div>
-                                                    <span
-                                                        className="text-slate-300 truncate text-xs md:text-sm"
-                                                        dir="ltr"
-                                                    >
-                                                        {order.spotifyEmail || "ثبت نشده"}
-                                                    </span>
-                                                </div>
-
-                                                <div className="flex items-center gap-3 text-sm">
-                                                    <div className="w-8 h-8 rounded-full bg-store-card flex items-center justify-center border border-store-border">
-                                                        <Lock className="w-4 h-4 text-slate-400" />
-                                                    </div>
-                                                    <span
-                                                        className={`tracking-widest text-xs md:text-sm ${order.password ? "text-slate-300" : "text-slate-500"}`}
-                                                        dir="ltr"
-                                                    >
-                                                        {order.password || "بدون کلمه عبور"}
+                                                        {order.contactInfo || "ثبت نشده"}
                                                     </span>
                                                 </div>
                                             </div>
