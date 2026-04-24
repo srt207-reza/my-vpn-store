@@ -154,7 +154,7 @@ export default function RubberVolumeSlider({ min = 2, max = 15, value, onChange 
                     <motion.path
                         d={path}
                         fill="none"
-                        stroke="#3b82f6" // رنگ اصلی (primary/blue-500)
+                        stroke="#06b6d4" // رنگ اصلی (primary/blue-500)
                         strokeWidth="3"
                         strokeLinecap="round"
                         clipPath="url(#active-line-clip)"
@@ -170,7 +170,7 @@ export default function RubberVolumeSlider({ min = 2, max = 15, value, onChange 
                         backgroundColor: isDragging ? "#e0e7ff" : "#ffffff", // تغییر رنگ هنگام درگ
                     }}
                 >
-                    <div className="w-1.5 h-1.5 bg-blue-500 rounded-full" />
+                    {/* <div className="w-1.5 h-1.5 bg-blue-500 rounded-full" /> */}
                 </motion.div>
             </div>
         </div>
