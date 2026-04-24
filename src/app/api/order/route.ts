@@ -8,10 +8,10 @@ const dataFilePath = path.join(process.cwd(), "orders.json");
 // ساختار داده‌ای یک سفارش با توجه به فیلدهای فرانت‌اند
 interface SpotifyOrder {
     id: string;
-    spotifyEmail: string;       // ۱. آدرس ایمیل
-    password?: string;          // ۲. کلمه عبور (اختیاری)
-    fullNameEn: string;         // ۳. نام و نام خانوادگی (به انگلیسی)
-    dateOfBirth: string;        // ۴. تاریخ تولد
+    spotifyEmail: string; // ۱. آدرس ایمیل
+    password?: string; // ۲. کلمه عبور (اختیاری)
+    fullNameEn: string; // ۳. نام و نام خانوادگی (به انگلیسی)
+    dateOfBirth: string; // ۴. تاریخ تولد
     planType: "individual" | "family";
     durationMonths: number;
     price: number;
@@ -73,5 +73,39 @@ export async function POST(req: Request) {
     } catch (error) {
         console.error("Error saving spotify order:", error);
         return NextResponse.json({ success: false, message: "خطا در ثبت سفارش اسپاتیفای در سرور" }, { status: 500 });
+    }
+}
+
+export async function DELETE(req: Request) {
+    try {
+        const { searchParams } = new URL(req.url);
+        const id = searchParams.get("id");
+
+        if (!id) {
+            return NextResponse.json(
+                { success: false, message: "شناسه سفارش برای حذف ارسال نشده است." },
+                { status: 400 },
+            );
+        }
+
+        // خواندن داده‌های فعلی
+        const fileData = await fs.readFile(dataFilePath, "utf-8");
+        let orders: SpotifyOrder[] = JSON.parse(fileData);
+
+        // بررسی وجود سفارش و حذف آن
+        const initialLength = orders.length;
+        orders = orders.filter((order) => order.id !== id);
+
+        if (orders.length === initialLength) {
+            return NextResponse.json({ success: false, message: "سفارشی با این شناسه یافت نشد." }, { status: 404 });
+        }
+
+        // ذخیره مجدد لیست به‌روزرسانی شده در فایل
+        await fs.writeFile(dataFilePath, JSON.stringify(orders, null, 2), "utf-8");
+
+        return NextResponse.json({ success: true, message: "سفارش با موفقیت حذف شد." }, { status: 200 });
+    } catch (error) {
+        console.error("Error deleting spotify order:", error);
+        return NextResponse.json({ success: false, message: "خطا در حذف سفارش از سرور" }, { status: 500 });
     }
 }

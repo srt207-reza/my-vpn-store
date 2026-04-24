@@ -1,14 +1,1 @@
-[
-  {
-    "id": "SPT-042480",
-    "spotifyEmail": "rezataghizadeh207@gmail.com",
-    "password": "123456",
-    "fullNameEn": "reza taghizadeh",
-    "dateOfBirth": "2012-04-13",
-    "planType": "individual",
-    "durationMonths": 6,
-    "price": 2999000,
-    "status": "pending_payment",
-    "createdAt": "2026-04-23T17:07:22.480Z"
-  }
-]
+[]

@@ -23,20 +23,44 @@ import BirthDatePicker from "@/components/BirthDatePicker";
 // داده‌های قیمت‌گذاری استخراج شده از فایل PDF
 const PRICING = {
     individual: [
-        { id: "ind-1m", durationMonths: 1, title: "اشتراک ۱ ماهه", price: 555000, desc: "تجربه موسیقی بدون مرز (تحویل سریع)" },
+        {
+            id: "ind-1m",
+            durationMonths: 1,
+            title: "اشتراک ۱ ماهه",
+            price: 555000,
+            desc: "تجربه موسیقی بدون مرز (تحویل سریع)",
+        },
         { id: "ind-3m", durationMonths: 3, title: "اشتراک ۳ ماهه", price: 1555000, desc: "پکیج سه ماهه شخصی" },
         { id: "ind-6m", durationMonths: 6, title: "اشتراک ۶ ماهه", price: 2999000, desc: "پکیج شش ماهه شخصی" },
-        { id: "ind-12m", durationMonths: 12, title: "اشتراک ۱۲ ماهه", price: 4999000, desc: "بهترین انتخاب برای مصرف مداوم" },
+        {
+            id: "ind-12m",
+            durationMonths: 12,
+            title: "اشتراک ۱۲ ماهه",
+            price: 4999000,
+            desc: "بهترین انتخاب برای مصرف مداوم",
+        },
     ],
     family: [
-        { id: "fam-6m", durationMonths: 6, title: "اشتراک ۶ ماهه", price: 1660000, desc: "اقتصادی‌ترین انتخاب (عضویت در فمیلی)" },
-        { id: "fam-12m", durationMonths: 12, title: "اشتراک ۱۲ ماهه", price: 2660000, desc: "اقتصادی‌ترین انتخاب (عضویت در فمیلی)" },
+        {
+            id: "fam-6m",
+            durationMonths: 6,
+            title: "اشتراک ۶ ماهه",
+            price: 1660000,
+            desc: "اقتصادی‌ترین انتخاب (عضویت در فمیلی)",
+        },
+        {
+            id: "fam-12m",
+            durationMonths: 12,
+            title: "اشتراک ۱۲ ماهه",
+            price: 2660000,
+            desc: "اقتصادی‌ترین انتخاب (عضویت در فمیلی)",
+        },
     ],
 };
 
 function OrderForm() {
     const searchParams = useSearchParams();
-    
+
     // تشخیص نوع محصول و پلن از URL
     const productType = searchParams.get("product") === "family" ? "family" : "individual";
     const planParam = searchParams.get("plan");
@@ -80,16 +104,16 @@ function OrderForm() {
                 price: matchedPlan.price,
             }));
         } else {
-            setFormData((prev) => ({ 
-                ...prev, 
-                planType: productType, 
-                planId: "", 
+            setFormData((prev) => ({
+                ...prev,
+                planType: productType,
+                planId: "",
                 price: 0,
                 durationMonths: 1,
-                planTitle: ""
+                planTitle: "",
             }));
         }
-        
+
         setStep(1);
     }, [productType, planParam]);
 
@@ -150,20 +174,35 @@ function OrderForm() {
         <div className="max-w-2xl mx-auto w-full">
             {/* هدر فرم */}
             <div className="text-center mb-8">
-                <div className="inline-flex items-center justify-center p-4 rounded-full bg-slate-800/50 border border-slate-700 mb-4">
-                    {isFamily ? <Users className={`w-8 h-8 ${themeColor}`} /> : <User className={`w-8 h-8 ${themeColor}`} />}
-                </div>
-                <h1 className="text-2xl font-bold text-white mb-2">
-                    {isFamily ? "خرید اشتراک اسپاتیفای فمیلی" : "خرید اشتراک اسپاتیفای شخصی (Individual)"}
-                </h1>
+                {step !== 4 && (
+                    <>
+                        <div className="inline-flex items-center justify-center p-4 rounded-full bg-slate-800/50 border border-slate-700 mb-4">
+                            {isFamily ? (
+                                <Users className={`w-8 h-8 ${themeColor}`} />
+                            ) : (
+                                <User className={`w-8 h-8 ${themeColor}`} />
+                            )}
+                        </div>
+                        <h1 className="text-2xl font-bold text-white mb-2">
+                            {isFamily ? "خرید اشتراک اسپاتیفای فمیلی" : "خرید اشتراک اسپاتیفای شخصی (Individual)"}
+                        </h1>
+                    </>
+                )}
+
                 {step < 4 && (
                     <div className="flex items-center justify-center gap-2 mt-6">
                         {[1, 2, 3].map((num) => (
                             <div key={num} className="flex items-center">
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${step >= num ? "bg-[#1ED760] text-black" : "bg-slate-800 text-slate-400"}`}>
+                                <div
+                                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${step >= num ? "bg-[#1ED760] text-black" : "bg-slate-800 text-slate-400"}`}
+                                >
                                     {num}
                                 </div>
-                                {num < 3 && <div className={`w-12 h-1 transition-colors ${step > num ? "bg-[#1ED760]" : "bg-slate-800"}`} />}
+                                {num < 3 && (
+                                    <div
+                                        className={`w-12 h-1 transition-colors ${step > num ? "bg-[#1ED760]" : "bg-slate-800"}`}
+                                    />
+                                )}
                             </div>
                         ))}
                     </div>
@@ -180,12 +219,17 @@ function OrderForm() {
                         exit={{ opacity: 0, x: 20 }}
                         className="space-y-4"
                     >
-                        <h2 className="text-lg font-medium text-slate-200 mb-4">لطفاً بسته مورد نظر خود را انتخاب کنید:</h2>
+                        <h2 className="text-lg font-medium text-slate-200 mb-4">
+                            لطفاً بسته مورد نظر خود را انتخاب کنید:
+                        </h2>
 
                         {isFamily && (
                             <div className="bg-amber-500/10 border border-amber-500/20 text-amber-400 p-4 rounded-xl flex gap-3 text-sm mb-6 leading-relaxed">
                                 <AlertCircle className="w-5 h-5 shrink-0" />
-                                <p>طبق قوانین اسپاتیفای، هر اکانت در سال تنها <strong>دو بار</strong> می‌تواند عضو فمیلی شود. لطفاً پیش از خرید این مورد را در نظر داشته باشید.</p>
+                                <p>
+                                    طبق قوانین اسپاتیفای، هر اکانت در سال تنها <strong>دو بار</strong> می‌تواند عضو
+                                    فمیلی شود. لطفاً پیش از خرید این مورد را در نظر داشته باشید.
+                                </p>
                             </div>
                         )}
 
@@ -214,10 +258,16 @@ function OrderForm() {
                                                 </div>
                                                 <div className="text-left flex flex-col items-end justify-center min-w-[120px]">
                                                     <div className="flex items-baseline gap-1.5">
-                                                        <span className={`text-2xl font-black transition-colors duration-300 ${isSelected ? themeColor : "text-white"}`}>
+                                                        <span
+                                                            className={`text-2xl font-black transition-colors duration-300 ${isSelected ? themeColor : "text-white"}`}
+                                                        >
                                                             {plan.price.toLocaleString("fa-IR")}
                                                         </span>
-                                                        <span className={`text-xs font-medium ${isSelected ? "text-[#1ED760]/80" : "text-slate-500"}`}>تومان</span>
+                                                        <span
+                                                            className={`text-xs font-medium ${isSelected ? "text-[#1ED760]/80" : "text-slate-500"}`}
+                                                        >
+                                                            تومان
+                                                        </span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -232,7 +282,10 @@ function OrderForm() {
                                                         className="absolute top-1/2 -translate-y-1/2 left-5 z-20"
                                                     >
                                                         <div className="bg-slate-900/50 rounded-full p-1 backdrop-blur-sm">
-                                                            <CheckCircle2 className={`w-7 h-7 ${themeColor} drop-shadow-lg`} strokeWidth={2.5} />
+                                                            <CheckCircle2
+                                                                className={`w-7 h-7 ${themeColor} drop-shadow-lg`}
+                                                                strokeWidth={2.5}
+                                                            />
                                                         </div>
                                                     </motion.div>
                                                 )}
@@ -262,11 +315,12 @@ function OrderForm() {
                         className="bg-slate-800/40 p-6 rounded-3xl border border-slate-700 space-y-5"
                     >
                         <h2 className="text-lg font-medium text-slate-200 mb-4">اطلاعات اکانت خود را وارد کنید:</h2>
-                        
+
                         {/* فیلد نام انگلیسی */}
                         <div>
                             <label className="flex items-center gap-2 text-sm text-slate-400 mb-2">
-                                <User className="w-4 h-4" /> نام و نام خانوادگی (انگلیسی) <span className="text-red-500">*</span>
+                                <User className="w-4 h-4" /> نام و نام خانوادگی (انگلیسی){" "}
+                                <span className="text-red-500">*</span>
                             </label>
                             <input
                                 type="text"
@@ -282,7 +336,8 @@ function OrderForm() {
                         {/* ایمیل اسپاتیفای */}
                         <div>
                             <label className="flex items-center gap-2 text-sm text-slate-400 mb-2">
-                                <Mail className="w-4 h-4" /> ایمیل متصل به اکانت اسپاتیفای <span className="text-red-500">*</span>
+                                <Mail className="w-4 h-4" /> ایمیل متصل به اکانت اسپاتیفای{" "}
+                                <span className="text-red-500">*</span>
                             </label>
                             <input
                                 type="email"
@@ -292,14 +347,16 @@ function OrderForm() {
                                 placeholder="example@gmail.com"
                                 dir="ltr"
                             />
-                            <p className="text-xs text-slate-500 mt-2">توجه: اشتراک دقیقاً روی همین ایمیل فعال خواهد شد.</p>
+                            <p className="text-xs text-slate-500 mt-2">
+                                توجه: اشتراک دقیقاً روی همین ایمیل فعال خواهد شد.
+                            </p>
                         </div>
 
                         {/* فیلد تاریخ تولد */}
                         <div>
-                            <BirthDatePicker 
-                                value={formData.dateOfBirth} 
-                                onChange={(val) => setFormData({ ...formData, dateOfBirth: val })} 
+                            <BirthDatePicker
+                                value={formData.dateOfBirth}
+                                onChange={(val) => setFormData({ ...formData, dateOfBirth: val })}
                             />
                         </div>
 
@@ -328,7 +385,11 @@ function OrderForm() {
                             <button
                                 onClick={() => setStep(3)}
                                 // ولیدیشن جدید: نام انگلیسی، ایمیل و تاریخ تولد اجباری هستند
-                                disabled={!formData.fullNameEn.trim() || !formData.spotifyEmail.trim() || !formData.dateOfBirth.trim()}
+                                disabled={
+                                    !formData.fullNameEn.trim() ||
+                                    !formData.spotifyEmail.trim() ||
+                                    !formData.dateOfBirth.trim()
+                                }
                                 className={`flex-1 cursor-pointer py-4 rounded-xl text-white font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${themeBg}`}
                             >
                                 تایید اطلاعات <ChevronLeft className="w-5 h-5" />
@@ -350,7 +411,9 @@ function OrderForm() {
                         <div className="bg-slate-900/50 rounded-2xl p-5 space-y-4">
                             <div className="flex justify-between text-sm">
                                 <span className="text-slate-400">نوع اشتراک:</span>
-                                <span className="text-white font-medium">{isFamily ? "اسپاتیفای فمیلی" : "اسپاتیفای شخصی (Individual)"}</span>
+                                <span className="text-white font-medium">
+                                    {isFamily ? "اسپاتیفای فمیلی" : "اسپاتیفای شخصی (Individual)"}
+                                </span>
                             </div>
                             <div className="flex justify-between text-sm">
                                 <span className="text-slate-400">پلن انتخابی:</span>
@@ -358,15 +421,21 @@ function OrderForm() {
                             </div>
                             <div className="flex justify-between text-sm">
                                 <span className="text-slate-400">نام (انگلیسی):</span>
-                                <span className="text-white font-medium" dir="ltr">{formData.fullNameEn}</span>
+                                <span className="text-white font-medium" dir="ltr">
+                                    {formData.fullNameEn}
+                                </span>
                             </div>
                             <div className="flex justify-between text-sm">
                                 <span className="text-slate-400">ایمیل اکانت:</span>
-                                <span className="text-white font-medium" dir="ltr">{formData.spotifyEmail}</span>
+                                <span className="text-white font-medium" dir="ltr">
+                                    {formData.spotifyEmail}
+                                </span>
                             </div>
                             <div className="flex justify-between text-sm">
                                 <span className="text-slate-400">تاریخ تولد:</span>
-                                <span className="text-white font-medium" dir="ltr">{formData.dateOfBirth}</span>
+                                <span className="text-white font-medium" dir="ltr">
+                                    {formData.dateOfBirth}
+                                </span>
                             </div>
                             <div className="flex justify-between text-sm">
                                 <span className="text-slate-400">کلمه عبور:</span>
@@ -377,7 +446,9 @@ function OrderForm() {
                             <div className="pt-4 border-t border-slate-700 flex justify-between items-center">
                                 <span className="text-slate-300 font-medium">مبلغ قابل پرداخت:</span>
                                 <div className="text-left">
-                                    <span className={`text-2xl font-bold ${themeColor}`}>{formData.price.toLocaleString("fa-IR")}</span>
+                                    <span className={`text-2xl font-bold ${themeColor}`}>
+                                        {formData.price.toLocaleString("fa-IR")}
+                                    </span>
                                     <span className="text-slate-400 text-sm mr-1">تومان</span>
                                 </div>
                             </div>
@@ -395,7 +466,11 @@ function OrderForm() {
                                 disabled={loading}
                                 className={`flex-1 cursor-pointer py-4 rounded-xl text-white font-bold transition-all flex items-center justify-center gap-2 ${themeBg}`}
                             >
-                                {loading ? <Loader2 className="w-5 h-5 animate-spin text-white" /> : "ثبت سفارش و پرداخت"}
+                                {loading ? (
+                                    <Loader2 className="w-5 h-5 animate-spin text-white" />
+                                ) : (
+                                    "ثبت سفارش و پرداخت"
+                                )}
                             </button>
                         </div>
                     </motion.div>
@@ -414,31 +489,43 @@ function OrderForm() {
                         </div>
                         <h2 className="text-2xl font-bold text-white">سفارش با موفقیت ثبت شد!</h2>
                         <p className="text-slate-400">
-                            کد پیگیری شما: <span className="font-mono text-white bg-slate-800 px-2 py-1 rounded">{orderId}</span>
+                            کد پیگیری شما:{" "}
+                            <span className="font-mono text-white bg-slate-800 px-2 py-1 rounded">{orderId}</span>
                         </p>
 
                         <div className="bg-gradient-to-br from-slate-800 to-slate-900 p-6 rounded-3xl border border-slate-700 relative overflow-hidden mt-8 text-left">
                             <CreditCard className="absolute -right-4 -top-4 w-32 h-32 text-slate-700/30 rotate-12" />
                             <div className="relative z-10 space-y-4">
                                 <p className="text-slate-400 text-sm text-right">
-                                    لطفا مبلغ <strong className="text-white">{formData.price.toLocaleString("fa-IR")} تومان</strong> را به کارت زیر واریز نمایید:
+                                    لطفا مبلغ{" "}
+                                    <strong className="text-white">
+                                        {formData.price.toLocaleString("fa-IR")} تومان
+                                    </strong>{" "}
+                                    را به کارت زیر واریز نمایید:
                                 </p>
                                 <div className="flex items-center justify-between bg-black/30 p-4 rounded-xl backdrop-blur-sm border border-slate-700/50">
-                                    <span className="text-xl md:text-2xl font-mono text-white tracking-widest">6219-8614-2282-4069</span>
+                                    <span className="text-xl md:text-2xl font-mono text-white tracking-widest">
+                                        6037-9981-4892-7014
+                                    </span>
                                     <button
-                                        onClick={() => copyToClipboard("6219861422824069")}
+                                        onClick={() => copyToClipboard("6037998148927014")}
                                         className="p-2 cursor-pointer text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition-colors"
                                     >
                                         <Copy className="w-5 h-5" />
                                     </button>
                                 </div>
-                                <p className="text-slate-400 text-sm text-right">به نام: سارا اسدی - بلو بانک</p>
+                                <p className="text-slate-400 text-sm text-right">به نام: مائده شعاعی - بانک ملی</p>
                             </div>
                         </div>
 
                         <div className="bg-slate-800/40 p-6 rounded-3xl border border-slate-700 space-y-4 mt-6">
                             <p className="text-slate-300 text-sm leading-relaxed">
-                                پس از پرداخت، لطفاً <strong>تصویر رسید واریز</strong> را به همراه کد پیگیری به پشتیبانی تلگرام ما ارسال کنید تا اکانت شما در کمتر از ۲۴ ساعت پریمیوم شود.
+                                پس از پرداخت، لطفاً{" "}
+                                <span className="text-red-500">
+                                    <strong>تصویر رسید واریز</strong> را به همراه کد پیگیری به پشتیبانی تلگرام ما ارسال
+                                    کنید
+                                </span>{" "}
+                                تا اکانت شما در کمتر از ۲۴ ساعت پریمیوم شود.
                             </p>
                             <a
                                 href={supportLink}

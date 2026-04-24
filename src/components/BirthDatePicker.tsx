@@ -49,7 +49,7 @@ export default function BirthDatePicker({ value, onChange }: BirthDatePickerProp
             <div className="flex gap-2 w-full" dir="ltr">
                 <select value={year} onChange={(e) => setYear(e.target.value)} className={selectClass}>
                     <option value="" disabled className="text-slate-500">
-                        Year
+                        سال
                     </option>
                     {years.map((y) => (
                         <option key={y} value={y} className="bg-slate-800">
@@ -60,7 +60,7 @@ export default function BirthDatePicker({ value, onChange }: BirthDatePickerProp
 
                 <select value={month} onChange={(e) => setMonth(e.target.value)} className={selectClass}>
                     <option value="" disabled className="text-slate-500">
-                        Month
+                        ماه
                     </option>
                     {months.map((m) => (
                         <option key={m} value={m} className="bg-slate-800">
@@ -71,7 +71,7 @@ export default function BirthDatePicker({ value, onChange }: BirthDatePickerProp
 
                 <select value={day} onChange={(e) => setDay(e.target.value)} className={selectClass}>
                     <option value="" disabled className="text-slate-500">
-                        Day
+                        روز
                     </option>
                     {days.map((d) => (
                         <option key={d} value={d} className="bg-slate-800">

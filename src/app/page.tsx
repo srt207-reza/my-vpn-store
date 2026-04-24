@@ -32,7 +32,7 @@ export default function HomePage() {
             subtitle: "اقتصادی‌ترین انتخاب برای شما",
             description:
                 "طرحی بسیار مقرون‌به‌صرفه در بسته‌های ۶ و ۱۲ ماهه. مناسب برای کاربرانی که در سال جاری محدودیت عضویت فمیلی (دو بار در سال) ندارند.",
-            icon: <Users className="w-12 h-12 text-blue-400" />,
+            icon: <Users className="w-12 h-12 text-emerald-400" />,
             features: [
                 "قیمت بسیار اقتصادی و مقرون‌به‌صرفه",
                 "ارائه در پلن‌های طولانی ۶ و ۱۲ ماهه",
@@ -40,9 +40,9 @@ export default function HomePage() {
                 "پرداخت قانونی روی ریجن‌های معتبر",
                 "پشتیبانی تا آخرین روز اشتراک",
             ],
-            color: "from-blue-500 to-indigo-400",
-            bgHover: "hover:shadow-blue-500/20",
-            buttonColor: "bg-blue-500 hover:bg-blue-400",
+            color: "from-emerald-500 to-green-400",
+            bgHover: "hover:shadow-emerald-500/20",
+            buttonColor: "bg-emerald-500 hover:bg-emerald-400",
             href: "/order?product=family",
         },
     ];
@@ -75,7 +75,7 @@ export default function HomePage() {
                 </div>
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white mb-6 leading-tight">
                     دسترسی بی‌حد و مرز به <br className="hidden md:block" />
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 via-emerald-400 to-blue-500">
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 via-emerald-400 to-green-500">
                         دنیای موسیقی اسپاتیفای
                     </span>
                 </h1>
@@ -110,7 +110,7 @@ export default function HomePage() {
                                 </div>
                             </div>
 
-                            <h2 className="text-2xl font-bold text-white mb-2">{product.title}</h2>
+                            <h2 className="text-2xl font-bold text-white! mb-2">{product.title}</h2>
                             <h3
                                 className={`text-sm font-medium text-transparent bg-clip-text bg-gradient-to-r ${product.color} mb-4`}
                             >
@@ -123,7 +123,7 @@ export default function HomePage() {
                                 {product.features.map((feature, idx) => (
                                     <li key={idx} className="flex items-center gap-3 text-sm text-slate-300">
                                         <CheckCircle2
-                                            className={`w-5 h-5 bg-clip-text bg-gradient-to-br ${product.color} rounded-full bg-slate-800`}
+                                            className={`w-5 h-5 flex-shrink-0 bg-clip-text bg-gradient-to-br ${product.color} rounded-full bg-slate-800`}
                                         />
                                         {feature}
                                     </li>

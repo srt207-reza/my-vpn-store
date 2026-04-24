@@ -6,10 +6,10 @@ import { SearchX, Home, ArrowLeft } from "lucide-react";
 
 export default function NotFound() {
     return (
-        <main className="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden" dir="rtl">
+        <main className="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden bg-store-base" dir="rtl">
             {/* هاله‌های نورانی پس‌زمینه */}
-            <div className="absolute top-1/4 right-1/3 w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none" />
-            <div className="absolute bottom-1/4 left-1/3 w-[400px] h-[400px] bg-purple-600/10 rounded-full blur-[100px] pointer-events-none" />
+            <div className="absolute top-1/4 right-1/3 w-[500px] h-[500px] bg-spotify/10 rounded-full blur-[120px] pointer-events-none" />
+            <div className="absolute bottom-1/4 left-1/3 w-[400px] h-[400px] bg-emerald-500/10 rounded-full blur-[100px] pointer-events-none" />
 
             <div className="relative z-10 w-full max-w-lg text-center">
                 {/* انیمیشن عدد 404 */}
@@ -19,7 +19,7 @@ export default function NotFound() {
                     transition={{ duration: 0.5, ease: "easeOut" }}
                     className="relative inline-block mb-8"
                 >
-                    <div className="text-[150px] md:text-[200px] font-black leading-none bg-clip-text text-transparent bg-gradient-to-b from-slate-200 to-slate-800 select-none">
+                    <div className="text-[150px] md:text-[200px] font-black leading-none bg-clip-text text-transparent bg-gradient-to-b from-white to-slate-700 select-none">
                         404
                     </div>
                     {/* آیکون روی عدد صفر */}
@@ -27,9 +27,9 @@ export default function NotFound() {
                         initial={{ y: 20, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
                         transition={{ delay: 0.3, type: "spring" }}
-                        className="absolute inset-0 flex items-center justify-center text-blue-500 shadow-blue-500"
+                        className="absolute inset-0 flex items-center justify-center"
                     >
-                        <div className="bg-slate-950 p-4 rounded-full border-4 border-slate-900 shadow-[0_0_50px_rgba(59,130,246,0.3)] mt-4">
+                        <div className="bg-store-card p-4 rounded-full border-4 border-store-base shadow-[0_0_50px_rgba(29,185,84,0.3)] mt-4 text-spotify">
                             <SearchX className="w-16 h-16" />
                         </div>
                     </motion.div>
@@ -53,7 +53,7 @@ export default function NotFound() {
                 >
                     <Link
                         href="/"
-                        className="group w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3.5 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white rounded-xl shadow-lg shadow-blue-500/25 transition-all duration-300 active:scale-95 font-medium"
+                        className="group w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3.5 bg-spotify hover:bg-spotify-light text-white rounded-xl shadow-lg shadow-spotify/20 transition-all duration-300 active:scale-95 font-medium"
                     >
                         <Home className="w-5 h-5" />
                         <span>بازگشت به خانه</span>
@@ -62,7 +62,7 @@ export default function NotFound() {
                     <Link
                         href="https://t.me/getSpotify_Support"
                         target="_blank"
-                        className="group w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3.5 bg-slate-800/50 hover:bg-slate-800 border border-slate-700 hover:border-slate-600 text-slate-300 hover:text-white rounded-xl transition-all duration-300 active:scale-95 font-medium"
+                        className="group w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3.5 bg-store-panel hover:bg-store-hover border border-store-border text-slate-300 hover:text-white rounded-xl transition-all duration-300 active:scale-95 font-medium"
                     >
                         <span>پشتیبانی</span>
                         <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />

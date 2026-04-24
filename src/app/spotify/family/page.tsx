@@ -17,19 +17,19 @@ export default function SpotifyFamily() {
     ];
 
     return (
-        <div className="min-h-screen bg-[#0f172a] text-white font-sans overflow-hidden" dir="rtl">
+        <div className="min-h-screen bg-store-base text-white font-sans overflow-hidden" dir="rtl">
             {/* Background Effects */}
-            <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-blue-500/20 blur-[120px] rounded-full pointer-events-none" />
+            <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-emerald-500/20 blur-[120px] rounded-full pointer-events-none" />
 
             <div className="max-w-7xl mx-auto px-6 py-16 relative z-10 space-y-24">
                 
                 {/* Hero Section */}
                 <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="text-center space-y-6 max-w-3xl mx-auto mt-10">
-                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-sm font-bold mb-4">
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm font-bold mb-4">
                         <Users className="w-4 h-4" />
                         اقتصادی‌ترین روش پرمیوم‌سازی
                     </div>
-                    <h1 className="text-4xl md:text-6xl font-black leading-tight text-transparent bg-clip-text bg-gradient-to-l from-white via-white to-blue-400/80">
+                    <h1 className="text-4xl md:text-6xl font-black leading-tight text-transparent bg-clip-text bg-gradient-to-l from-white via-white to-emerald-400/80">
                         طرح فمیلی اسپاتیفای <br className="hidden md:block"/> (Family Plan)
                     </h1>
                     <p className="text-lg text-slate-300 leading-relaxed">
@@ -43,9 +43,9 @@ export default function SpotifyFamily() {
                         const Icon = item.icon;
                         return (
                             <motion.div key={idx} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.1 }} 
-                                className="bg-slate-900/50 backdrop-blur-sm border border-slate-800 p-8 rounded-3xl hover:bg-slate-800/50 transition-colors">
-                                <div className="w-14 h-14 bg-blue-500/10 rounded-2xl flex items-center justify-center mb-6">
-                                    <Icon className="w-7 h-7 text-blue-400" />
+                                className="bg-store-panel backdrop-blur-sm border border-store-border p-8 rounded-3xl hover:bg-store-hover transition-colors">
+                                <div className="w-14 h-14 bg-emerald-500/10 rounded-2xl flex items-center justify-center mb-6">
+                                    <Icon className="w-7 h-7 text-emerald-400" />
                                 </div>
                                 <h3 className="text-xl font-bold mb-3">{item.title}</h3>
                                 <p className="text-slate-400 leading-relaxed text-sm">{item.desc}</p>
@@ -68,29 +68,29 @@ export default function SpotifyFamily() {
                                 initial={{ opacity: 0, scale: 0.95 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 transition={{ delay: index * 0.1 }}
-                                className={`w-full md:w-1/2 relative bg-slate-900/80 backdrop-blur-md border ${index === 1 ? 'border-blue-500 shadow-xl shadow-blue-500/20' : 'border-slate-800'} rounded-3xl p-8 hover:-translate-y-2 transition-all flex flex-col`}
+                                className={`w-full md:w-1/2 relative bg-store-panel backdrop-blur-md border ${index === 1 ? 'border-emerald-500 shadow-xl shadow-emerald-500/20' : 'border-store-border'} rounded-3xl p-8 hover:-translate-y-2 transition-all flex flex-col`}
                             >
-                                <div className="absolute top-6 left-6 bg-blue-500/10 text-blue-400 text-xs font-bold px-3 py-1 rounded-full border border-blue-500/20">
+                                <div className="absolute top-6 left-6 bg-emerald-500/10 text-emerald-400 text-xs font-bold px-3 py-1 rounded-full border border-emerald-500/20">
                                     {plan.badge}
                                 </div>
                                 <div className="mb-8 flex-grow">
                                     <h3 className="text-xl font-bold text-white mb-2">اشتراک فمیلی {plan.duration}</h3>
-                                    <div className="text-4xl font-black text-blue-400 my-6">
+                                    <div className="text-4xl font-black text-emerald-400 my-6">
                                         {plan.price} <span className="text-sm text-slate-400 font-normal">تومان</span>
                                     </div>
                                     <ul className="space-y-3 mt-6">
                                         <li className="flex items-center gap-2 text-sm text-slate-300">
-                                            <CheckCircle2 className="w-4 h-4 text-blue-400" /> قیمت بسیار مقرون‌به‌صرفه
+                                            <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" /> قیمت بسیار مقرون‌به‌صرفه
                                         </li>
                                         <li className="flex items-center gap-2 text-sm text-slate-300">
-                                            <CheckCircle2 className="w-4 h-4 text-blue-400" /> ضمانت بازگشت زمان باقیمانده (کد تخفیف)
+                                            <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" /> ضمانت بازگشت زمان باقیمانده (کد تخفیف)
                                         </li>
                                     </ul>
                                 </div>
                                 <Link 
                                     href={`/order?product=family&plan=${plan.id}`}
                                     className={`w-full py-4 rounded-xl font-bold flex justify-center items-center gap-2 transition-colors ${
-                                        index === 1 ? 'bg-blue-500 text-white hover:bg-blue-600' : 'bg-slate-800 text-white hover:bg-slate-700'
+                                        index === 1 ? 'bg-emerald-500 text-white hover:bg-emerald-400' : 'bg-store-card text-white hover:bg-store-hover'
                                     }`}
                                 >
                                     انتقال به صفحه سفارش
@@ -144,7 +144,7 @@ export default function SpotifyFamily() {
                 {/* Bottom CTA */}
                 <div className="text-center pb-10">
                     <h3 className="text-2xl font-bold mb-6 text-slate-200">با مطالعه قوانین بالا، آماده ثبت سفارش هستید؟</h3>
-                    <Link href="/order?product=family&plan=6month" className="inline-flex items-center gap-2 bg-blue-500 text-white px-8 py-4 rounded-full font-bold hover:bg-blue-600 transition-colors shadow-lg shadow-blue-500/20">
+                    <Link href="/order?product=family&plan=6month" className="inline-flex items-center gap-2 bg-emerald-500 text-white px-8 py-4 rounded-full font-bold hover:bg-emerald-400 transition-colors shadow-lg shadow-emerald-500/20">
                         انتقال به مرحله نهایی سفارش
                         <ChevronLeft className="w-5 h-5" />
                     </Link>

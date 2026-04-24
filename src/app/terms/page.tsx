@@ -9,7 +9,7 @@ export default function TermsPage() {
             id: 1,
             icon: <MapPin className="w-6 h-6 text-rose-400" />,
             title: "محدودیت‌های آدرس اینترنتی (IP Address)",
-            desc: "طبق قوانین و شرایط استفاده (Terms of Use) اسپاتیفای، موقعیت مکانی ثبت‌شده در حساب کاربری باید با موقعیت مکانی اتصال اینترنتی (IP Address) دستگاه کاربر یکسان باشد. بنابراین، استفاده از سرویس VPN متناسب با کشور ثبت‌شده در حساب کاربری هنگام استفاده از اسپاتیفای الزامی است.",
+            desc: "طبق قوانین و شرایط استفاده (Terms of Use) اسپاتیفای، موقعیت مکانی ثبت‌شده در حساب کاربری باید با موقعیت مکانی اتصال اینترنتی (IP Address) دستگاه کاربر یکسان باشد. بنابراین، استفاده از سرویس تغییر IP متناسب با کشور ثبت‌شده در حساب کاربری هنگام استفاده از اسپاتیفای الزامی است.",
             warning:
                 "⚠️ در صورت عدم رعایت این قانون، اسپاتیفای می‌تواند بدون اطلاع قبلی اشتراک را لغو کند و امکان جبران خسارت یا بازگشت وجه وجود ندارد. مسئولیت رعایت این شرط بر عهده کاربر است.",
         },
@@ -21,38 +21,38 @@ export default function TermsPage() {
         },
         {
             id: 3,
-            icon: <Shield className="w-6 h-6 text-green-400" />,
+            icon: <Shield className="w-6 h-6 text-spotify-light" />,
             title: "حفظ اطلاعات حساب کاربری",
             desc: "در فعال‌سازی طرح‌های شخصی (Individual Plans)، کلیه اطلاعات حساب کاربری از جمله موزیک‌های ذخیره‌شده، پلی‌لیست‌ها، پادکست‌ها و تنظیمات شخصی بدون هیچ تغییری حفظ می‌گردد. اشتراک مستقیماً روی همان حساب فعلی شما فعال می‌شود و نیازی به ایجاد حساب جدید نیست.",
         },
         {
             id: 4,
-            icon: <Users className="w-6 h-6 text-cyan-400" />,
+            icon: <Users className="w-6 h-6 text-spotify-light" />,
             title: "طرح‌های خانوادگی (Family Plans)",
             desc: "در طرح‌های خانوادگی، تا ۶ نفر می‌توانند از اشتراک پرمیوم استفاده کنند. تمامی اعضا باید در یک آدرس مشترک ساکن باشند و موقعیت مکانی یکسانی داشته باشند. هر عضو حساب کاربری مستقل و پلی‌لیست‌های جداگانه خواهد داشت.",
         },
         {
             id: 5,
-            icon: <PlayCircle className="w-6 h-6 text-purple-400" />,
+            icon: <PlayCircle className="w-6 h-6 text-spotify-light" />,
             title: "قوانین حق پخش و محدودیت‌های محتوا",
             desc: "در دسترس نبودن یا غیرفعال شدن موقت برخی قابلیت‌ها، آهنگ‌ها یا محتواها امری طبیعی بوده و طبق سیاست‌های داخلی اسپاتیفای، قوانین کپی‌رایت و تصمیم ناشران و هنرمندان صورت می‌گیرد. این موارد خارج از کنترل ما بوده و دلیل بازپس‌گیری وجه نمی‌باشد.",
         },
         {
             id: 6,
-            icon: <CreditCard className="w-6 h-6 text-blue-400" />,
+            icon: <CreditCard className="w-6 h-6 text-spotify-light" />,
             title: "پرداخت قانونی و امن",
             desc: "پرداخت‌های مربوط به فعال‌سازی اشتراک، به‌صورت کاملاً قانونی و با استفاده از کارت‌های بانکی ارزی معتبر در کشورهایی نظیر هند، ترکیه، نیجریه، فیلیپین و سایر کشورهای مجاز انجام می‌گردد. تمامی تراکنش‌ها از طریق درگاه‌های پرداخت رسمی اسپاتیفای صورت می‌پذیرد.",
         },
         {
             id: 7,
-            icon: <FileText className="w-6 h-6 text-indigo-400" />,
+            icon: <FileText className="w-6 h-6 text-spotify-light" />,
             title: "عدم امکان استرداد وجه",
             desc: "با توجه به ماهیت دیجیتالی خدمات و فعال‌سازی فوری اشتراک، امکان استرداد وجه پس از فعال‌سازی وجود ندارد. لطفاً پیش از خرید، از صحت اطلاعات حساب کاربری و انتخاب طرح مناسب اطمینان حاصل فرمایید.",
         },
     ];
 
     return (
-        <main className="min-h-screen pt-32 pb-20 px-4 sm:px-6 lg:px-8">
+        <main className="min-h-screen pt-32 pb-20 px-4 sm:px-6 lg:px-8 bg-store-base text-white" dir="rtl">
             <div className="max-w-5xl mx-auto">
                 {/* هدر صفحه */}
                 <motion.div
@@ -69,7 +69,7 @@ export default function TermsPage() {
                     </h1>
                     <p className="text-slate-400 text-lg leading-relaxed max-w-2xl mx-auto">
                         لطفاً پیش از خرید یا فعال‌سازی اشتراک، قوانین زیر را با دقت مطالعه نمایید. استفاده از خدمات
-                        GetSpotify به منزله پذیرش کامل این شرایط و مقررات می‌باشد.
+                        اسپاتیفای ما به منزله پذیرش کامل این شرایط و مقررات می‌باشد.
                     </p>
                 </motion.div>
 
@@ -81,15 +81,15 @@ export default function TermsPage() {
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: index * 0.1 }}
-                            className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6 md:p-8 hover:bg-slate-800/50 transition-colors group"
+                            className="bg-store-panel border border-store-border rounded-2xl p-6 md:p-8 hover:bg-store-hover transition-colors group"
                         >
                             <div className="flex flex-col md:flex-row gap-6 items-start">
-                                <div className="bg-slate-800 p-4 rounded-2xl shrink-0 group-hover:scale-110 transition-transform">
+                                <div className="bg-store-card p-4 rounded-2xl shrink-0 group-hover:scale-110 transition-transform border border-store-border/50">
                                     {term.icon}
                                 </div>
 
                                 <div className="flex-1">
-                                    <h3 className="text-xl font-bold text-slate-100 mb-3">
+                                    <h3 className="text-xl font-bold text-white mb-3">
                                         {term.title}
                                     </h3>
 
@@ -116,7 +116,7 @@ export default function TermsPage() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.6 }}
-                    className="mt-16 text-center border-t border-slate-800 pt-10"
+                    className="mt-16 text-center border-t border-store-border pt-10"
                 >
                     <p className="text-slate-500 text-sm leading-relaxed max-w-2xl mx-auto">
                         در صورت وجود هرگونه سوال درباره قوانین، فعال‌سازی اشتراک یا مشکلات حساب کاربری،
@@ -126,7 +126,7 @@ export default function TermsPage() {
                     <a
                         href="https://t.me/getSpotify_Support"
                         target="_blank"
-                        className="inline-block mt-4 text-emerald-400 hover:text-emerald-300 transition"
+                        className="inline-block mt-4 text-spotify hover:text-spotify-light transition font-medium"
                     >
                         ارتباط با پشتیبانی
                     </a>

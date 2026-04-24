@@ -16,34 +16,25 @@ const config: Config = {
         },
         extend: {
             colors: {
-                // پالت رنگی اختصاصی اسپاتیفای
+                // پالت رنگی اصلی اسپاتیفای
                 spotify: {
-                    DEFAULT: "#1DB954", // رنگ اصلی اسپاتیفای
-                    light: "#1ED760",
+                    DEFAULT: "#1DB954", // سبز کلاسیک اسپاتیفای
+                    light: "#1ED760",   // سبز روشن‌تر (استفاده برای هاور دکمه‌ها و برندینگ جدید)
                     dark: "#1AA34A",
+                    press: "#169C46",   // زمان کلیک روی دکمه‌ها
                 },
-                // پالت رنگی اختصاصی VPN (آبی متمایل به بنفش برای حس سرعت و پرمیوم بودن)
-                vpn: {
-                    50: "#eff6ff",
-                    100: "#dbeafe",
-                    200: "#bfdbfe",
-                    300: "#93c5fd",
-                    400: "#60a5fa",
-                    500: "#3b82f6", // رنگ اصلی VPN
-                    600: "#2563eb",
-                    700: "#1d4ed8",
-                    800: "#1e40af",
-                    900: "#1e3a8a",
-                    950: "#172554",
-                },
-                // رنگ‌های پایه فروشگاه (تاریک و مدرن)
+                // رنگ‌های پایه و ساختاری (کاملا منطبق بر UI اسپاتیفای)
                 store: {
-                    dark: "#0f172a", // پس‌زمینه اصلی سایت
-                    panel: "#1e293b", // پس‌زمینه کارت‌های محصول و فرم‌ها
-                    border: "#334155",
-                    success: "#10b981", // برای پیام‌های موفقیت‌آمیز (مثل ثبت سفارش)
-                    warning: "#f59e0b",
-                    danger: "#ef4444",
+                    base: "#000000",    // پس‌زمینه اصلی (مشکی مطلق در اسپاتیفای)
+                    panel: "#121212",   // پس‌زمینه سایدبارها و بخش‌های اصلی
+                    card: "#181818",    // پس‌زمینه کارت‌های محصول/پلی‌لیست
+                    hover: "#282828",   // رنگ کارت‌ها و ردیف‌ها هنگام هاور (Hover)
+                    border: "#2A2A2A",  // خطوط جداکننده ملایم
+                    text: "#FFFFFF",    // رنگ متن اصلی
+                    muted: "#B3B3B3",   // رنگ متن فرعی (توضیحات کارت‌ها)
+                    success: "#1ED760", // پیام‌های موفقیت
+                    warning: "#FFA42B", // اخطارها
+                    danger: "#E22134",  // خطاها
                 },
                 background: "var(--background)",
                 foreground: "var(--foreground)",
@@ -51,7 +42,7 @@ const config: Config = {
             },
             fontFamily: {
                 vazir: ["var(--font-vazirmatn)", "sans-serif"],
-                iransans: ["IRANSans", "sans-serif"], 
+                iransans: ["IRANSans", "sans-serif"],
             },
             keyframes: {
                 "accordion-down": {
@@ -66,7 +57,7 @@ const config: Config = {
                     from: { opacity: "0" },
                     to: { opacity: "1" },
                 },
-                "float": { // انیمیشن شناور برای کارت‌های محصول
+                "float": {
                     "0%, 100%": { transform: "translateY(0)" },
                     "50%": { transform: "translateY(-8px)" },
                 }
@@ -83,19 +74,15 @@ const config: Config = {
         require("tailwindcss-animate"),
         function ({ addUtilities }: any) {
             addUtilities({
-                // مخفی کردن اسکرول‌بار برای لیست‌های فرم و جداول
+                // مخفی کردن اسکرول‌بار
                 ".scrollbar-hide": {
                     "-ms-overflow-style": "none",
                     "scrollbar-width": "none",
                     "&::-webkit-scrollbar": { display: "none" },
                 },
-                // افکت درخشش برای متمایز کردن پکیج‌های اسپاتیفای
+                // افکت درخشش ملایم برای متمایز کردن عناصر (آپدیت شده با رنگ اسپاتیفای)
                 ".box-glow-spotify": {
                     boxShadow: '0 0 20px rgba(29, 185, 84, 0.15), inset 0 0 10px rgba(29, 185, 84, 0.05)',
-                },
-                // افکت درخشش برای متمایز کردن پکیج‌های VPN
-                ".box-glow-vpn": {
-                    boxShadow: '0 0 20px rgba(59, 130, 246, 0.15), inset 0 0 10px rgba(59, 130, 246, 0.05)',
                 }
             });
         },

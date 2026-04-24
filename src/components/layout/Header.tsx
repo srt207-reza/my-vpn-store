@@ -27,7 +27,7 @@ export default function Header() {
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled
-          ? "bg-slate-900/80 backdrop-blur-lg border-b border-slate-800 shadow-2xl"
+          ? "bg-store-panel backdrop-blur-lg border-b border-store-border shadow-2xl"
           : "bg-transparent border-b border-transparent"
       }`}
     >

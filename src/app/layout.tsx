@@ -5,8 +5,8 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 
 export const metadata: Metadata = {
-  title: "فروشگاه محصولات دیجیتال | اسپاتیفای و VPN",
-  description: "خرید اشتراک پریمیوم اسپاتیفای و سرویس‌های پرسرعت VPN با بهترین قیمت، تحویل آنی و پشتیبانی تلگرامی.",
+  title: "فروشگاه محصولات دیجیتال | اسپاتیفای",
+  description: "خرید اشتراک پریمیوم اسپاتیفای با بهترین قیمت، تحویل آنی و پشتیبانی تلگرامی.",
 };
 
 export default function RootLayout({
@@ -16,7 +16,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fa" dir="rtl" className="scroll-smooth">
-      <body cz-shortcut-listen="true" className="flex flex-col min-h-screen bg-store-dark text-slate-100 antialiased selection:bg-store-success/30 selection:text-store-success">
+      <body cz-shortcut-listen="true" className="flex flex-col min-h-screen bg-store-base text-store-text antialiased selection:bg-spotify/30 selection:text-spotify-light">
         {/* هدر سایت */}
         <Header />
         
@@ -33,9 +33,9 @@ export default function RootLayout({
           position="top-center" 
           toastOptions={{
             style: {
-              background: '#1e293b',
-              color: '#fff',
-              border: '1px solid #334155',
+              background: '#181818', // رنگ کارت‌های اسپاتیفای
+              color: '#FFFFFF', // رنگ متن اصلی
+              border: '1px solid #2A2A2A', // رنگ بوردرهای اسپاتیفای
               fontFamily: 'inherit'
             },
           }} 
