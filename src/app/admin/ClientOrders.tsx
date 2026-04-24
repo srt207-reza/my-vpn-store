@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     User,
-    Phone,
+    Mail, // <<-- تغییر: استفاده از آیکون ایمیل به جای تلفن
     Clock,
     CreditCard,
     AlertCircle,
@@ -198,7 +198,7 @@ export default function ClientOrders({ orders }: { orders: VpnOrder[] }) {
                         </div>
                         <input
                             type="text"
-                            placeholder="جستجو نام، شماره یا شناسه..."
+                            placeholder="جستجو نام، ایمیل یا شناسه..." // <<-- تغییر: اصلاح کلمه جستجو
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="w-full bg-store-card border border-store-border text-white text-sm rounded-xl py-3.5 pr-12 pl-4 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all placeholder:text-slate-500 shadow-inner"
@@ -315,10 +315,10 @@ export default function ClientOrders({ orders }: { orders: VpnOrder[] }) {
 
                                                 <div className="flex items-center gap-3 text-sm">
                                                     <div className="w-8 h-8 rounded-full bg-store-card flex items-center justify-center border border-store-border">
-                                                        <Phone className="w-4 h-4 text-slate-400" />
+                                                        <Mail className="w-4 h-4 text-slate-400" /> {/* <<-- تغییر: جایگزینی Phone با Mail */}
                                                     </div>
                                                     <span
-                                                        className="text-slate-300 tracking-widest text-xs md:text-sm"
+                                                        className="text-slate-300 tracking-widest text-xs md:text-sm truncate w-full"
                                                         dir="ltr"
                                                     >
                                                         {order.contactInfo || "ثبت نشده"}

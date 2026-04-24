@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, ShieldCheck, Zap, FileText } from "lucide-react";
+import { Menu, X, Zap, FileText } from "lucide-react";
 import LOGO from "@/../public/assets/images/Logo.png"
 import Image from "next/image";
 

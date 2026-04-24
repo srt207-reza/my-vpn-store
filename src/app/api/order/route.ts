@@ -1,3 +1,5 @@
+// src/app/api/order/route.ts (یا مسیر مشابه)
+
 import { NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
@@ -5,14 +7,14 @@ import path from "path";
 // مسیر فایل دیتابیس محلی (JSON)
 const dataFilePath = path.join(process.cwd(), "orders.json");
 
-// ساختار داده‌ای یک سفارش بر اساس فرم VPN
+// ساختار داده‌ای یک سفارش
 interface VpnOrder {
     id: string;
     type: string;
-    volume: number; // حجم به گیگابایت
-    fullName: string; // نام و نام خانوادگی
-    contactInfo: string; // شماره موبایل یا آیدی تلگرام
-    price: number; // مبلغ نهایی
+    volume: number;
+    fullName: string;
+    contactInfo: string; // <<-- تغییر: کامنت به‌روزرسانی شد (قبلاً: شماره موبایل یا آیدی تلگرام)
+    price: number;
     status: "pending_payment" | "awaiting_receipt" | "processing" | "completed";
     createdAt: string;
 }
@@ -21,7 +23,7 @@ export async function POST(req: Request) {
     try {
         const data = await req.json();
 
-        // اعتبارسنجی اولیه: بررسی وجود فیلدهای ضروری برای VPN
+        // اعتبارسنجی اولیه: بررسی وجود فیلدهای ضروری
         if (!data.volume || !data.fullName || !data.contactInfo || !data.price) {
             return NextResponse.json(
                 { success: false, message: "اطلاعات ضروری (حجم، نام، راه ارتباطی و مبلغ) ناقص است." },
@@ -35,17 +37,16 @@ export async function POST(req: Request) {
             const fileData = await fs.readFile(dataFilePath, "utf-8");
             orders = JSON.parse(fileData);
         } catch (error) {
-            // فایل وجود ندارد، با آرایه خالی شروع می‌کنیم
             orders = [];
         }
 
-        // ساخت آبجکت سفارش جدید (GP مخفف GetPremium)
+        // ساخت آبجکت سفارش جدید
         const newOrder: VpnOrder = {
             id: `GP-${Date.now().toString().slice(-6)}`,
             type: data.type || "vpn",
             volume: data.volume,
             fullName: data.fullName,
-            contactInfo: data.contactInfo,
+            contactInfo: data.contactInfo, // اینجا ایمیل ذخیره می‌شود
             price: data.price,
             status: "pending_payment",
             createdAt: new Date().toISOString(),
@@ -60,7 +61,7 @@ export async function POST(req: Request) {
                 success: true,
                 orderId: newOrder.id,
                 message: "سفارش با موفقیت ثبت شد. لطفاً رسید پرداخت را به پشتیبانی تلگرام ارسال کنید.",
-                supportLink: "https://t.me/support_GetPremium", // هماهنگ شده با فرانت‌اند
+                supportLink: "https://t.me/support_GetPremium",
             },
             { status: 201 },
         );
@@ -70,6 +71,7 @@ export async function POST(req: Request) {
     }
 }
 
+// تابع DELETE بدون تغییر باقی می‌ماند
 export async function DELETE(req: Request) {
     try {
         const { searchParams } = new URL(req.url);
@@ -82,11 +84,9 @@ export async function DELETE(req: Request) {
             );
         }
 
-        // خواندن داده‌های فعلی
         const fileData = await fs.readFile(dataFilePath, "utf-8");
         let orders: VpnOrder[] = JSON.parse(fileData);
 
-        // بررسی وجود سفارش و حذف آن
         const initialLength = orders.length;
         orders = orders.filter((order) => order.id !== id);
 
@@ -94,7 +94,6 @@ export async function DELETE(req: Request) {
             return NextResponse.json({ success: false, message: "سفارشی با این شناسه یافت نشد." }, { status: 404 });
         }
 
-        // ذخیره مجدد لیست به‌روزرسانی شده در فایل
         await fs.writeFile(dataFilePath, JSON.stringify(orders, null, 2), "utf-8");
 
         return NextResponse.json({ success: true, message: "سفارش با موفقیت حذف شد." }, { status: 200 });

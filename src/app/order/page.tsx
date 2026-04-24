@@ -1,3 +1,5 @@
+// src/app/order/page.tsx
+
 "use client";
 
 import { useState, Suspense } from "react";
@@ -11,10 +13,12 @@ import {
     Send,
     Loader2,
     User,
-    Phone,
+    Mail,
     ShieldCheck
 } from "lucide-react";
 import toast from "react-hot-toast";
+import RubberVolumeSlider from "@/components/RubberVolumeSlider";
+
 
 // داده‌های پایه
 const PRICE_PER_GB = 600000;
@@ -24,10 +28,8 @@ const MAX_GB = 15;
 function OrderForm() {
     const searchParams = useSearchParams();
     const productType = searchParams.get("product") || "vpn";
-    console.log(searchParams.get("volume"));
 
-    
-    // استخراج حجم از URL و بررسی صحت آن (محدود کردن بین ۲ تا ۲۰)
+    // استخراج حجم از URL و بررسی صحت آن (محدود کردن بین ۲ تا ۱۵)
     const urlVolumeParam = parseInt(searchParams.get("volume") || "0", 10);
     const initialVolume = (urlVolumeParam >= MIN_GB && urlVolumeParam <= MAX_GB) 
         ? urlVolumeParam 
@@ -54,7 +56,6 @@ function OrderForm() {
     const handleSubmit = async () => {
         setLoading(true);
         try {
-            // آدرس API را در صورت نیاز با آدرس دقیق خود جایگزین کنید (مثلا /api/orders)
             const res = await fetch("/api/order", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -68,7 +69,7 @@ function OrderForm() {
             const data = await res.json();
             
             if (res.ok && data.success) {
-                setOrderId(data.orderId); // دریافت شناسه ثبت شده در سرور
+                setOrderId(data.orderId);
                 setStep(4);
                 toast.success("سفارش شما با موفقیت ثبت شد.");
             } else {
@@ -88,7 +89,6 @@ function OrderForm() {
 
     return (
         <div className="max-w-2xl mx-auto w-full">
-            {/* هدر فرم */}
             <div className="text-center mb-10">
                 {step !== 4 && (
                     <>
@@ -100,8 +100,6 @@ function OrderForm() {
                         </h1>
                     </>
                 )}
-
-                {/* پراگرس بار (مراحل ۱ تا ۳) */}
                 {step < 4 && (
                     <div className="flex items-center justify-center gap-2 mt-6">
                         {[1, 2, 3].map((num) => (
@@ -123,7 +121,7 @@ function OrderForm() {
             </div>
 
             <AnimatePresence mode="wait">
-                {/* مرحله ۱: انتخاب حجم (محاسبه‌گر) */}
+                {/* مرحله ۱: انتخاب حجم (جایگزینی با اسلایدر کشسانی) */}
                 {step === 1 && (
                     <motion.div
                         key="step1"
@@ -135,36 +133,20 @@ function OrderForm() {
                         <h2 className="text-lg font-medium text-slate-200 mb-8 text-center">
                             میزان ترافیک مورد نیاز خود را مشخص کنید:
                         </h2>
-
+                        
                         <div className="flex flex-col items-center justify-center space-y-10">
-                            {/* دکمه‌های کنترل حجم */}
-                            <div className="flex items-center gap-8 justify-center">
-                                <button
-                                    onClick={() => setFormData({ ...formData, volume: Math.max(MIN_GB, formData.volume - 1) })}
-                                    disabled={formData.volume <= MIN_GB}
-                                    className="w-14 h-14 rounded-2xl bg-slate-800 border border-slate-600 flex items-center justify-center text-3xl pt-1.5 text-white hover:bg-slate-700 hover:border-slate-500 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-lg"
-                                >
-                                    -
-                                </button>
-
-                                <div className="relative group">
-                                    <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full transition-all"></div>
-                                    <div className="w-36 h-36 rounded-full bg-slate-900 border-[3px] border-primary flex flex-col items-center justify-center relative z-10 shadow-[0_0_30px_rgba(6,182,212,0.2)]">
-                                        <span className="text-5xl font-black text-white">{formData.volume}</span>
-                                        <span className="text-primary font-bold mt-2 tracking-wider">GB</span>
-                                    </div>
-                                </div>
-
-                                <button
-                                    onClick={() => setFormData({ ...formData, volume: formData.volume >= MAX_GB ? formData.volume : formData.volume + 1 })}
-                                    disabled={formData.volume >= MAX_GB}
-                                    className="w-14 h-14 rounded-2xl bg-slate-800 border border-slate-600 flex items-center justify-center text-3xl pt-1.5 text-white hover:bg-slate-700 hover:border-slate-500 transition-all cursor-pointer shadow-lg"
-                                >
-                                    +
-                                </button>
+                            
+                            {/* =========== کامپوننت اسلایدر جایگزین شد =========== */}
+                            <div className="w-full max-w-sm">
+                                <RubberVolumeSlider 
+                                    min={MIN_GB} 
+                                    max={MAX_GB} 
+                                    value={formData.volume} 
+                                    onChange={(val) => setFormData({ ...formData, volume: val })} 
+                                />
                             </div>
+                            {/* =================================================== */}
 
-                            {/* نمایش مبلغ زنده */}
                             <div className="bg-slate-900/80 px-6 py-5 rounded-2xl border border-primary/30 w-full max-w-sm flex justify-between items-center shadow-inner">
                                 <span className="text-slate-400 font-medium">مبلغ کل:</span>
                                 <div className="flex items-baseline gap-1.5">
@@ -173,7 +155,6 @@ function OrderForm() {
                                 </div>
                             </div>
                         </div>
-
                         <button
                             onClick={() => setStep(2)}
                             className={`w-full cursor-pointer mt-10 py-4 rounded-xl font-bold transition-all flex items-center justify-center gap-2 ${themeBg}`}
@@ -193,7 +174,6 @@ function OrderForm() {
                         className="bg-slate-800/40 p-8 rounded-3xl border border-slate-700 space-y-6"
                     >
                         <h2 className="text-lg font-medium text-slate-200 mb-6">مشخصات خود را جهت پیگیری وارد کنید:</h2>
-
                         <div className="space-y-5">
                             <div>
                                 <label className="flex items-center gap-2 text-sm text-slate-400 mb-2">
@@ -207,25 +187,23 @@ function OrderForm() {
                                     placeholder="مثال: علی حسینی"
                                 />
                             </div>
-
                             <div>
                                 <label className="flex items-center gap-2 text-sm text-slate-400 mb-2">
-                                    <Phone className="w-4 h-4" /> شماره موبایل یا آیدی تلگرام <span className="text-red-500">*</span>
+                                    <Mail className="w-4 h-4" /> آدرس ایمیل <span className="text-red-500">*</span>
                                 </label>
                                 <input
-                                    type="text"
+                                    type="email"
                                     value={formData.contactInfo}
                                     onChange={(e) => setFormData({ ...formData, contactInfo: e.target.value })}
                                     className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors"
-                                    placeholder="0912... یا @username"
+                                    placeholder="example@domain.com"
                                     dir="ltr"
                                 />
                                 <p className="text-xs text-slate-500 mt-2 text-justify">
-                                    ارسال کانفیگ و ارتباطات بعدی پشتیبانی از طریق این راه ارتباطی انجام خواهد شد.
+                                    ارسال کانفیگ و اطلاعات سفارش به این آدرس ایمیل انجام خواهد شد.
                                 </p>
                             </div>
                         </div>
-
                         <div className="flex gap-3 pt-6">
                             <button
                                 onClick={() => setStep(1)}
@@ -246,7 +224,7 @@ function OrderForm() {
 
                 {/* مرحله ۳: پیش‌فاکتور نهایی */}
                 {step === 3 && (
-                    <motion.div
+                     <motion.div
                         key="step3"
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
@@ -269,7 +247,7 @@ function OrderForm() {
                                 <span className="text-white font-medium">{formData.fullName}</span>
                             </div>
                             <div className="flex justify-between items-center text-sm">
-                                <span className="text-slate-400">راه ارتباطی:</span>
+                                <span className="text-slate-400">راه ارتباطی (ایمیل):</span>
                                 <span className="text-white font-medium" dir="ltr">{formData.contactInfo}</span>
                             </div>
                             
@@ -306,9 +284,9 @@ function OrderForm() {
                     </motion.div>
                 )}
 
-                {/* مرحله ۴: پرداخت دستی و پشتیبانی */}
+                {/* مرحله ۴: نمایش رسید */}
                 {step === 4 && (
-                    <motion.div
+                     <motion.div
                         key="step4"
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
