@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Zap, FileText } from "lucide-react";
-import LOGO from "@/../public/assets/images/Logo.png"
+import LOGO from "@/../public/assets/images/logo.png"
 import Image from "next/image";
 
 export default function Header() {
