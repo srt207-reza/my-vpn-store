@@ -5,8 +5,11 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 
 export const metadata: Metadata = {
-    title: "GetPremium | خرید اشتراک VPN ایمن و پرسرعت",
+    title: "Get Premium | خرید اشتراک راهکار اتصال",
     description: "خرید اشتراک VPN و فیلترشکن با بهترین قیمت، امنیت بالا، تحویل آنی و پشتیبانی تلگرامی GetPremium.",
+    icons: {
+        icon: "/assets/images/favicon.png",
+    },
 };
 
 export default function RootLayout({
@@ -16,6 +19,9 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="fa" dir="rtl" className="scroll-smooth">
+            {/* <head>
+                <link rel="icon" href="" />
+            </head> */}
             {/* تغییر سلکشن از spotify به primary */}
             <body
                 cz-shortcut-listen="true"

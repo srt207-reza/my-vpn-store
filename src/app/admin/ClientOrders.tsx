@@ -276,7 +276,7 @@ export default function ClientOrders({ orders }: { orders: VpnOrder[] }) {
                                                         ID: {(order.id || "").toUpperCase()}
                                                     </span>
                                                     <span className="text-sm font-black tracking-wide text-primary">
-                                                        ترافیک ({order.volume} GB)
+                                                        ترافیک <span dir="ltr">({order.volume} GB)</span>
                                                     </span>
                                                 </div>
                                             </div>

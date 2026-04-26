@@ -1,26 +1,31 @@
 import Link from "next/link";
-import { Zap, Send, ShieldCheck } from "lucide-react";
+import { Zap, Send, ShieldCheck, ShieldUser } from "lucide-react";
 
 export default function Footer() {
     return (
         <footer className="border-t border-store-border bg-slate-900/50 mt-auto">
             <div className="container mx-auto px-4 py-8">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-sm">
+                {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm"> */}
+                    <div className="flex flex-col md:flex-row justify-evenly gap-8 text-sm">
+
                     {/* بخش درباره ما */}
                     <div className="space-y-4">
                         <h3 className="text-lg font-bold text-white flex items-center gap-2">
                             <ShieldCheck className="w-5 h-5 text-primary" />
-                            درباره GetPremium
+                            درباره Get Premium
                         </h3>
-                        <p className="text-slate-400 leading-relaxed text-justify">
-                            ما در GetPremium با ارائه راهکارهای اتصال امن، سریع و پایدار، دغدغه‌ی شما را برای دسترسی به
-                            اینترنت جهانی و آزاد برطرف می‌کنیم. با پرداخت بر اساس حجم مصرفی، بدون محدودیت زمانی در دنیای
-                            وب کاوش کنید.
+                        <p className="text-slate-400 leading-relaxed text-justify max-w-xl">
+                            در سال‌های اخیر، محدودیت‌ها، تحریم‌ها و افت کیفیت زیرساخت اینترنت ، دسترسی کاربران ایرانی به
+                            اینترنت بین‌الملل را با چالش های متعددی مواجه کرده است. در چنین شرایطی، دسترسی پایدار، آزاد
+                            و امن به سرویس های جهانی، به یک ضرورت تبدیل شده است. فروشگاه Get Premium با درک این نیاز شکل
+                            گرفته است تا راهکاری قابل اعتماد، جهت اتصال به اینترنت آزاد فراهم کند. ما تلاش کرده‌ایم با
+                            ارائه اتصالی با کیفیت و بهینه، امکان استفاده از اینترنت بین‌الملل را بدون نگرانی از
+                            محدودیت‌ها و اختلالات، برای کاربران فراهم کنیم.
                         </p>
                     </div>
 
                     {/* بخش لینک‌های سریع */}
-                    <div className="space-y-4">
+                    {/* <div className="space-y-4">
                         <h3 className="text-lg font-bold text-white">دسترسی سریع</h3>
                         <ul className="space-y-2">
                             <li>
@@ -40,11 +45,11 @@ export default function Footer() {
                                 </Link>
                             </li>
                         </ul>
-                    </div>
+                    </div> */}
 
                     {/* بخش پشتیبانی */}
                     <div className="space-y-4">
-                        <h3 className="text-lg font-bold text-white">پشتیبانی و شبکه‌های اجتماعی</h3>
+                        <h3 className="text-lg font-bold text-white">ارتباط با ما</h3>
                         <div className="flex flex-col gap-3">
                             <a
                                 href="https://t.me/GetPremium_support"
@@ -52,7 +57,7 @@ export default function Footer() {
                                 rel="noreferrer"
                                 className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
                             >
-                                <Send className="w-4 h-4 text-primary" /> ارتباط با پشتیبانی
+                                <ShieldUser className="w-5 h-5 text-primary" /> ارتباط با پشتیبانی
                             </a>
                             <a
                                 href="https://t.me/GetPremium_ir"
@@ -68,7 +73,7 @@ export default function Footer() {
 
                 {/* کپی رایت */}
                 <div className="mt-8 pt-6 border-t border-store-border text-center text-slate-500 text-xs">
-                    © {new Date().getFullYear()} تمامی حقوق محفوظ است. GetPremium - ارائه دهنده خدمات اتصال امن و
+                    © {new Date().getFullYear()} تمامی حقوق محفوظ است. Get Premium - ارائه دهنده خدمات اتصال امن و
                     پایدار.
                 </div>
             </div>

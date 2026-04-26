@@ -18,8 +18,8 @@ export default function Header() {
     }, []);
 
     const navLinks = [
-        { name: "صفحه اصلی", href: "/", icon: null },
-        { name: "خرید ترافیک", href: "/plans", icon: <Zap className="w-4 h-4" /> },
+        { name: "خرید اشتراک", href: "/", icon: <Zap className="w-4 h-4" /> },
+        // { name: "خرید ترافیک", href: "/plans", icon: <Zap className="w-4 h-4" /> },
         { name: "قوانین و مقررات", href: "/terms", icon: <FileText className="w-4 h-4" /> },
     ];
 
@@ -40,7 +40,7 @@ export default function Header() {
                             <Image src={LOGO} alt="Logo" className="w-14 h-14" />
                         </div>
                         <span className="text-xl font-bold text-white tracking-tight transition-colors">
-                            GetPremium
+                            Get Premium
                         </span>
                     </Link>
 
@@ -62,15 +62,18 @@ export default function Header() {
                         ))}
                     </nav>
 
-                    {/* Desktop Button */}
+                    {/* Desktop Button with Animated Border */}
                     <div className="hidden md:flex items-center">
                         <a
                             href="https://t.me/GetPremium_support"
                             target="_blank"
                             rel="noreferrer"
-                            className="px-6 py-2.5 rounded-full bg-transparent border border-slate-500 text-white text-sm font-bold hover:border-primary hover:text-primary hover:scale-105 transition-all duration-300"
+                            className="relative inline-flex overflow-hidden rounded-full p-[2px] group hover:scale-105 transition-transform duration-300 shadow-lg shadow-[#06b6d4]/20"
                         >
-                            پشتیبانی تلگرام
+                            <span className="absolute inset-[-1000%] animate-[spin_3s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#06b6d4_0%,transparent_50%,#06b6d4_100%)]" />
+                            <span className="inline-flex h-full w-full items-center justify-center rounded-full bg-slate-950 px-6 py-2.5 text-sm font-bold text-white backdrop-blur-3xl z-10 group-hover:bg-slate-900 transition-colors">
+                                ارتباط با پشتیبانی
+                            </span>
                         </a>
                     </div>
 
@@ -116,6 +119,8 @@ export default function Header() {
                                     </Link>
                                 </motion.div>
                             ))}
+                            
+                            {/* Mobile Button with Animated Border */}
                             <motion.a
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
@@ -123,9 +128,12 @@ export default function Header() {
                                 href="https://t.me/GetPremium_support"
                                 target="_blank"
                                 rel="noreferrer"
-                                className="mt-4 text-center px-4 py-3.5 rounded-full bg-primary text-slate-900 hover:bg-cyan-400 hover:scale-105 active:bg-cyan-500 font-bold shadow-lg shadow-primary/20 transition-all duration-300"
+                                className="mt-4 relative flex overflow-hidden rounded-full p-[2px] group hover:scale-105 active:scale-95 transition-transform duration-300 shadow-lg shadow-[#06b6d4]/20"
                             >
-                                ارتباط با پشتیبانی
+                                <span className="absolute inset-[-1000%] animate-[spin_3s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#06b6d4_0%,transparent_50%,#06b6d4_100%)]" />
+                                <span className="inline-flex h-full w-full items-center justify-center rounded-full bg-slate-950 px-4 py-3.5 text-sm font-bold text-white backdrop-blur-3xl z-10 group-hover:bg-slate-900 transition-colors">
+                                    ارتباط با پشتیبانی
+                                </span>
                             </motion.a>
                         </div>
                     </motion.div>
