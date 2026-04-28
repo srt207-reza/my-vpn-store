@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Zap, FileText } from "lucide-react";
+import { Menu, X, FileText, ShieldCheck } from "lucide-react";
 import LOGO from "@/../public/assets/images/logo.png"
 import Image from "next/image";
 
@@ -18,9 +18,9 @@ export default function Header() {
     }, []);
 
     const navLinks = [
-        { name: "خرید اشتراک", href: "/", icon: <Zap className="w-4 h-4" /> },
-        // { name: "خرید ترافیک", href: "/plans", icon: <Zap className="w-4 h-4" /> },
-        { name: "قوانین و مقررات", href: "/terms", icon: <FileText className="w-4 h-4" /> },
+        { name: "خرید اشتراک", href: "/", icon: <ShieldCheck className="w-5 h-5" /> },
+        // { name: "خرید ترافیک", href: "/plans", icon: <Zap className="w-5 h-5" /> },
+        { name: "قوانین و مقررات", href: "/terms", icon: <FileText className="w-5 h-5" /> },
     ];
 
     return (

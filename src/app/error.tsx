@@ -45,7 +45,7 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
                     <div className="flex flex-col gap-3">
                         <button
                             onClick={() => reset()} // تلاش مجدد برای رندر کردن صفحه
-                            className="group flex items-center justify-center gap-2 w-full py-3.5 px-4 bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 hover:text-orange-300 rounded-xl border border-orange-500/20 transition-all duration-300 active:scale-95 font-medium"
+                            className="group cursor-pointer flex items-center justify-center gap-2 w-full py-3.5 px-4 bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 hover:text-orange-300 rounded-xl border border-orange-500/20 transition-all duration-300 active:scale-95 font-medium"
                         >
                             <RotateCcw className="w-5 h-5 group-hover:-rotate-180 transition-transform duration-500" />
                             <span>تلاش مجدد</span>

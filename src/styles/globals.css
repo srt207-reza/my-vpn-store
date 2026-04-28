@@ -29,8 +29,14 @@
         background-color: var(--background);
         color: var(--foreground);
         /* تنظیم فونت ایران‌سنس به عنوان فونت اصلی و سراسری */
-        font-family: "IRANSansX";
+        font-family: "IRANSansXFaNum", "IRANSansX", sans-serif;
         direction: rtl;
+
+        /* فعال‌سازی اعداد فارسی در اکثر نسخه‌های فونت‌های استاندارد ایرانی */
+        font-variant-numeric: lining-nums;
+        -webkit-font-feature-settings: "ss02";
+        -moz-font-feature-settings: "ss02";
+        font-feature-settings: "ss02"; /* در برخی فونت‌ها ممکن است ss03 یا locl باشد */
     }
 
     html {

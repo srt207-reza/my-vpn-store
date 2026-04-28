@@ -2,29 +2,43 @@
 
 "use client";
 
-import { useState, Suspense, useMemo } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState, Suspense } from "react";
+// هوک useRouter برای برگشت به صفحه اصلی اضافه شد
+import { useSearchParams, useRouter } from "next/navigation"; 
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle2, ChevronLeft, CreditCard, Copy, Send, Loader2, User, Mail, ShieldCheck } from "lucide-react";
 import toast from "react-hot-toast";
 import RubberVolumeSlider from "@/components/RubberVolumeSlider";
 
-// لیست حجم‌های مجاز بر اساس درخواست
-export const ALLOWED_VOLUMES = [2, 3, 4, 5, 10, 15, 20];
+// لیست حجم‌های مجاز از ۲ تا ۲۰ گیگابایت به صورت پیوسته
+export const ALLOWED_VOLUMES = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
 
-// مپینگ دقیق قیمت‌ها (قیمت‌ها به تومان و دقیقاً معادل "هزار تومان" درخواستی تنظیم شده‌اند)
+// مپینگ دقیق قیمت‌ها بر اساس تصاویر ارسالی (تمامی اعداد ضرب در ۱۰۰۰ شده‌اند تا به تومان تبدیل شوند)
 const PRICING_DATA: Record<number, { original?: number; price: number }> = {
-    2: { price: 1200000 },
-    3: { price: 1800000 },
-    4: { price: 2400000 },
-    5: { original: 3000000, price: 2900000 },
-    10: { original: 6000000, price: 5500000 },
-    15: { original: 9000000, price: 7500000 },
-    20: { original: 12000000, price: 10000000 },
+    2: { price: 1000000 },
+    3: { price: 1500000 },
+    4: { price: 2000000 },
+    5: { original: 2500000, price: 2400000 },
+    6: { original: 3000000, price: 2880000 },
+    7: { original: 3500000, price: 3360000 },
+    8: { original: 4000000, price: 3840000 },
+    9: { original: 4500000, price: 4320000 },
+    10: { original: 5000000, price: 4500000 },
+    11: { original: 5500000, price: 4950000 },
+    12: { original: 6000000, price: 5400000 },
+    13: { original: 6500000, price: 5850000 },
+    14: { original: 7000000, price: 6300000 },
+    15: { original: 7500000, price: 6000000 },
+    16: { original: 8000000, price: 6400000 },
+    17: { original: 8500000, price: 6800000 },
+    18: { original: 9000000, price: 7200000 },
+    19: { original: 9500000, price: 7600000 },
+    20: { original: 10000000, price: 8000000 },
 };
 
 function OrderForm() {
     const searchParams = useSearchParams();
+    const router = useRouter(); // تعریف روتر برای دکمه بازگشت
     const productType = searchParams.get("product") || "vpn";
 
     // بررسی حجم از URL، در صورتی که در لیست مجاز نبود مقدار پیش‌فرض 2 گیگ قرار گیرد
@@ -136,7 +150,6 @@ function OrderForm() {
                         exit={{ opacity: 0, x: 20 }}
                         className="bg-slate-800/40 p-8 rounded-3xl border border-slate-700"
                     >
-                        {/* متن راهنمای درخواستی اضافه شد */}
                         <div className="mb-8 p-4 bg-slate-900/60 border border-slate-700/50 rounded-xl text-center">
                             <p className="text-slate-300 text-sm leading-relaxed mb-2">
                                 اشتراک راهکار اتصال بدون محدودیت زمانی ارائه می‌شود و میزان استفاده از آن صرفاً بر اساس
@@ -177,12 +190,22 @@ function OrderForm() {
                                 </div>
                             </div>
                         </div>
-                        <button
-                            onClick={() => setStep(2)}
-                            className={`w-full cursor-pointer mt-10 py-4 rounded-xl font-bold transition-all flex items-center justify-center gap-2 ${themeBg}`}
-                        >
-                            ادامه و ثبت مشخصات <ChevronLeft className="w-5 h-5" />
-                        </button>
+
+                        {/* دکمه‌های مرحله ۱: اضافه شدن دکمه بازگشت */}
+                        <div className="flex gap-3 mt-10">
+                            <button
+                                onClick={() => router.push("/")}
+                                className="px-6 cursor-pointer py-4 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 transition-colors"
+                            >
+                                بازگشت به خانه
+                            </button>
+                            <button
+                                onClick={() => setStep(2)}
+                                className={`flex-1 cursor-pointer py-4 rounded-xl font-bold transition-all flex items-center justify-center gap-2 ${themeBg}`}
+                            >
+                                ادامه و ثبت مشخصات <ChevronLeft className="w-5 h-5" />
+                            </button>
+                        </div>
                     </motion.div>
                 )}
 
@@ -196,7 +219,6 @@ function OrderForm() {
                     >
                         <h2 className="text-lg font-medium text-slate-200 mb-6">مشخصات خود را جهت پیگیری وارد کنید:</h2>
                         <div className="space-y-5">
-                            {/* ایمیل به بالای نام منتقل شد */}
                             <div>
                                 <label className="flex items-center gap-2 text-sm text-slate-400 mb-2">
                                     <Mail className="w-4 h-4" /> آدرس ایمیل <span className="text-red-500">*</span>
@@ -214,7 +236,6 @@ function OrderForm() {
                                 </p>
                             </div>
 
-                            {/* نام به پایین ایمیل منتقل شد و فقط حروف انگلیسی می‌گیرد */}
                             <div>
                                 <label className="flex items-center gap-2 text-sm text-slate-400 mb-2">
                                     <User className="w-4 h-4" /> نام و نام خانوادگی{" "}
@@ -271,7 +292,7 @@ function OrderForm() {
                                 <span className={`font-bold text-lg ${themeColor}`}>{formData.volume} گیگابایت</span>
                             </div>
                             <div className="flex justify-between items-center text-sm">
-                                <span className="text-slate-400">راه ارتباطی (ایمیل):</span>
+                                <span className="text-slate-400">آدرس ایمیل:</span>
                                 <span className="text-white font-medium" dir="ltr">
                                     {formData.contactInfo}
                                 </span>
@@ -343,9 +364,7 @@ function OrderForm() {
                                     را به کارت زیر واریز نمایید:
                                 </p>
 
-                                {/* کادر شماره کارت: محتوا وسط‌چین شد */}
                                 <div className="flex items-center bg-black/40 p-4 md:p-5 rounded-2xl backdrop-blur-sm border border-slate-700/50 shadow-inner">
-                                    {/* Wrapper برای وسط‌چین کردن شماره کارت */}
                                     <div className="flex-grow text-center">
                                         <span className="text-xl md:text-2xl font-mono text-white tracking-widest drop-shadow-md">
                                             5022-2915-8438-9710
@@ -360,7 +379,6 @@ function OrderForm() {
                                     </button>
                                 </div>
 
-                                {/* کادر نام صاحب حساب: نام بانک تغییر کرد */}
                                 <div className="flex justify-start gap-2 items-center text-sm">
                                     <span className="text-slate-400">به نام:</span>
                                     <span className="text-white font-medium bg-slate-800 px-3 py-1 rounded-lg">
