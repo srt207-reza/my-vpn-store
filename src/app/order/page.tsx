@@ -203,7 +203,7 @@ function OrderForm() {
                                 onClick={() => setStep(2)}
                                 className={`flex-1 cursor-pointer py-4 rounded-xl font-bold transition-all flex items-center justify-center gap-2 ${themeBg}`}
                             >
-                                ادامه و ثبت مشخصات <ChevronLeft className="w-5 h-5" />
+                                ادامه و ثبت <ChevronLeft className="w-5 h-5" />
                             </button>
                         </div>
                     </motion.div>
@@ -414,7 +414,7 @@ function OrderForm() {
 
 export default function OrderPage() {
     return (
-        <div className="min-h-[70vh] flex items-center justify-center py-10 px-4">
+        <div className="min-h-[70vh] flex items-center justify-center py-10">
             <Suspense
                 fallback={
                     <div className="flex justify-center items-center h-40">
