@@ -166,13 +166,13 @@ function GlobeSection() {
 
     return (
         <section className="relative w-full px-2 sm:px-4">
-            <div className="mx-auto flex w-full max-w-6xl items-center justify-center rounded-[1.5rem] border border-slate-200/10 bg-white/[0.015] p-3 shadow-[0_24px_80px_rgba(15,23,42,0.08)] sm:rounded-[2rem] sm:p-6 lg:p-8">
-                <div className="relative flex h-[300px] w-full items-center justify-center overflow-hidden rounded-[1.25rem] sm:h-[400px] sm:rounded-[1.75rem] lg:h-[520px]">
+            <div className="mx-auto flex w-full max-w-6xl items-center justify-center rounded-[1.5rem] border border-slate-200/10 bg-white/[0.015] p-3 shadow-[0_24px_80px_rgba(15,23,42,0.08)] sm:rounded-[2rem] sm:p-6 pb-6 lg:p-8">
+                <div className="relative flex h-[300px] w-full items-center justify-center rounded-[1.25rem] sm:h-[400px] sm:rounded-[1.75rem] lg:h-[520px]">
                     <div className="absolute inset-0 flex items-center justify-center">
                         <World globeConfig={globeConfig} data={globeData} />
                     </div>
 
-                    <div className="absolute bottom-0! z-10 rounded-full border border-slate-200/10 bg-white/[0.04] px-4 py-1.5 backdrop-blur-md sm:bottom-5 sm:px-5 sm:py-2">
+                    <div className="absolute -bottom-3 z-10 rounded-full border border-slate-200/10 bg-white/[0.04] px-4 py-1.5 backdrop-blur-md sm:bottom-0 sm:px-5 sm:py-2">
                         <span className="text-[10px] font-medium text-slate-300 sm:text-xs md:text-sm">
                             سرور فعال: <strong className="text-cyan-400">{activeServer.name}</strong>
                         </span>
