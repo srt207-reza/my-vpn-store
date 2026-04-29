@@ -6,7 +6,7 @@ import {
     // FaPinterest,
     FaTelegram,
     FaWhatsapp,
-    FaSkype,
+    FaSquareThreads,
     // FaViber,
     FaYoutube,
     FaSpotify,
@@ -24,9 +24,9 @@ import {
     SiX, // Grok
     SiGithubcopilot, // Copilot
     SiBinance,
-    // SiMetatrader,
+    SiBuiltbybit,
     SiCoinbase,
-    // SiEtoro,
+    SiKucoin,
 } from "react-icons/si";
 
 const BrandIcons = {
@@ -40,12 +40,12 @@ const BrandIcons = {
     Telegram: FaTelegram,
     WhatsApp: FaWhatsapp,
     Signal: SiSignal,
-    Skype: FaSkype,
+    Threads: FaSquareThreads,
 
     // === Entertainment ===
+    Spotify: FaSpotify,
     YouTube: FaYoutube,
     Netflix: SiNetflix,
-    Spotify: FaSpotify,
     AppleMusic: SiApplemusic,
 
     // === AI ===
@@ -56,9 +56,9 @@ const BrandIcons = {
 
     // === Crypto ===
     Binance: SiBinance,
-    // MetaTrader: SiMetatrader,
+    Builtbybit: SiBuiltbybit,
     Coinbase: SiCoinbase,
-    // eToro: SiEtoro,
+    Kucoin: SiKucoin,
 };
 
 export default BrandIcons;

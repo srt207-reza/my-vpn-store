@@ -88,7 +88,7 @@ const platformsData = [
             { id: "telegram", icon: <BrandIcons.Telegram className="w-8 h-8" />, color: "text-blue-400" },
             { id: "whatsapp", icon: <BrandIcons.WhatsApp className="w-8 h-8" />, color: "text-green-500" },
             { id: "signal", icon: <BrandIcons.Signal className="w-8 h-8" />, color: "text-blue-500" },
-            { id: "skype", icon: <BrandIcons.Skype className="w-8 h-8" />, color: "text-sky-500" },
+            { id: "Threads", icon: <BrandIcons.Threads className="w-8 h-8" />, color: "" },
         ],
     },
     {
@@ -97,10 +97,10 @@ const platformsData = [
         desc: "دسترسی بدون وقفه به کلیه اشتراک های پرمیوم فیلم و موسیقی",
         color: "from-red-500 via-rose-500 to-orange-500",
         icons: [
-            { id: "youtube", icon: <BrandIcons.YouTube className="w-8 h-8" />, color: "text-red-500" },
-            { id: "netflix", icon: <BrandIcons.Netflix className="w-8 h-8" />, color: "text-red-600" },
             { id: "spotify", icon: <BrandIcons.Spotify className="w-8 h-8" />, color: "text-green-400" },
             { id: "apple", icon: <BrandIcons.AppleMusic className="w-8 h-8" />, color: "text-slate-200" },
+            { id: "youtube", icon: <BrandIcons.YouTube className="w-8 h-8" />, color: "text-red-500" },
+            { id: "netflix", icon: <BrandIcons.Netflix className="w-8 h-8" />, color: "text-red-600" },
         ],
     },
     {
@@ -110,8 +110,8 @@ const platformsData = [
         color: "from-emerald-400 via-green-500 to-teal-500",
         icons: [
             { id: "chatgpt", icon: <BrandIcons.ChatGPT className="w-8 h-8" />, color: "text-emerald-400" },
-            { id: "gemini", icon: <BrandIcons.Gemini className="w-8 h-8" />, color: "text-blue-400" },
             { id: "grok", icon: <BrandIcons.Grok className="w-8 h-8" />, color: "text-slate-200" },
+            { id: "gemini", icon: <BrandIcons.Gemini className="w-8 h-8" />, color: "text-blue-400" },
             { id: "copilot", icon: <BrandIcons.Copilot className="w-8 h-8" />, color: "text-cyan-400" },
         ],
     },
@@ -122,9 +122,9 @@ const platformsData = [
         color: "from-amber-400 via-orange-500 to-red-500",
         icons: [
             { id: "binance", icon: <BrandIcons.Binance className="w-8 h-8" />, color: "text-yellow-400" },
-            // { id: "metatrader", icon: <BrandIcons.MetaTrader className="w-8 h-8" />, color: "text-blue-500" },
+            { id: "builtbybit", icon: <BrandIcons.Builtbybit className="w-8 h-8" />, color: "text-blue-500" },
             { id: "coinbase", icon: <BrandIcons.Coinbase className="w-8 h-8" />, color: "text-sky-500" },
-            // { id: "etoro", icon: <BrandIcons.eToro className="w-8 h-8" />, color: "text-green-500" },
+            { id: "kucoin", icon: <BrandIcons.Kucoin className="w-8 h-8" />, color: "text-green-500" },
         ],
     },
 ];
@@ -172,7 +172,7 @@ function GlobeSection() {
                         <World globeConfig={globeConfig} data={globeData} />
                     </div>
 
-                    <div className="absolute bottom-4 z-10 rounded-full border border-slate-200/10 bg-white/[0.04] px-4 py-1.5 backdrop-blur-md sm:bottom-5 sm:px-5 sm:py-2">
+                    <div className="absolute bottom-0! z-10 rounded-full border border-slate-200/10 bg-white/[0.04] px-4 py-1.5 backdrop-blur-md sm:bottom-5 sm:px-5 sm:py-2">
                         <span className="text-[10px] font-medium text-slate-300 sm:text-xs md:text-sm">
                             سرور فعال: <strong className="text-cyan-400">{activeServer.name}</strong>
                         </span>
@@ -283,7 +283,7 @@ export default function HomePage() {
 
                         <p className="mx-auto mt-6 w-full px-6 text-base leading-relaxed text-slate-300/90 sm:text-lg md:text-xl md:leading-9 lg:mx-0">
                             با استفاده از این راهکار، محدودیت‌های دسترسی به اینترنت بین‌الملل برطرف شده و اتصال پایدار
-                            با سرعت <strong className="text-cyan-400">بالا</strong> در اختیار شما قرار خواهد گرفت.
+                            با سرعت بالا در اختیار شما قرار خواهد گرفت.
                         </p>
 
                         <div className="mt-10 flex justify-center lg:justify-start">

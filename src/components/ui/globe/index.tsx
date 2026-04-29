@@ -117,7 +117,87 @@ export function Globe({ globeConfig, data }: WorldProps) {
     defaultProps.shininess,
   ]);
 
-  useEffect(() => {
+  // useEffect(() => {
+  //   if (!globeRef.current || !isInitialized || !data) return;
+
+  //   const globe = globeRef.current as any;
+
+  //   const points = data.flatMap((arc) => [
+  //     {
+  //       size: defaultProps.pointSize,
+  //       order: arc.order,
+  //       color: arc.color,
+  //       lat: arc.startLat,
+  //       lng: arc.startLng,
+  //     },
+  //     {
+  //       size: defaultProps.pointSize,
+  //       order: arc.order,
+  //       color: arc.color,
+  //       lat: arc.endLat,
+  //       lng: arc.endLng,
+  //     },
+  //   ]);
+
+  //   const filteredPoints = points.filter(
+  //     (v, i, a) =>
+  //       a.findIndex((v2) => v2.lat === v.lat && v2.lng === v.lng) === i,
+  //   );
+
+  //   globe
+  //     .hexPolygonsData(countries.features)
+  //     .hexPolygonResolution(3)
+  //     .hexPolygonMargin(0.7)
+  //     .showAtmosphere(defaultProps.showAtmosphere)
+  //     .atmosphereColor(defaultProps.atmosphereColor)
+  //     .atmosphereAltitude(defaultProps.atmosphereAltitude)
+  //     .hexPolygonColor(() => defaultProps.polygonColor);
+
+  //   globe
+  //     .arcsData(data)
+  //     .arcStartLat((d: any) => d.startLat)
+  //     .arcStartLng((d: any) => d.startLng)
+  //     .arcEndLat((d: any) => d.endLat)
+  //     .arcEndLng((d: any) => d.endLng)
+  //     .arcColor((e: any) => e.color)
+  //     .arcAltitude((e: any) => e.arcAlt)
+  //     .arcStroke(() => [0.32, 0.28, 0.3][Math.round(Math.random() * 2)])
+  //     .arcDashLength(defaultProps.arcLength)
+  //     .arcDashInitialGap((e: any) => e.order)
+  //     .arcDashGap(15)
+  //     .arcDashAnimateTime(() => defaultProps.arcTime);
+
+  //   globe
+  //     .pointsData(filteredPoints)
+  //     .pointColor((e: any) => e.color)
+  //     .pointsMerge(true)
+  //     .pointAltitude(0.0)
+  //     .pointRadius(2);
+
+  //   globe
+  //     .ringsData([])
+  //     .ringColor(() => defaultProps.polygonColor)
+  //     .ringMaxRadius(defaultProps.maxRings)
+  //     .ringPropagationSpeed(RING_PROPAGATION_SPEED)
+  //     .ringRepeatPeriod(
+  //       (defaultProps.arcTime * defaultProps.arcLength) / defaultProps.rings,
+  //     );
+  // }, [
+  //   isInitialized,
+  //   data,
+  //   defaultProps.pointSize,
+  //   defaultProps.showAtmosphere,
+  //   defaultProps.atmosphereColor,
+  //   defaultProps.atmosphereAltitude,
+  //   defaultProps.polygonColor,
+  //   defaultProps.arcLength,
+  //   defaultProps.arcTime,
+  //   defaultProps.rings,
+  //   defaultProps.maxRings,
+  // ]);
+
+
+    useEffect(() => {
     if (!globeRef.current || !isInitialized || !data) return;
 
     const globe = globeRef.current as any;
@@ -174,14 +254,17 @@ export function Globe({ globeConfig, data }: WorldProps) {
       .pointAltitude(0.0)
       .pointRadius(2);
 
+    // تغییرات اصلی در این بخش انجام شده است:
+    // اختصاص مستقیم نقاط فیلتر شده به جای آرایه خالی
     globe
-      .ringsData([])
-      .ringColor(() => defaultProps.polygonColor)
+      .ringsData(filteredPoints)
+      .ringColor((e: any) => e.color)
       .ringMaxRadius(defaultProps.maxRings)
       .ringPropagationSpeed(RING_PROPAGATION_SPEED)
       .ringRepeatPeriod(
         (defaultProps.arcTime * defaultProps.arcLength) / defaultProps.rings,
       );
+
   }, [
     isInitialized,
     data,
