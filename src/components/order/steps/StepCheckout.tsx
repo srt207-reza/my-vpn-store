@@ -12,6 +12,12 @@ export default function StepCheckout({
     themeBg,
     themeColor,
 }: any) {
+    // محاسبه قیمت پایه و مقدار تخفیف (سود کاربر)
+    const BASE_PRICE_PER_GB = 299000;
+    const calculatedBasePrice = formData.volume * BASE_PRICE_PER_GB;
+    const discountAmount = calculatedBasePrice - totalPrice;
+    const hasDiscount = discountAmount > 0;
+
     return (
         <motion.div
             key="step3"
@@ -43,6 +49,24 @@ export default function StepCheckout({
                     <span className="text-slate-400">نام خریدار:</span>
                     <span className="text-white font-medium">{formData.fullName}</span>
                 </div>
+
+                {/* بخش نمایش ارزش واقعی و سود شما (فقط در صورت وجود تخفیف) */}
+                {hasDiscount && (
+                    <>
+                        <div className="flex justify-between items-center text-sm pt-2">
+                            <span className="text-slate-400">ارزش واقعی سرویس:</span>
+                            <span className="text-slate-500 line-through">
+                                {calculatedBasePrice.toLocaleString("fa-IR")} تومان
+                            </span>
+                        </div>
+                        <div className="flex justify-between items-center text-sm bg-emerald-500/10 px-3 py-2.5 rounded-lg border border-emerald-500/20 -mx-1">
+                            <span className="text-emerald-400 font-medium">سود شما از این خرید:</span>
+                            <span className="text-emerald-400 font-bold">
+                                {discountAmount.toLocaleString("fa-IR")} تومان
+                            </span>
+                        </div>
+                    </>
+                )}
 
                 <div className="pt-5 mt-2 border-t border-slate-700 border-dashed flex justify-between items-center">
                     <span className="text-slate-300 font-bold">مبلغ قابل پرداخت:</span>

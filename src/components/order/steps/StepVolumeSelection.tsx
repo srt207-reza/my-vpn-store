@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Tags } from "lucide-react"; // اضافه شدن آیکون Tags
 import RubberVolumeSlider from "@/components/RubberVolumeSlider";
 import { ALLOWED_VOLUMES } from "@/constants/order";
 
@@ -10,11 +10,17 @@ export default function StepVolumeSelection({
     setFormData,
     setStep,
     router,
-    currentPricing,
+    // currentPricing,
     totalPrice,
     themeBg,
     themeColor,
 }: any) {
+    // محاسبه قیمت پایه و تخفیف
+    const BASE_PRICE_PER_GB = 299000;
+    const calculatedBasePrice = formData.volume * BASE_PRICE_PER_GB;
+    const discountAmount = calculatedBasePrice - totalPrice;
+    const hasDiscount = discountAmount > 0;
+
     return (
         <motion.div
             key="step1"
@@ -28,11 +34,19 @@ export default function StepVolumeSelection({
                     اشتراک راهکار اتصال بدون محدودیت زمانی ارائه می‌شود و میزان استفاده از آن صرفاً بر اساس حجم ترافیک
                     مصرفی محاسبه می‌گردد.
                 </p>
-                <p className="text-primary font-medium text-sm">لطفاً مقدار حجم ترافیک مورد نیاز را انتخاب بفرمایید:</p>
+                <div className="flex justify-center mt-3">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-slate-800 text-slate-300 text-xs border border-slate-700/60">
+                        <Tags className="w-3.5 h-3.5 text-primary" />
+                        تعرفه پایه: هر گیگابایت ۲۹۹,۰۰۰ تومان
+                    </span>
+                </div>
             </div>
 
             <div className="flex flex-col items-center justify-center space-y-10">
                 <div className="w-full max-w-sm">
+                    <p className="text-primary font-medium text-sm text-center mb-6">
+                        لطفاً مقدار حجم ترافیک مورد نیاز را انتخاب بفرمایید:
+                    </p>
                     <RubberVolumeSlider
                         allowedValues={ALLOWED_VOLUMES}
                         value={formData.volume}
@@ -40,20 +54,39 @@ export default function StepVolumeSelection({
                     />
                 </div>
 
-                <div className="bg-slate-900/80 px-6 py-5 rounded-2xl border border-primary/30 w-full max-w-sm flex justify-between items-center shadow-inner">
-                    <span className="text-slate-400 font-medium">مبلغ کل:</span>
+                {/* باکس فاکتور محاسبه قیمت */}
+                <div className="bg-slate-900/80 p-5 rounded-2xl border border-primary/30 w-full max-w-sm flex flex-col gap-3 shadow-inner">
+                    
+                    {/* ردیف قیمت پایه */}
+                    <div className="flex justify-between items-center text-sm">
+                        <span className="text-slate-400">مبلغ پایه ({formData.volume} گیگابایت):</span>
+                        <span className={`font-medium ${hasDiscount ? "text-slate-500 line-through" : "text-slate-300"}`}>
+                            {calculatedBasePrice.toLocaleString("fa-IR")} تومان
+                        </span>
+                    </div>
 
-                    <div className="flex flex-col items-end">
-                        {currentPricing.original && (
-                            <div className="flex items-center gap-1.5 text-slate-500 mb-0.5">
-                                <span className="text-sm line-through decoration-red-500/70">
-                                    {currentPricing.original.toLocaleString("fa-IR")}
+                    {/* ردیف تخفیف (فقط در صورت وجود تخفیف نمایش داده می‌شود) */}
+                    {hasDiscount && (
+                        <div className="flex justify-between items-center text-sm bg-emerald-500/10 px-3 py-2 rounded-lg border border-emerald-500/20 -mx-1">
+                            <span className="text-emerald-400 font-medium">سود شما از این خرید:</span>
+                            <span className="text-emerald-400 font-bold">
+                                {discountAmount.toLocaleString("fa-IR")} تومان
+                            </span>
+                        </div>
+                    )}
+
+                    <div className="border-t border-slate-700/50 my-1" />
+
+                    {/* ردیف مبلغ نهایی */}
+                    <div className="flex justify-between items-end mt-1">
+                        <span className="text-slate-300 font-medium mb-1">مبلغ نهایی:</span>
+                        <div className="flex flex-col items-end">
+                            <div className="flex items-baseline gap-1.5">
+                                <span className="text-2xl font-bold text-white">
+                                    {totalPrice.toLocaleString("fa-IR")}
                                 </span>
+                                <span className={`text-sm font-bold ${themeColor}`}>تومان</span>
                             </div>
-                        )}
-                        <div className="flex items-baseline gap-1.5">
-                            <span className="text-2xl font-bold text-white">{totalPrice.toLocaleString("fa-IR")}</span>
-                            <span className={`text-sm font-bold ${themeColor}`}>تومان</span>
                         </div>
                     </div>
                 </div>
