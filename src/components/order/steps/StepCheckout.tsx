@@ -70,7 +70,7 @@ export default function StepCheckout({
                     {loading ? (
                         <Loader2 className="w-5 h-5 animate-spin text-slate-900" />
                     ) : (
-                        "ثبت سفارش و دریافت شماره کارت"
+                        "ثبت سفارش و پرداخت"
                     )}
                 </button>
             </div>

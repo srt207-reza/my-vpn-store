@@ -250,15 +250,15 @@ export default function StepPayment({ orderId, totalPrice, supportLink, themeCol
 
                         {/* نام صاحب کارت */}
                         <div className="w-full mt-auto flex justify-between items-end">
-                            <div className="flex flex-col text-left" dir="ltr">
-                                <span className="text-[9px] text-end sm:text-[10px] text-store-muted uppercase tracking-widest mb-1">
-                                    Cardholder
+                            <div className="flex flex-row items-center gap-3 text-right" dir="rtl">
+                                <span className="text-sm text-start text-store-muted tracking-widest mb-1">
+                                    دارنده کارت :
                                 </span>
                                 <motion.span
                                     initial={{ opacity: 0, y: 6 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: 0.34, duration: 0.45 }}
-                                    className="text-store-text text-sm sm:text-base font-medium tracking-wide whitespace-nowrap"
+                                    className="text-store-text mb-1 text-base sm:text-lg font-semibold tracking-wide whitespace-nowrap"
                                     style={{
                                         transform: "translateZ(0)",
                                         backfaceVisibility: "hidden",
@@ -278,7 +278,6 @@ export default function StepPayment({ orderId, totalPrice, supportLink, themeCol
                     </div>
                 </motion.div>
             </motion.div>
-
 
             {/* بخش راهنمای ارسال رسید */}
             <motion.div
