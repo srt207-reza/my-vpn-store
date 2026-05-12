@@ -6,6 +6,8 @@ import dynamic from "next/dynamic";
 import { AnimatePresence, motion } from "framer-motion";
 import { ShieldCheck, ArrowLeft, Globe2 } from "lucide-react";
 import BrandIcons from "@/data/brand-icons";
+import { ShootingStars } from "@/components/ui/shooting-stars";
+import { StarsBackground } from "@/components/ui/stars-background";
 
 const World = dynamic(() => import("@/components/ui/globe").then((mod) => mod.World), {
     ssr: false,
@@ -260,97 +262,101 @@ export default function HomePage() {
     };
 
     return (
-        <div className="flex min-h-[calc(100vh-160px)] flex-col items-center pb-20">
-            <section className="mx-auto mt-16 w-full max-w-7xl px-4 sm:mt-20">
-                <div dir="rtl" className="grid items-center gap-12 lg:grid-cols-2 lg:gap-8">
-                    <motion.header
-                        initial={{ opacity: 0, y: -16 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.45 }}
-                        className="text-center lg:text-right"
-                    >
-                        <div className="inline-flex items-center gap-2 rounded-full border border-slate-200/10 bg-white/[0.03] px-5 py-2 text-xs font-medium text-slate-300 shadow-[0_10px_30px_rgba(15,23,42,0.06)] sm:text-sm">
-                            <ShieldCheck className="h-4 w-4 text-cyan-400" />
-                            <span>دسترسی امن، سریع و پایدار در سراسر کشور</span>
-                        </div>
+        <>
+            <ShootingStars />
+            <StarsBackground />
+            <div className="flex min-h-[calc(100vh-160px)] flex-col items-center pb-20">
+                <section className="mx-auto mt-16 w-full max-w-7xl px-4 sm:mt-20">
+                    <div dir="rtl" className="grid items-center gap-12 lg:grid-cols-2 lg:gap-8">
+                        <motion.header
+                            initial={{ opacity: 0, y: -16 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.45 }}
+                            className="text-center lg:text-right"
+                        >
+                            <div className="inline-flex items-center gap-2 rounded-full border border-slate-200/10 bg-white/[0.03] px-5 py-2 text-xs font-medium text-slate-300 shadow-[0_10px_30px_rgba(15,23,42,0.06)] sm:text-sm">
+                                <ShieldCheck className="h-4 w-4 text-cyan-400" />
+                                <span>دسترسی امن، سریع و پایدار در سراسر کشور</span>
+                            </div>
 
-                        <h1 className="mt-8 text-4xl font-black leading-tight text-white sm:text-5xl md:text-6xl lg:leading-[1.15]">
-                            تنها یک اشتراک برای <br className="hidden lg:block" />
-                            <span className="mt-1 inline-block bg-gradient-to-r from-cyan-400 via-sky-400 to-blue-500 bg-clip-text pb-2 text-transparent">
-                                تمام نیاز های اینترنتی!
-                            </span>
-                        </h1>
+                            <h1 className="mt-8 text-4xl font-black leading-tight text-white sm:text-5xl md:text-6xl lg:leading-[1.15]">
+                                تنها یک اشتراک برای <br className="hidden lg:block" />
+                                <span className="mt-1 inline-block bg-gradient-to-r from-cyan-400 via-sky-400 to-blue-500 bg-clip-text pb-2 text-transparent">
+                                    تمام نیاز های اینترنتی!
+                                </span>
+                            </h1>
 
-                        <p className="mx-auto mt-6 w-full px-6 text-base leading-relaxed text-slate-300/90 sm:text-lg md:text-xl md:leading-9 lg:mx-0">
-                            با استفاده از این راهکار، محدودیت‌های دسترسی به اینترنت بین‌الملل برطرف شده و اتصال پایدار
-                            با سرعت بالا در اختیار شما قرار خواهد گرفت.
+                            <p className="mx-auto mt-6 w-full px-6 text-base leading-relaxed text-slate-300/90 sm:text-lg md:text-xl md:leading-9 lg:mx-0">
+                                با استفاده از این راهکار، محدودیت‌های دسترسی به اینترنت بین‌الملل برطرف شده و اتصال
+                                پایدار با سرعت بالا در اختیار شما قرار خواهد گرفت.
+                            </p>
+
+                            <div className="mt-10 flex justify-center lg:justify-start">
+                                <Link
+                                    href="/order?product=vpn"
+                                    className="group inline-flex items-center justify-center gap-3 rounded-[1.5rem] border border-cyan-300/20 bg-gradient-to-r from-cyan-400 to-sky-300 px-6 py-3.5 text-base font-black text-slate-950 shadow-[0_16px_50px_rgba(6,182,212,0.18)] transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_20px_60px_rgba(6,182,212,0.25)] sm:px-8 sm:py-4 sm:text-lg"
+                                >
+                                    <span>خرید اشتراک</span>
+                                    <ArrowLeft className="h-6 w-6 transition-transform group-hover:-translate-x-1" />
+                                </Link>
+                            </div>
+                        </motion.header>
+
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.98 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ duration: 0.6, delay: 0.05 }}
+                            className="flex justify-center lg:justify-end"
+                        >
+                            <div className="w-full max-w-[620px]">
+                                <GlobeSection />
+                            </div>
+                        </motion.div>
+                    </div>
+                </section>
+
+                <motion.section
+                    variants={containerVariants}
+                    initial="hidden"
+                    whileInView="show"
+                    viewport={{ once: true, margin: "-100px" }}
+                    className="mt-20 w-full px-4 sm:mt-24"
+                >
+                    <div className="mx-auto flex w-full max-w-6xl flex-col items-center text-center">
+                        <h2 className="text-3xl font-bold text-white md:text-5xl">راهکار اتصال پرسرعت</h2>
+                        <p className="mx-auto mb-16 mt-5 max-w-2xl text-lg text-slate-400 md:text-xl">
+                            اینترنت پایدار، بدون مرز و بدون محدودیت زمانی. تجربه‌ای متفاوت از وب‌گردی.
                         </p>
 
-                        <div className="mt-10 flex justify-center lg:justify-start">
-                            <Link
-                                href="/order?product=vpn"
-                                className="group inline-flex items-center justify-center gap-3 rounded-[1.5rem] border border-cyan-300/20 bg-gradient-to-r from-cyan-400 to-sky-300 px-6 py-3.5 text-base font-black text-slate-950 shadow-[0_16px_50px_rgba(6,182,212,0.18)] transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_20px_60px_rgba(6,182,212,0.25)] sm:px-8 sm:py-4 sm:text-lg"
-                            >
-                                <span>خرید اشتراک</span>
-                                <ArrowLeft className="h-6 w-6 transition-transform group-hover:-translate-x-1" />
-                            </Link>
+                        <div className="mb-20 flex w-full flex-wrap justify-center gap-5 sm:gap-7 md:gap-9">
+                            {features.map((feature, idx) => (
+                                <motion.div
+                                    key={idx}
+                                    variants={itemVariants}
+                                    className="group flex flex-col items-center gap-4"
+                                >
+                                    <div className="flex h-20 w-20 items-center justify-center rounded-[1.5rem] border border-slate-200/10 bg-white/[0.03] text-white shadow-[0_12px_35px_rgba(15,23,42,0.08)] transition-transform duration-300 group-hover:-translate-y-1 sm:h-24 sm:w-24">
+                                        <span className="text-4xl">{feature.emoji}</span>
+                                    </div>
+                                    <span className="text-center text-sm font-medium text-slate-300 sm:text-base md:text-lg">
+                                        {feature.title}
+                                    </span>
+                                </motion.div>
+                            ))}
                         </div>
-                    </motion.header>
-
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.98 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.6, delay: 0.05 }}
-                        className="flex justify-center lg:justify-end"
-                    >
-                        <div className="w-full max-w-[620px]">
-                            <GlobeSection />
-                        </div>
-                    </motion.div>
-                </div>
-            </section>
-
-            <motion.section
-                variants={containerVariants}
-                initial="hidden"
-                whileInView="show"
-                viewport={{ once: true, margin: "-100px" }}
-                className="mt-20 w-full px-4 sm:mt-24"
-            >
-                <div className="mx-auto flex w-full max-w-6xl flex-col items-center text-center">
-                    <h2 className="text-3xl font-bold text-white md:text-5xl">راهکار اتصال پرسرعت</h2>
-                    <p className="mx-auto mb-16 mt-5 max-w-2xl text-lg text-slate-400 md:text-xl">
-                        اینترنت پایدار، بدون مرز و بدون محدودیت زمانی. تجربه‌ای متفاوت از وب‌گردی.
-                    </p>
-
-                    <div className="mb-20 flex w-full flex-wrap justify-center gap-5 sm:gap-7 md:gap-9">
-                        {features.map((feature, idx) => (
-                            <motion.div
-                                key={idx}
-                                variants={itemVariants}
-                                className="group flex flex-col items-center gap-4"
-                            >
-                                <div className="flex h-20 w-20 items-center justify-center rounded-[1.5rem] border border-slate-200/10 bg-white/[0.03] text-white shadow-[0_12px_35px_rgba(15,23,42,0.08)] transition-transform duration-300 group-hover:-translate-y-1 sm:h-24 sm:w-24">
-                                    <span className="text-4xl">{feature.emoji}</span>
-                                </div>
-                                <span className="text-center text-sm font-medium text-slate-300 sm:text-base md:text-lg">
-                                    {feature.title}
-                                </span>
-                            </motion.div>
-                        ))}
                     </div>
-                </div>
-            </motion.section>
+                </motion.section>
 
-            <motion.section
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                viewport={{ once: true, margin: "-100px" }}
-                transition={{ duration: 0.5 }}
-                className="w-full"
-            >
-                <PlatformCarousel />
-            </motion.section>
-        </div>
+                <motion.section
+                    initial={{ opacity: 0 }}
+                    whileInView={{ opacity: 1 }}
+                    viewport={{ once: true, margin: "-100px" }}
+                    transition={{ duration: 0.5 }}
+                    className="w-full"
+                >
+                    <PlatformCarousel />
+                </motion.section>
+            </div>
+        </>
     );
 }

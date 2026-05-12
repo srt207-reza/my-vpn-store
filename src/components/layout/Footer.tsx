@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { Zap, Send, ShieldCheck, ShieldUser } from "lucide-react";
+import { Send, ShieldCheck, ShieldUser } from "lucide-react";
 
 export default function Footer() {
     return (

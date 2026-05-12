@@ -84,7 +84,7 @@ export default function StepPayment({ orderId, totalPrice, supportLink, themeCol
                     initial={{ scale: 0, rotate: -18 }}
                     animate={{ scale: 1, rotate: 0 }}
                     transition={{ type: "spring", stiffness: 220, damping: 16 }}
-                    className="w-20 h-20 sm:w-24 sm:h-24 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto border-2 border-primary/20 shadow-[0_0_30px_rgba(6,182,212,0.2)] relative overflow-hidden"
+                    className="w-20 h-20 sm:w-24 sm:h-24 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto border-2 border-primary/20 box-glow-primary relative overflow-hidden"
                 >
                     <motion.div
                         animate={{ scale: [1, 1.12, 1], opacity: [0.35, 0.7, 0.35] }}
@@ -98,7 +98,7 @@ export default function StepPayment({ orderId, totalPrice, supportLink, themeCol
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.12, duration: 0.5 }}
-                    className="text-2xl sm:text-3xl font-bold text-white"
+                    className="text-2xl sm:text-3xl font-bold text-store-text"
                 >
                     درخواست شما ثبت شد!
                 </motion.h2>
@@ -107,7 +107,7 @@ export default function StepPayment({ orderId, totalPrice, supportLink, themeCol
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2, duration: 0.5 }}
-                    className="text-slate-400 text-base sm:text-lg"
+                    className="text-store-muted text-base sm:text-lg"
                 >
                     کد پیگیری:{" "}
                     <span className="font-mono text-primary bg-primary/10 px-3 py-1 sm:px-4 sm:py-1.5 rounded-xl ml-1 border border-primary/20 inline-block shadow-inner">
@@ -125,52 +125,52 @@ export default function StepPayment({ orderId, totalPrice, supportLink, themeCol
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.25, duration: 0.45 }}
-                    className="text-slate-300 text-sm leading-relaxed mb-6 px-2"
+                    className="text-store-muted text-sm leading-relaxed mb-6 px-2"
                 >
                     جهت دریافت ترافیک، لطفاً مبلغ{" "}
-                    <strong className={`text-lg sm:text-xl ${themeColor}`}>
+                    <strong className={`text-lg sm:text-xl text-primary`}>
                         {totalPrice.toLocaleString("fa-IR")} تومان
                     </strong>{" "}
                     را به کارت زیر واریز نمایید:
                 </motion.p>
 
-                {/* کارت بانکی */}
+                {/* کارت بانکی با تم Dark Cyber */}
                 <motion.div
                     //@ts-ignore
                     variants={cardVariants}
                     initial="rest"
                     whileHover="hover"
-                    className="group relative w-full max-w-[450px] mx-auto aspect-[1.586/1] rounded-3xl overflow-hidden border border-yellow-500/20 bg-black/20 text-left transform-gpu [transform-style:preserve-3d]"
+                    className="group relative w-full max-w-[450px] mx-auto aspect-[1.586/1] rounded-3xl overflow-hidden border border-primary/30 bg-store-panel text-left transform-gpu [transform-style:preserve-3d] shadow-[0_0_30px_rgba(6,182,212,0.1)]"
                     style={{
                         perspective: 1200,
                     }}
                 >
-                    {/* پس‌زمینه اصلی */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 via-zinc-900 to-black z-0" />
+                    {/* پس‌زمینه اصلی کارت */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-store-panel via-store-base to-black z-0" />
 
-                    {/* لایه‌های نور */}
+                    {/* لایه‌های نور (فیروزه‌ای و طلایی) */}
                     <motion.div
                         //@ts-ignore
                         variants={glowVariants}
-                        className="absolute top-0 right-0 w-36 h-36 bg-yellow-500/12 rounded-full blur-3xl z-0 pointer-events-none"
+                        className="absolute top-0 right-0 w-36 h-36 bg-primary/15 rounded-full blur-3xl z-0 pointer-events-none"
                     />
                     <motion.div
                         //@ts-ignore
                         variants={glowVariants}
-                        className="absolute bottom-0 left-0 w-44 h-44 bg-zinc-500/10 rounded-full blur-3xl z-0 pointer-events-none"
+                        className="absolute bottom-0 left-0 w-44 h-44 bg-accent/10 rounded-full blur-3xl z-0 pointer-events-none"
                     />
 
                     {/* شاین متحرک */}
                     <motion.div
                         //@ts-ignore
                         variants={shimmerVariants}
-                        className="absolute top-0 left-0 h-full w-1/3 bg-gradient-to-r from-transparent via-white/10 to-transparent blur-xl pointer-events-none"
+                        className="absolute top-0 left-0 h-full w-1/3 bg-gradient-to-r from-transparent via-primary/10 to-transparent blur-xl pointer-events-none"
                     />
 
-                    {/* خطوط ظریف */}
-                    <div className="absolute inset-0 z-0 opacity-30 pointer-events-none bg-[linear-gradient(to_right,rgba(255,255,255,0.045)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[size:22px_22px]" />
+                    {/* خطوط ظریف سایبری */}
+                    <div className="absolute inset-0 z-0 opacity-20 pointer-events-none bg-[linear-gradient(to_right,rgba(6,182,212,0.05)_1px,transparent_1px),linear-gradient(to_bottom,rgba(6,182,212,0.05)_1px,transparent_1px)] bg-[size:22px_22px]" />
 
-                    {/* محتوای کارت: این بخش دیگر rotate نمی‌شود تا متن blur نشود */}
+                    {/* محتوای کارت */}
                     <div
                         className="relative z-10 h-full p-5 sm:p-6 flex flex-col justify-between"
                         style={{
@@ -186,7 +186,7 @@ export default function StepPayment({ orderId, totalPrice, supportLink, themeCol
                                     initial={{ opacity: 0, x: 10 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     transition={{ delay: 0.18, duration: 0.45 }}
-                                    className="text-yellow-500 font-bold text-base sm:text-lg tracking-wider"
+                                    className="text-primary font-bold text-base sm:text-lg tracking-wider drop-shadow-md"
                                 >
                                     بانک پاسارگاد
                                 </motion.span>
@@ -194,22 +194,22 @@ export default function StepPayment({ orderId, totalPrice, supportLink, themeCol
                                     initial={{ opacity: 0, x: 10 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     transition={{ delay: 0.24, duration: 0.45 }}
-                                    className="text-[9px] sm:text-[10px] text-zinc-400 tracking-widest uppercase mt-0.5"
+                                    className="text-[9px] sm:text-[10px] text-store-muted tracking-widest uppercase mt-0.5"
                                 >
                                     Bank Pasargad
                                 </motion.span>
                             </div>
                         </div>
 
-                        {/* چیپ و وای‌فای */}
+                        {/* چیپ و وای‌فای (طلایی - Accent) */}
                         <div className="flex items-center gap-3 sm:gap-4 w-full mt-3 sm:mt-2">
                             <motion.div
                                 animate={{ y: [0, -1.5, 0] }}
                                 transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
-                                className="relative w-10 h-8 sm:w-12 sm:h-9 bg-gradient-to-br from-yellow-200 to-yellow-500 rounded-md flex items-center justify-center border border-yellow-600/50 shadow-inner overflow-hidden shrink-0"
+                                className="relative w-10 h-8 sm:w-12 sm:h-9 bg-gradient-to-br from-yellow-300 to-accent rounded-md flex items-center justify-center border border-accent/50 shadow-inner overflow-hidden shrink-0"
                             >
-                                <div className="w-full h-[1px] bg-yellow-700/30 absolute" />
-                                <div className="w-[1px] h-full bg-yellow-700/30 absolute" />
+                                <div className="w-full h-[1px] bg-yellow-700/40 absolute" />
+                                <div className="w-[1px] h-full bg-yellow-700/40 absolute" />
                             </motion.div>
 
                             <motion.div
@@ -217,7 +217,7 @@ export default function StepPayment({ orderId, totalPrice, supportLink, themeCol
                                 transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
                                 className="shrink-0"
                             >
-                                <Wifi className="w-5 h-5 sm:w-6 sm:h-6 text-zinc-400" />
+                                <Wifi className="w-5 h-5 sm:w-6 sm:h-6 text-store-muted/70" />
                             </motion.div>
                         </div>
 
@@ -228,7 +228,7 @@ export default function StepPayment({ orderId, totalPrice, supportLink, themeCol
                                 initial={{ opacity: 0, y: 8 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.28, duration: 0.45 }}
-                                className="text-[1.12rem] sm:text-2xl font-mono text-zinc-100 tracking-[0.12em] sm:tracking-[0.16em] whitespace-nowrap drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)]"
+                                className="text-[1.12rem] sm:text-2xl font-mono text-store-text tracking-[0.12em] sm:tracking-[0.16em] whitespace-nowrap drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
                                 style={{
                                     transform: "translateZ(0)",
                                     textRendering: "geometricPrecision",
@@ -241,7 +241,7 @@ export default function StepPayment({ orderId, totalPrice, supportLink, themeCol
                                 whileHover={{ scale: 1.08, rotate: -3 }}
                                 whileTap={{ scale: 0.94 }}
                                 onClick={() => copyToClipboard("5022291584389710")}
-                                className="p-2 shrink-0 cursor-pointer text-yellow-500 hover:text-white hover:bg-yellow-500/20 rounded-lg transition-colors bg-zinc-800/50 backdrop-blur-sm border border-yellow-500/30 flex items-center justify-center"
+                                className="p-2 shrink-0 cursor-pointer text-primary hover:text-white hover:bg-primary/20 rounded-lg transition-colors bg-store-base/50 backdrop-blur-sm border border-primary/30 flex items-center justify-center"
                                 title="کپی شماره کارت"
                             >
                                 <Copy className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -251,14 +251,14 @@ export default function StepPayment({ orderId, totalPrice, supportLink, themeCol
                         {/* نام صاحب کارت */}
                         <div className="w-full mt-auto flex justify-between items-end">
                             <div className="flex flex-col text-left" dir="ltr">
-                                <span className="text-[9px] text-end sm:text-[10px] text-zinc-400 uppercase tracking-widest mb-1">
+                                <span className="text-[9px] text-end sm:text-[10px] text-store-muted uppercase tracking-widest mb-1">
                                     Cardholder
                                 </span>
                                 <motion.span
                                     initial={{ opacity: 0, y: 6 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: 0.34, duration: 0.45 }}
-                                    className="text-zinc-200 text-sm sm:text-base font-medium tracking-wide whitespace-nowrap"
+                                    className="text-store-text text-sm sm:text-base font-medium tracking-wide whitespace-nowrap"
                                     style={{
                                         transform: "translateZ(0)",
                                         backfaceVisibility: "hidden",
@@ -272,12 +272,13 @@ export default function StepPayment({ orderId, totalPrice, supportLink, themeCol
                                 animate={{ y: [0, -2, 0], rotate: [0, 1, 0] }}
                                 transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
                             >
-                                <CreditCard className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-500/30 shrink-0" />
+                                <CreditCard className="w-6 h-6 sm:w-8 sm:h-8 text-primary/30 shrink-0" />
                             </motion.div>
                         </div>
                     </div>
                 </motion.div>
             </motion.div>
+
 
             {/* بخش راهنمای ارسال رسید */}
             <motion.div
@@ -303,7 +304,7 @@ export default function StepPayment({ orderId, totalPrice, supportLink, themeCol
                     </strong>{" "}
                     را به همراه{" "}
                     <strong className="text-white bg-slate-700 px-1 rounded whitespace-nowrap">کد پیگیری</strong> در
-                    تلگرام برای ما ارسال کنید تا <strong className="text-red-400 whitespace-nowrap">لینک اتصال</strong>{" "}
+                    تلگرام برای ما ارسال کنید تا <strong className="text-accent whitespace-nowrap">لینک اتصال</strong>{" "}
                     شما در سریع‌ترین زمان ممکن صادر شود.
                 </motion.p>
 
