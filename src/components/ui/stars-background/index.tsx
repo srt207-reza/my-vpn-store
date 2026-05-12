@@ -17,6 +17,7 @@ interface StarBackgroundProps {
     minTwinkleSpeed?: number;
     maxTwinkleSpeed?: number;
     className?: string;
+    onReady?: () => void;
 }
 
 export const StarsBackground: React.FC<StarBackgroundProps> = ({
@@ -26,6 +27,7 @@ export const StarsBackground: React.FC<StarBackgroundProps> = ({
     minTwinkleSpeed = 0.5,
     maxTwinkleSpeed = 1,
     className,
+    onReady,
 }) => {
     const [stars, setStars] = useState<StarProps[]>([]);
     const canvasRef: RefObject<HTMLCanvasElement> = useRef<HTMLCanvasElement>(null);
@@ -49,6 +51,10 @@ export const StarsBackground: React.FC<StarBackgroundProps> = ({
         },
         [starDensity, allStarsTwinkle, twinkleProbability, minTwinkleSpeed, maxTwinkleSpeed],
     );
+
+    useEffect(() => {
+        onReady?.();
+    }, [onReady]);
 
     useEffect(() => {
         const updateStars = () => {
@@ -110,5 +116,7 @@ export const StarsBackground: React.FC<StarBackgroundProps> = ({
         };
     }, [stars]);
 
-    return <canvas ref={canvasRef} className={cn("h-full w-full absolute inset-0 pointer-events-none -z-10", className)} />;
+    return (
+        <canvas ref={canvasRef} className={cn("h-full w-full absolute inset-0 pointer-events-none -z-10", className)} />
+    );
 };

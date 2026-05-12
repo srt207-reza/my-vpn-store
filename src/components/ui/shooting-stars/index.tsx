@@ -22,6 +22,7 @@ interface ShootingStarsProps {
     starWidth?: number;
     starHeight?: number;
     className?: string;
+    onReady?: () => void
 }
 
 const getRandomStartPoint = () => {
@@ -51,9 +52,14 @@ export const ShootingStars: React.FC<ShootingStarsProps> = ({
     starWidth = 10,
     starHeight = 1,
     className,
+    onReady
 }) => {
     const [star, setStar] = useState<ShootingStar | null>(null);
     const svgRef = useRef<SVGSVGElement>(null);
+
+    useEffect(() => {
+        onReady?.();
+    }, [onReady]);
 
     useEffect(() => {
         const createStar = () => {

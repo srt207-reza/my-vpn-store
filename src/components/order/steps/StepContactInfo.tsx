@@ -3,7 +3,23 @@
 import { motion } from "framer-motion";
 import { ChevronLeft, Mail, User } from "lucide-react";
 
-export default function StepContactInfo({ formData, setFormData, handleNameChange, setStep, themeBg }: any) {
+export default function StepContactInfo({
+    formData,
+    setFormData,
+    handleNameChange,
+    onNext,
+    setStep,
+    themeBg,
+    isValidEmail,
+    isValidFullName,
+    canProceedToNextStep,
+}: any) {
+    const email = formData.contactInfo?.trim?.() || "";
+    const fullName = formData.fullName?.trim?.().replace(/\s+/g, " ") || "";
+
+    const emailInvalid = email.length > 0 && !isValidEmail(email);
+    const nameInvalid = fullName.length > 0 && !isValidFullName(fullName);
+
     return (
         <motion.div
             key="step2"
@@ -13,6 +29,7 @@ export default function StepContactInfo({ formData, setFormData, handleNameChang
             className="bg-slate-800/40 p-8 rounded-3xl border border-slate-700 space-y-6"
         >
             <h2 className="text-lg font-medium text-slate-200 mb-6">مشخصات خود را جهت پیگیری وارد کنید:</h2>
+
             <div className="space-y-5">
                 <div>
                     <label className="flex items-center gap-2 text-sm text-slate-400 mb-2">
@@ -21,14 +38,22 @@ export default function StepContactInfo({ formData, setFormData, handleNameChang
                     <input
                         type="email"
                         value={formData.contactInfo}
-                        onChange={(e) => setFormData({ ...formData, contactInfo: e.target.value })}
+                        onChange={(e) =>
+                            setFormData({ ...formData, contactInfo: e.target.value })
+                        }
                         className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors"
                         placeholder="example@domain.com"
                         dir="ltr"
+                        autoComplete="email"
                     />
                     <p className="text-xs text-slate-500 mt-2 text-justify">
                         ارسال کانفیگ و اطلاعات سفارش به این آدرس ایمیل انجام خواهد شد.
                     </p>
+                    {emailInvalid && (
+                        <p className="text-xs text-red-400 mt-2">
+                            ایمیل معتبر وارد کنید. مثال: name@example.com
+                        </p>
+                    )}
                 </div>
 
                 <div>
@@ -43,9 +68,16 @@ export default function StepContactInfo({ formData, setFormData, handleNameChang
                         className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors"
                         placeholder="Only English Letters (e.g. Ali Hosseini)"
                         dir="ltr"
+                        autoComplete="name"
                     />
+                    {nameInvalid && (
+                        <p className="text-xs text-red-400 mt-2">
+                            باید هم نام و هم نام خانوادگی را وارد کنید. مثال: Ali Hosseini
+                        </p>
+                    )}
                 </div>
             </div>
+
             <div className="flex gap-3 pt-6">
                 <button
                     onClick={() => setStep(1)}
@@ -53,9 +85,10 @@ export default function StepContactInfo({ formData, setFormData, handleNameChang
                 >
                     بازگشت
                 </button>
+
                 <button
-                    onClick={() => setStep(3)}
-                    disabled={!formData.fullName.trim() || !formData.contactInfo.trim()}
+                    onClick={onNext}
+                    disabled={!canProceedToNextStep}
                     className={`flex-1 cursor-pointer py-4 rounded-xl font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${themeBg}`}
                 >
                     تایید اطلاعات <ChevronLeft className="w-5 h-5" />

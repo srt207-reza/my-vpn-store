@@ -36,7 +36,14 @@ export default function Header() {
                     <Link href="/" className="flex items-center gap-3 group">
                         <div className="rounded-full transition-all duration-300 shadow-lg shadow-primary/20">
                             {/* <ShieldCheck className="w-5 h-5 text-slate-900" /> */}
-                            <Image src='/assets/images/logo.png' alt="Logo" className="w-14 h-14" />
+                            {/* <Image src='/assets/images/logo.png' alt="Logo" className="w-14 h-14" /> */}
+                            <Image
+                                src="/assets/images/logo.png"
+                                alt="Logo"
+                                width={56}
+                                height={56}
+                                className="rounded-full"
+                            />
                         </div>
                         <span className="text-xl font-bold text-white tracking-tight transition-colors">
                             Get Premium
@@ -118,7 +125,7 @@ export default function Header() {
                                     </Link>
                                 </motion.div>
                             ))}
-                            
+
                             {/* Mobile Button with Animated Border */}
                             <motion.a
                                 initial={{ opacity: 0, y: 10 }}

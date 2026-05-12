@@ -37,6 +37,20 @@ export default function OrderForm() {
     const themeBg = "bg-primary hover:bg-cyan-400 text-slate-900";
     const themeColor = "text-primary";
 
+    const isValidEmail = (email: string) => {
+        const value = email.trim();
+        return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value);
+    };
+
+    const isValidFullName = (name: string) => {
+        const value = name.trim().replace(/\s+/g, " ");
+        // حداقل دو کلمه، فقط حروف انگلیسی، هر کلمه حداقل یک حرف
+        return /^[A-Za-z]+(?:\s+[A-Za-z]+)+$/.test(value);
+    };
+
+    const canProceedToNextStep =
+        isValidEmail(formData.contactInfo) && isValidFullName(formData.fullName);
+
     const handleSubmit = async () => {
         setLoading(true);
         try {
@@ -67,10 +81,38 @@ export default function OrderForm() {
     };
 
     const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const val = e.target.value;
-        if (/^[a-zA-Z\s]*$/.test(val)) {
-            setFormData({ ...formData, fullName: val });
+        const rawValue = e.target.value;
+
+        // فقط حروف انگلیسی و فاصله
+        const cleanedValue = rawValue.replace(/[^a-zA-Z\s]/g, "");
+
+        setFormData((prev) => ({
+            ...prev,
+            fullName: cleanedValue,
+        }));
+    };
+
+    const handleContactInfoNext = () => {
+        const email = formData.contactInfo.trim();
+        const fullName = formData.fullName.trim().replace(/\s+/g, " ");
+
+        if (!isValidEmail(email)) {
+            toast.error("لطفاً یک ایمیل معتبر وارد کنید.");
+            return;
         }
+
+        if (!isValidFullName(fullName)) {
+            toast.error("نام و نام خانوادگی را کامل وارد کنید. مثال: Ali Hosseini");
+            return;
+        }
+
+        setFormData((prev) => ({
+            ...prev,
+            contactInfo: email,
+            fullName,
+        }));
+
+        setStep(3);
     };
 
     return (
@@ -120,15 +162,21 @@ export default function OrderForm() {
                         themeColor={themeColor}
                     />
                 )}
+
                 {step === 2 && (
                     <StepContactInfo
                         formData={formData}
                         setFormData={setFormData}
                         handleNameChange={handleNameChange}
+                        onNext={handleContactInfoNext}
                         setStep={setStep}
                         themeBg={themeBg}
+                        isValidEmail={isValidEmail}
+                        isValidFullName={isValidFullName}
+                        canProceedToNextStep={canProceedToNextStep}
                     />
                 )}
+
                 {step === 3 && (
                     <StepCheckout
                         formData={formData}
@@ -140,6 +188,7 @@ export default function OrderForm() {
                         themeColor={themeColor}
                     />
                 )}
+
                 {step === 4 && (
                     <StepPayment
                         orderId={orderId}

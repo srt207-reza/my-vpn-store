@@ -3,6 +3,9 @@ import { Toaster } from "react-hot-toast";
 import "../styles/globals.css"; // مسیر globals.css خود را در صورت نیاز اصلاح کنید
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import { ShootingStars } from "@/components/ui/shooting-stars";
+import { StarsBackground } from "@/components/ui/stars-background";
+import BackgroundProvider from "@/components/layout/BackgroundProvider";
 
 export const metadata: Metadata = {
     title: "Get Premium | خرید اشتراک راهکار اتصال",
@@ -27,6 +30,8 @@ export default function RootLayout({
                 cz-shortcut-listen="true"
                 className="flex flex-col min-h-screen bg-store-base text-store-text antialiased selection:bg-primary/30 selection:text-primary-light"
             >
+                <BackgroundProvider />
+
                 {/* هدر سایت */}
                 <Header />
 
