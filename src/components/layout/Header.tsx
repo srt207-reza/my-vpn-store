@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, FileText, ShieldCheck } from "lucide-react";
-import LOGO from "@/../public/assets/images/logo.png"
 import Image from "next/image";
 
 export default function Header() {
@@ -37,7 +36,7 @@ export default function Header() {
                     <Link href="/" className="flex items-center gap-3 group">
                         <div className="rounded-full transition-all duration-300 shadow-lg shadow-primary/20">
                             {/* <ShieldCheck className="w-5 h-5 text-slate-900" /> */}
-                            <Image src={LOGO} alt="Logo" className="w-14 h-14" />
+                            <Image src='/assets/images/logo.png' alt="Logo" className="w-14 h-14" />
                         </div>
                         <span className="text-xl font-bold text-white tracking-tight transition-colors">
                             Get Premium
