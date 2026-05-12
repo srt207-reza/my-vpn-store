@@ -156,7 +156,6 @@ export default function OrderForm() {
                         setFormData={setFormData}
                         setStep={setStep}
                         router={router}
-                        // currentPricing={currentPricing}
                         totalPrice={totalPrice}
                         themeBg={themeBg}
                         themeColor={themeColor}
