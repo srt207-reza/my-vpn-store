@@ -28,7 +28,7 @@ export default function StepContactInfo({
             exit={{ opacity: 0, x: 20 }}
             className="bg-slate-800/40 p-8 rounded-3xl border border-slate-700 space-y-6"
         >
-            <h2 className="text-lg font-medium text-slate-200 mb-6">مشخصات خود را جهت پیگیری وارد کنید:</h2>
+            <h2 className="text-lg font-medium text-slate-200 mb-6">مشخصات خود را جهت ثبت در سیستم، در کادر زیر وارد نمایید:</h2>
 
             <div className="space-y-5">
                 <div>
@@ -46,19 +46,16 @@ export default function StepContactInfo({
                         dir="ltr"
                         autoComplete="email"
                     />
-                    <p className="text-xs text-slate-500 mt-2 text-justify">
-                        ارسال کانفیگ و اطلاعات سفارش به این آدرس ایمیل انجام خواهد شد.
-                    </p>
                     {emailInvalid && (
                         <p className="text-xs text-red-400 mt-2">
-                            ایمیل معتبر وارد کنید. مثال: name@example.com
+                            لطفا آدرس ایمیل را در قالب صحیح، مطابق نمونه وارد نمایید: name@example.com
                         </p>
                     )}
                 </div>
 
                 <div>
                     <label className="flex items-center gap-2 text-sm text-slate-400 mb-2">
-                        <User className="w-4 h-4" /> نام و نام خانوادگی <span className="text-red-500">*</span>
+                        <User className="w-4 h-4" /> نام و نام‌خانوادگی <span className="text-red-500">*</span>
                     </label>
                     <input
                         type="text"
@@ -66,13 +63,13 @@ export default function StepContactInfo({
                         onChange={handleNameChange}
                         maxLength={50}
                         className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors"
-                        placeholder="Only English Letters (e.g. Ali Hosseini)"
+                        placeholder="e.g. Ali Hosseini (Only English Letters)"
                         dir="ltr"
                         autoComplete="name"
                     />
                     {nameInvalid && (
                         <p className="text-xs text-red-400 mt-2">
-                            باید هم نام و هم نام خانوادگی را وارد کنید. مثال: Ali Hosseini
+                            لطفا نام و نام‌خانوادگی را در قالب صحیح، مطابق نمونه وارد نمایید: Ali Hosseini
                         </p>
                     )}
                 </div>

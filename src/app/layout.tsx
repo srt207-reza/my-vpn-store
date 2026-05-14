@@ -3,16 +3,11 @@ import { Toaster } from "react-hot-toast";
 import "../styles/globals.css"; // مسیر globals.css خود را در صورت نیاز اصلاح کنید
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
-import { ShootingStars } from "@/components/ui/shooting-stars";
-import { StarsBackground } from "@/components/ui/stars-background";
 import BackgroundProvider from "@/components/layout/BackgroundProvider";
 
 export const metadata: Metadata = {
     title: "Get Premium | خرید اشتراک راهکار اتصال",
     description: "خرید اشتراک VPN و فیلترشکن با بهترین قیمت، امنیت بالا، تحویل آنی و پشتیبانی تلگرامی GetPremium.",
-    icons: {
-        icon: "/assets/images/favicon.png",
-    },
 };
 
 export default function RootLayout({

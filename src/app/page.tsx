@@ -98,7 +98,7 @@ const platformsData = [
         color: "from-red-500 via-rose-500 to-orange-500",
         icons: [
             { id: "spotify", icon: <BrandIcons.Spotify className="w-8 h-8" />, color: "text-green-400" },
-            { id: "apple", icon: <BrandIcons.AppleMusic className="w-8 h-8" />, color: "text-slate-200" },
+            { id: "apple", icon: <BrandIcons.AppleMusic className="w-8 h-8" />, color: "text-red-500" },
             { id: "youtube", icon: <BrandIcons.YouTube className="w-8 h-8" />, color: "text-red-500" },
             { id: "netflix", icon: <BrandIcons.Netflix className="w-8 h-8" />, color: "text-red-600" },
         ],
