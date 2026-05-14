@@ -74,7 +74,7 @@ export default function StepPayment({ orderId, totalPrice, supportLink, themeCol
             animate="visible"
             className="text-center space-y-8"
         >
-            {/* بخش تایید سفارش */}
+            {/* بخش تأیید سفارش */}
             <motion.div
                 //@ts-ignore
                 variants={itemVariants}

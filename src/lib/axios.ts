@@ -51,7 +51,7 @@ axiosInstance.interceptors.response.use(
 
                 Swal.fire({
                     title: "نیاز به ورود",
-                    text: "برای دسترسی به این بخش لطفا وارد حساب کاربری خود شوید.",
+                    text: "برای دسترسی به این بخش لطفاً وارد حساب کاربری خود شوید.",
                     icon: "warning",
                     showCancelButton: true,
                     confirmButtonText: "ورود / ثبت‌نام",

@@ -48,7 +48,7 @@ export default function StepContactInfo({
                     />
                     {emailInvalid && (
                         <p className="text-xs text-red-400 mt-2">
-                            لطفا آدرس ایمیل را در قالب صحیح، مطابق نمونه وارد نمایید: name@example.com
+                            لطفاً آدرس ایمیل را در قالب صحیح، مطابق نمونه وارد نمایید: name@example.com
                         </p>
                     )}
                 </div>
@@ -69,7 +69,7 @@ export default function StepContactInfo({
                     />
                     {nameInvalid && (
                         <p className="text-xs text-red-400 mt-2">
-                            لطفا نام و نام‌خانوادگی را در قالب صحیح، مطابق نمونه وارد نمایید: Ali Hosseini
+                            لطفاً نام و نام‌خانوادگی را در قالب صحیح، مطابق نمونه وارد نمایید: Ali Hosseini
                         </p>
                     )}
                 </div>
@@ -88,7 +88,7 @@ export default function StepContactInfo({
                     disabled={!canProceedToNextStep}
                     className={`flex-1 cursor-pointer py-4 rounded-xl font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${themeBg}`}
                 >
-                    تایید اطلاعات <ChevronLeft className="w-5 h-5" />
+                    تأیید اطلاعات <ChevronLeft className="w-5 h-5" />
                 </button>
             </div>
         </motion.div>
