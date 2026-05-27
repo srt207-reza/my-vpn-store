@@ -6,7 +6,7 @@ import OrderForm from "@/components/order/OrderForm";
 
 export default function OrderPage() {
     return (
-        <div className="min-h-[70vh] flex items-center justify-center py-10">
+        <div className="min-h-[70vh] flex items-center justify-center pb-10">
             <Suspense
                 fallback={
                     <div className="flex justify-center items-center h-40">

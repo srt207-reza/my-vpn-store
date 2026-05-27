@@ -70,7 +70,7 @@ const platformsData = [
     {
         id: "social",
         name: "شبکه‌های اجتماعی",
-        desc: "اتصال سریع و بدون محدودیت به شبکه های اجتماعی",
+        desc: "اتصال سریع و بدون محدودیت به شبکه‌های اجتماعی",
         color: "from-pink-500 via-purple-500 to-indigo-500",
         icons: [
             { id: "insta", icon: <BrandIcons.Instagram className="w-8 h-8" />, color: "text-pink-500" },
@@ -94,7 +94,7 @@ const platformsData = [
     {
         id: "entertainment",
         name: "سرویس های پخش فیلم و موسیقی",
-        desc: "دسترسی بدون وقفه به کلیه اشتراک های پرمیوم فیلم و موسیقی",
+        desc: "دسترسی بدون وقفه به کلیه‌ اشتراک‌های پرمیوم فیلم و موسیقی",
         color: "from-red-500 via-rose-500 to-orange-500",
         icons: [
             { id: "spotify", icon: <BrandIcons.Spotify className="w-8 h-8" />, color: "text-green-400" },
@@ -106,7 +106,7 @@ const platformsData = [
     {
         id: "ai",
         name: "دستیارهای هوش مصنوعی",
-        desc: "دسترسی کامل به تمام امکانات و قابلیت های پیشرفته ابزار های هوش مصنوعی",
+        desc: "دسترسی کامل به تمام امکانات و قابلیت‌های پیشرفته ابزارهای هوش مصنوعی",
         color: "from-emerald-400 via-green-500 to-teal-500",
         icons: [
             { id: "chatgpt", icon: <BrandIcons.ChatGPT className="w-8 h-8" />, color: "text-emerald-400" },
@@ -118,7 +118,7 @@ const platformsData = [
     {
         id: "crypto",
         name: "کیف پول و ارز دیجیتال",
-        desc: "مدیریت امن دارایی های دیجیتال با آیپی ثابت و بدون نگرانی از مسدودیت حساب",
+        desc: "مدیریت امن دارایی‌های دیجیتال با آی‌پی ثابت و بدون نگرانی از مسدودیت حساب",
         color: "from-amber-400 via-orange-500 to-red-500",
         icons: [
             { id: "binance", icon: <BrandIcons.Binance className="w-8 h-8" />, color: "text-yellow-400" },
@@ -239,7 +239,7 @@ export default function HomePage() {
     const features = [
         { title: "سرعت بالا", emoji: "🚀" },
         { title: "پایداری اتصال ٪۹۹", emoji: "⛵️" },
-        { title: "اتصال ماهواره ای", emoji: "🛰️" },
+        { title: "اتصال ماهواره‌ای", emoji: "🛰️" },
         { title: "قیمت رقابتی", emoji: "💵" },
         { title: "پشتیبانی ۲۴ ساعته", emoji: "👨‍💻" },
         { title: "بدون محدودیت کاربر", emoji: "👥" },
@@ -318,9 +318,9 @@ export default function HomePage() {
                 className="mt-20 w-full px-4 sm:mt-24"
             >
                 <div className="mx-auto flex w-full max-w-6xl flex-col items-center text-center">
-                    <h2 className="text-3xl font-bold text-white md:text-5xl">راهکار اتصال پرسرعت</h2>
-                    <p className="mx-auto mb-16 mt-5 max-w-2xl text-lg text-slate-400 md:text-xl">
-                        اینترنت پایدار، بدون مرز و بدون محدودیت زمانی. تجربه‌ای متفاوت از وب‌گردی.
+                    <h2 className="text-3xl font-bold text-white md:text-5xl">راهکاری هوشمند برای اتصال پایدار</h2>
+                    <p className="mx-auto mb-16 mt-6 max-w-2xl text-lg text-slate-400 md:text-xl">
+                       سرعت بالا، اتصال پایدار و دسترسی بدون محدودیت برای هر زمان و هر مکان
                     </p>
 
                     <div className="mb-20 flex w-full flex-wrap justify-center gap-5 sm:gap-7 md:gap-9">

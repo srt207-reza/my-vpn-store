@@ -1,4 +1,5 @@
 import { Send, ShieldCheck, ShieldUser } from "lucide-react";
+import Image from "next/image";
 
 export default function Footer() {
     return (
@@ -14,9 +15,9 @@ export default function Footer() {
                             درباره Get Premium
                         </h3>
                         <p className="text-slate-400 leading-relaxed text-justify max-w-xl">
-                            در سال‌های اخیر، محدودیت‌ها، تحریم‌ها و افت کیفیت زیرساخت اینترنت ، دسترسی کاربران ایرانی به
-                            اینترنت بین‌الملل را با چالش های متعددی مواجه کرده است. در چنین شرایطی، دسترسی پایدار، آزاد
-                            و امن به سرویس های جهانی، به یک ضرورت تبدیل شده است. فروشگاه Get Premium با درک این نیاز شکل
+                            در سال‌های اخیر، محدودیت‌ها، تحریم‌ها و افت کیفیت زیرساخت اینترنت، دسترسی کاربران ایرانی به
+                            اینترنت بین‌الملل را با چالش‌های متعددی مواجه کرده است. در چنین شرایطی، دسترسی پایدار، آزاد
+                            و امن به سرویس‌های جهانی، به یک ضرورت تبدیل شده است. فروشگاه Get Premium با درک این نیاز شکل
                             گرفته است تا راهکاری قابل اعتماد، جهت اتصال به اینترنت آزاد فراهم کند. ما تلاش کرده‌ایم با
                             ارائه اتصالی با کیفیت و بهینه، امکان استفاده از اینترنت بین‌الملل را بدون نگرانی از
                             محدودیت‌ها و اختلالات، برای کاربران فراهم کنیم.
@@ -56,7 +57,7 @@ export default function Footer() {
                                 rel="noreferrer"
                                 className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
                             >
-                                <ShieldUser className="w-5 h-5 text-primary" /> ارتباط با پشتیبانی
+                                <Image src='/assets/images/spotify_style_support_icon2.png' alt="support" width={20} height={20} className="text-primary" /> ارتباط با پشتیبانی
                             </a>
                             <a
                                 href="https://t.me/GetPremium_ir"

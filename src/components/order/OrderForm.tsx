@@ -3,14 +3,14 @@
 import { useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { AnimatePresence } from "framer-motion";
-import { ShieldCheck } from "lucide-react";
 import toast from "react-hot-toast";
+import Image from "next/image";
 
 import StepVolumeSelection from "./steps/StepVolumeSelection";
 import StepContactInfo from "./steps/StepContactInfo";
 import StepCheckout from "./steps/StepCheckout";
 import StepPayment from "./steps/StepPayment";
-import { ALLOWED_VOLUMES, PRICING_DATA } from "@/constants/order";
+import { ALLOWED_VOLUMES, ALLOWED_DURATIONS, PRICING_DATA } from "@/constants/order";
 
 export default function OrderForm() {
     const searchParams = useSearchParams();
@@ -27,12 +27,13 @@ export default function OrderForm() {
 
     const [formData, setFormData] = useState({
         volume: initialVolume,
+        duration: ALLOWED_DURATIONS[0],
         fullName: "",
         contactInfo: "",
     });
 
-    const currentPricing = PRICING_DATA[formData.volume];
-    const totalPrice = currentPricing.price;
+    // قیمت بر اساس هر دو پارامتر حجم و مدت
+    const totalPrice = PRICING_DATA[formData.volume][formData.duration];
 
     const themeBg = "bg-primary hover:bg-cyan-400 text-slate-900";
     const themeColor = "text-primary";
@@ -44,7 +45,6 @@ export default function OrderForm() {
 
     const isValidFullName = (name: string) => {
         const value = name.trim().replace(/\s+/g, " ");
-        // حداقل دو کلمه، فقط حروف انگلیسی، هر کلمه حداقل یک حرف
         return /^[A-Za-z]+(?:\s+[A-Za-z]+)+$/.test(value);
     };
 
@@ -82,14 +82,8 @@ export default function OrderForm() {
 
     const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const rawValue = e.target.value;
-
-        // فقط حروف انگلیسی و فاصله
         const cleanedValue = rawValue.replace(/[^a-zA-Z\s]/g, "");
-
-        setFormData((prev) => ({
-            ...prev,
-            fullName: cleanedValue,
-        }));
+        setFormData((prev) => ({ ...prev, fullName: cleanedValue }));
     };
 
     const handleContactInfoNext = () => {
@@ -100,40 +94,26 @@ export default function OrderForm() {
             toast.error("لطفاً یک ایمیل معتبر وارد کنید.");
             return;
         }
-
         if (!isValidFullName(fullName)) {
             toast.error("نام و نام خانوادگی را کامل وارد کنید. مثال: Ali Hosseini");
             return;
         }
 
-        setFormData((prev) => ({
-            ...prev,
-            contactInfo: email,
-            fullName,
-        }));
-
+        setFormData((prev) => ({ ...prev, contactInfo: email, fullName }));
         setStep(3);
     };
 
     return (
-        <div className="max-w-2xl mx-auto w-full">
+        <div className="max-w-3xl mx-auto w-full">
             <div className="text-center mb-10">
-                {step !== 4 && (
-                    <>
-                        <div className="inline-flex items-center justify-center p-4 rounded-full bg-slate-800/50 border border-slate-700 mb-4 shadow-[0_0_20px_rgba(6,182,212,0.15)]">
-                            <ShieldCheck className={`w-10 h-10 ${themeColor}`} />
-                        </div>
-                        <h1 className="text-2xl font-bold text-white mb-2">خرید ترافیک و اتصال پرسرعت</h1>
-                    </>
-                )}
                 {step < 4 && (
-                    <div className="flex items-center justify-center gap-2 mt-6">
+                    <div className="flex items-center justify-center gap-2 mb-2">
                         {[1, 2, 3].map((num) => (
                             <div key={num} className="flex items-center">
                                 <div
                                     onClick={() => (num === 1 && step > 1 ? setStep(1) : undefined)}
-                                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all 
-                                        ${step >= num ? "bg-primary text-slate-900" : "bg-slate-800 text-slate-400"} 
+                                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all
+                                        ${step >= num ? "bg-primary text-slate-900" : "bg-slate-800 text-slate-400"}
                                         ${num === 1 && step > 1 ? "cursor-pointer hover:ring-2 hover:ring-offset-2 hover:ring-offset-slate-900 hover:ring-primary" : ""}`}
                                 >
                                     {num}
@@ -147,6 +127,20 @@ export default function OrderForm() {
                         ))}
                     </div>
                 )}
+                {step !== 4 && (
+                    <>
+                        <div className="inline-flex my-6 items-center justify-center p-4 rounded-full bg-slate-800/50 border border-slate-700 shadow-[0_0_20px_rgba(6,182,212,0.15)]">
+                            <Image
+                                src="/assets/images/information2.png"
+                                alt="support"
+                                width={50}
+                                height={50}
+                                className={`${themeColor}`}
+                            />
+                        </div>
+                        <h1 className="text-2xl font-bold text-white mb-2">خرید ترافیک و اتصال پرسرعت</h1>
+                    </>
+                )}
             </div>
 
             <AnimatePresence mode="wait">
@@ -156,13 +150,11 @@ export default function OrderForm() {
                         setFormData={setFormData}
                         setStep={setStep}
                         router={router}
-                        // currentPricing={currentPricing}
                         totalPrice={totalPrice}
                         themeBg={themeBg}
                         themeColor={themeColor}
                     />
                 )}
-
                 {step === 2 && (
                     <StepContactInfo
                         formData={formData}
@@ -176,7 +168,6 @@ export default function OrderForm() {
                         canProceedToNextStep={canProceedToNextStep}
                     />
                 )}
-
                 {step === 3 && (
                     <StepCheckout
                         formData={formData}
@@ -188,7 +179,6 @@ export default function OrderForm() {
                         themeColor={themeColor}
                     />
                 )}
-
                 {step === 4 && (
                     <StepPayment
                         orderId={orderId}
