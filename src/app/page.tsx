@@ -93,7 +93,7 @@ const platformsData = [
     },
     {
         id: "entertainment",
-        name: "سرویس های پخش فیلم و موسیقی",
+        name: "سرویس‌های پخش فیلم و موسیقی",
         desc: "دسترسی بدون وقفه به کلیه‌ اشتراک‌های پرمیوم فیلم و موسیقی",
         color: "from-red-500 via-rose-500 to-orange-500",
         icons: [

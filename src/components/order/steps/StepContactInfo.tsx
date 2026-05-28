@@ -28,7 +28,7 @@ export default function StepContactInfo({
             exit={{ opacity: 0, x: 20 }}
             className="bg-slate-800/40 p-8 rounded-3xl border border-slate-700 space-y-6"
         >
-            <h2 className="text-lg font-medium text-slate-200 mb-6">لطفاً اطلاعات حساب کاربری خود را وارد بفرمایید:</h2>
+            <h2 className="text-lg font-medium text-slate-200 mb-6">لطفاً اطلاعات خواسته شده را با دقت وارد بفرمایید:</h2>
 
             <div className="space-y-5">
                 <div>

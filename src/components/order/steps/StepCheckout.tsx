@@ -26,25 +26,25 @@ export default function StepCheckout({
             exit={{ opacity: 0, x: 20 }}
             className="bg-slate-800/40 p-8 rounded-3xl border border-slate-700 space-y-6"
         >
-            <h2 className="text-lg font-medium text-slate-200">پیش‌فاکتور نهایی شما:</h2>
+            {/* <h2 className="text-lg font-medium text-slate-200">پیش‌فاکتور نهایی شما:</h2> */}
 
             <div className="bg-slate-900/60 rounded-2xl p-6 space-y-5 border border-slate-700/50">
                 <div className="flex justify-between items-center text-sm">
                     <span className="text-slate-400">سرویس انتخابی:</span>
                     <span className="text-white font-bold bg-slate-800 px-3 py-1 rounded-lg">
-                        ترافیک اتصال بین‌الملل
+                        طرح راهکار اتصال بین‌الملل
                     </span>
                 </div>
 
                 <div className="flex justify-between items-center text-sm">
-                    <span className="text-slate-400">حجم درخواستی:</span>
+                    <span className="text-slate-400">حجم ترافیک انتخابی:</span>
                     <span className={`font-bold text-lg ${themeColor}`}>
                         {formData.volume} گیگابایت
                     </span>
                 </div>
 
                 <div className="flex justify-between items-center text-sm">
-                    <span className="text-slate-400">مدت اشتراک:</span>
+                    <span className="text-slate-400">مدت زمان انتخابی:</span>
                     <span className={`font-bold text-lg ${themeColor}`}>
                         {durationLabel}
                     </span>
@@ -58,7 +58,7 @@ export default function StepCheckout({
                 </div>
 
                 <div className="flex justify-between items-center text-sm">
-                    <span className="text-slate-400">نام خریدار:</span>
+                    <span className="text-slate-400">نام و نام‌خانوادگی:</span>
                     <span className="text-white font-medium">{formData.fullName}</span>
                 </div>
 
@@ -78,7 +78,7 @@ export default function StepCheckout({
                     onClick={() => setStep(2)}
                     className="px-6 cursor-pointer py-4 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 transition-colors"
                 >
-                    اصلاح
+                    ویرایش اطلاعات
                 </button>
                 <button
                     onClick={handleSubmit}
@@ -88,7 +88,7 @@ export default function StepCheckout({
                     {loading ? (
                         <Loader2 className="w-5 h-5 animate-spin text-slate-900" />
                     ) : (
-                        "ثبت سفارش و پرداخت"
+                        "تأیید اطلاعات و پرداخت"
                     )}
                 </button>
             </div>

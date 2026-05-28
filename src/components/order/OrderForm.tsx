@@ -127,7 +127,20 @@ export default function OrderForm() {
                         ))}
                     </div>
                 )}
-                {step !== 4 && (
+                {step === 1 ? (
+                    <>
+                        <div className="inline-flex my-6 items-center justify-center p-4 rounded-full bg-slate-800/50 border border-slate-700 shadow-[0_0_20px_rgba(6,182,212,0.15)]">
+                            <Image
+                                src="/assets/images/clock.png"
+                                alt="support"
+                                width={50}
+                                height={50}
+                                className={`${themeColor}`}
+                            />
+                        </div>
+                        <h1 className="text-2xl font-bold text-white mb-2">انتخاب طرح راهکار اتصال</h1>
+                    </>
+                ) : step === 2 ? (
                     <>
                         <div className="inline-flex my-6 items-center justify-center p-4 rounded-full bg-slate-800/50 border border-slate-700 shadow-[0_0_20px_rgba(6,182,212,0.15)]">
                             <Image
@@ -138,9 +151,37 @@ export default function OrderForm() {
                                 className={`${themeColor}`}
                             />
                         </div>
-                        <h1 className="text-2xl font-bold text-white mb-2">خرید ترافیک و اتصال پرسرعت</h1>
+                        <h1 className="text-2xl font-bold text-white mb-2">وارد نمودن اطلاعات </h1>
+                    </>
+                ) : step === 2 && (
+                   <>
+                        <div className="inline-flex my-6 items-center justify-center p-4 rounded-full bg-slate-800/50 border border-slate-700 shadow-[0_0_20px_rgba(6,182,212,0.15)]">
+                            <Image
+                                src="/assets/images/approved.png"
+                                alt="support"
+                                width={50}
+                                height={50}
+                                className={`${themeColor}`}
+                            />
+                        </div>
+                        <h1 className="text-2xl font-bold text-white mb-2">تأیید اطلاعات</h1>
                     </>
                 )}
+
+                {/* {step !== 4 && (
+                    <>
+                        <div className="inline-flex my-6 items-center justify-center p-4 rounded-full bg-slate-800/50 border border-slate-700 shadow-[0_0_20px_rgba(6,182,212,0.15)]">
+                            <Image
+                                src="/assets/images/clock.png"
+                                alt="support"
+                                width={50}
+                                height={50}
+                                className={`${themeColor}`}
+                            />
+                        </div>
+                        <h1 className="text-2xl font-bold text-white mb-2">انتخاب طرح راهکار اتصال</h1>
+                    </>
+                )} */}
             </div>
 
             <AnimatePresence mode="wait">

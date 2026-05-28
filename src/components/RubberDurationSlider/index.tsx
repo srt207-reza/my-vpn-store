@@ -116,7 +116,7 @@ export default function RubberDurationSlider({ allowedValues, value, onChange }:
                     <span className="text-sm text-primary font-bold mr-1">ماه</span>
                     {value.toLocaleString("fa-IR")}
                 </div>
-                <h3 className="text-lg font-semibold uppercase tracking-wider mb-1">مدت اشتراک</h3>
+                <h3 className="text-lg font-semibold uppercase tracking-wider mb-1">مدت زمان اشتراک</h3>
             </div>
 
             {/* نشانگرهای مراحل */}

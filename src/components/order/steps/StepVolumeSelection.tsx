@@ -38,16 +38,16 @@ export default function StepVolumeSelection({
         >
             {/* توضیحات بالا */}
             <div className="mb-6 p-4 bg-slate-900/60 border border-slate-700/50 rounded-xl text-center">
-                <p className="text-slate-300 text-sm leading-relaxed mb-2">
-                    اشتراک راهکار اتصال بدون محدودیت زمانی ارائه می‌شود و میزان استفاده از آن صرفاً بر اساس حجم ترافیک
-                    مصرفی محاسبه می‌گردد.
+                <p className="text-slate-300 text-sm leading-relaxed">
+                    لطفاً با توجه به مشخصات طرح‌های موجود، حجم و مدت زمان مورد نظر را انتخاب نمایید و سپس بر روی گزینه
+                    <strong className="text-primary"> تأیید طرح اشتراک</strong>، کلیک بفرمایید.
                 </p>
-                <div className="flex justify-center mt-3">
+                {/* <div className="flex justify-center mt-3">
                     <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-slate-800 text-slate-300 text-xs border border-slate-700/60">
                         <Tags className="w-3.5 h-3.5 text-primary" />
                         قیمت‌ها بر اساس حجم و مدت اشتراک انتخابی محاسبه می‌شوند
                     </span>
-                </div>
+                </div> */}
             </div>
 
             <div className="flex flex-col items-center justify-center space-y-6">
@@ -71,8 +71,13 @@ export default function StepVolumeSelection({
                     </div>
                 </div>
 
+                <p className="text-slate-500 text-xs text-center mt-2">
+                    همچنین می‌توانید با کلیک بر روی هر مبلغ، حجم ترافیک و مدت زمان اشتراک را به صورت خودکار انتخاب
+                    نمایید.
+                </p>
+
                 {/* جدول قیمت‌ها */}
-                <div className="w-full hidden md:block overflow-x-auto rounded-2xl border border-slate-700/60 scrollbar-hide">
+                <div className="w-full overflow-x-auto rounded-2xl border border-slate-700/60 scrollbar-hide">
                     <table className="w-full text-sm border-collapse scrollbar-hide" dir="ltr">
                         <thead>
                             <tr className="bg-slate-900/80">
@@ -229,10 +234,6 @@ export default function StepVolumeSelection({
                     </table>
                 </div>
 
-                <p className="text-slate-500 hidden md:block text-xs text-center -mt-2">
-                    روی هر سلول کلیک کنید تا حجم و مدت همزمان انتخاب شود
-                </p>
-
                 {/* باکس قیمت نهایی */}
                 <motion.div
                     key={`${formData.volume}-${formData.duration}`}
@@ -242,7 +243,7 @@ export default function StepVolumeSelection({
                     className="bg-slate-900/80 p-5 rounded-2xl border border-primary/30 w-full flex flex-col gap-3 shadow-inner"
                 >
                     <div className="flex justify-between items-center text-sm mb-1.5">
-                        <span className="text-slate-400">حجم انتخابی:</span>
+                        <span className="text-slate-400">حجم ترافیک انتخابی:</span>
                         <motion.span
                             key={formData.volume}
                             initial={{ opacity: 0, x: 8 }}
@@ -254,7 +255,7 @@ export default function StepVolumeSelection({
                         </motion.span>
                     </div>
                     <div className="flex justify-between items-center text-sm">
-                        <span className="text-slate-400">مدت اشتراک:</span>
+                        <span className="text-slate-400">مدت زمان انتخابی:</span>
                         <motion.span
                             key={formData.duration}
                             initial={{ opacity: 0, x: 8 }}
@@ -297,7 +298,7 @@ export default function StepVolumeSelection({
                     onClick={() => setStep(2)}
                     className={`flex-1 cursor-pointer py-4 rounded-xl font-bold transition-all flex items-center justify-center gap-2 ${themeBg}`}
                 >
-                    تأیید طرح اشتراک  <ChevronLeft className="w-5 h-5" />
+                    تأیید طرح اشتراک <ChevronLeft className="w-5 h-5" />
                 </button>
             </div>
         </motion.div>

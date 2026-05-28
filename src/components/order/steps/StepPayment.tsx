@@ -100,7 +100,7 @@ export default function StepPayment({ orderId, totalPrice, supportLink, themeCol
                     transition={{ delay: 0.12, duration: 0.5 }}
                     className="text-2xl sm:text-3xl font-bold text-store-text"
                 >
-                    درخواست شما ثبت شد!
+                   ثبت سفارش اشتراک راهکار اتصال انجام شد!
                 </motion.h2>
 
                 <motion.p
@@ -127,11 +127,11 @@ export default function StepPayment({ orderId, totalPrice, supportLink, themeCol
                     transition={{ delay: 0.25, duration: 0.45 }}
                     className="text-store-muted text-sm leading-relaxed mb-6 px-2"
                 >
-                    جهت دریافت ترافیک، لطفاً مبلغ{" "}
+                    جهت پرداخت وجه، لطفاً مبلغ{" "}
                     <strong className={`text-lg sm:text-xl text-primary`}>
                         {totalPrice.toLocaleString("fa-IR")} تومان
                     </strong>{" "}
-                    را به کارت زیر واریز نمایید:
+                    را به شماره کارت زیر واریز بفرمایید.
                 </motion.p>
 
                 {/* کارت بانکی با تم Dark Cyber */}
