@@ -1,12 +1,10 @@
-// src/components/RubberVolumeSlider.tsx
-
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { motion, useSpring, useTransform, useMotionValue } from "framer-motion";
 
 interface RubberVolumeSliderProps {
-    allowedValues: number[]; // جایگزینی min/max با آرایه‌ای از اعداد مجاز
+    allowedValues: number[];
     value: number;
     onChange: (value: number) => void;
 }
@@ -20,8 +18,6 @@ export default function RubberVolumeSlider({ allowedValues, value, onChange }: R
     const dragX = useMotionValue(0);
 
     const maxIndex = allowedValues.length - 1;
-    
-    // محاسبه درصد پیش‌فرض بر اساس ایندکس مقدار انتخابی درون آرایه
     const initialPercentage = Math.max(0, allowedValues.indexOf(value)) / maxIndex;
 
     useEffect(() => {
@@ -35,7 +31,6 @@ export default function RubberVolumeSlider({ allowedValues, value, onChange }: R
         return () => window.removeEventListener("resize", updateWidth);
     }, []);
 
-    // تنظیم موقعیت اولیه X هندل
     useEffect(() => {
         if (width > 0 && !isDragging) {
             dragX.set(initialPercentage * width);
@@ -52,11 +47,10 @@ export default function RubberVolumeSlider({ allowedValues, value, onChange }: R
             newX = Math.max(0, Math.min(newX, rect.width));
             dragX.set(newX);
 
-            // محاسبه ایندکس جدید بر اساس موقعیت ماوس
             const percentage = newX / rect.width;
             const mappedIndex = Math.round(percentage * maxIndex);
             const newValue = allowedValues[mappedIndex];
-            
+
             if (newValue !== value) {
                 onChange(newValue);
             }
@@ -73,9 +67,8 @@ export default function RubberVolumeSlider({ allowedValues, value, onChange }: R
 
     const handlePointerUp = useCallback(() => {
         setIsDragging(false);
-        dragY.set(0); 
+        dragY.set(0);
 
-        // همگام‌سازی موقعیت هندل با مقدار دقیق انتخاب شده (Snapping)
         if (containerRef.current) {
             const rect = containerRef.current.getBoundingClientRect();
             const snapIndex = allowedValues.indexOf(value);
@@ -103,20 +96,18 @@ export default function RubberVolumeSlider({ allowedValues, value, onChange }: R
         const x = dragX.get();
         const y = dragY.get();
         const centerY = 41.5;
-        // میزان پدینگ کارت والد (p-6 معادل 24 پیکسل است) 
-        // این مقدار باعث می‌شود خط از هر دو طرف به لبه‌های کارت بچسبد
-        const pad = 0; 
+        const pad = 0;
 
         return `
-            M ${-pad} ${centerY} 
-            C ${(x - pad) / 2} ${centerY}, ${x - 15} ${centerY + y}, ${x} ${centerY + y} 
+            M ${-pad} ${centerY}
+            C ${(x - pad) / 2} ${centerY}, ${x - 15} ${centerY + y}, ${x} ${centerY + y}
             C ${(x + width + pad) / 2} ${centerY}, ${width + pad} ${centerY}, ${width + pad} ${centerY}
         `;
     });
 
     return (
         <div
-            className="w-full max-w-sm mx-auto bg-store-panel p-6 rounded-2xl border border-store-border shadow-lg select-none"
+            className="w-full px-2 max-w-sm mx-auto bg-transparent p-0 rounded-none border-0 shadow-none select-none md:max-w-sm md:bg-store-panel md:p-6 md:rounded-2xl md:border md:border-store-border md:shadow-lg"
             dir="ltr"
         >
             <div className="flex justify-between items-center mb-6">
@@ -145,7 +136,7 @@ export default function RubberVolumeSlider({ allowedValues, value, onChange }: R
                     <motion.path
                         d={path}
                         fill="none"
-                        stroke="#06b6d4" 
+                        stroke="#06b6d4"
                         strokeWidth="3"
                         strokeLinecap="round"
                         clipPath="url(#active-line-clip)"

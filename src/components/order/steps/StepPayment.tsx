@@ -1,10 +1,18 @@
 "use client";
 
+import ReceiptForm from "@/components/Receiptform";
 import { motion } from "framer-motion";
 import { CheckCircle2, Copy, Send, CreditCard, Wifi } from "lucide-react";
 import toast from "react-hot-toast";
 
-export default function StepPayment({ orderId, totalPrice, supportLink, themeColor }: any) {
+type Props = {
+    orderId: string;
+    totalPrice: number;
+    supportLink: string;
+    themeColor?: string;
+};
+
+export default function StepPayment({ orderId, totalPrice, supportLink, themeColor = "text-primary" }: Props) {
     const copyToClipboard = (text: string) => {
         navigator.clipboard.writeText(text);
         toast.success("شماره کارت کپی شد!");
@@ -74,7 +82,6 @@ export default function StepPayment({ orderId, totalPrice, supportLink, themeCol
             animate="visible"
             className="text-center space-y-8"
         >
-            {/* بخش تأیید سفارش */}
             <motion.div
                 //@ts-ignore
                 variants={itemVariants}
@@ -94,26 +101,39 @@ export default function StepPayment({ orderId, totalPrice, supportLink, themeCol
                     <CheckCircle2 className="w-10 h-10 sm:w-12 sm:h-12 relative z-10" />
                 </motion.div>
 
-                <motion.h2
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.12, duration: 0.5 }}
-                    className="text-2xl sm:text-3xl font-bold text-store-text"
-                >
-                   ثبت سفارش اشتراک راهکار اتصال انجام شد!
-                </motion.h2>
+                {orderId ? (
+                    <>
+                        <motion.h2
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.12, duration: 0.5 }}
+                            className="text-2xl sm:text-3xl font-bold text-store-text"
+                        >
+                            ثبت سفارش اشتراک راهکار اتصال انجام شد!
+                        </motion.h2>
 
-                <motion.p
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2, duration: 0.5 }}
-                    className="text-store-muted text-base sm:text-lg"
-                >
-                    کد پیگیری:{" "}
-                    <span className="font-mono text-primary bg-primary/10 px-3 py-1 sm:px-4 sm:py-1.5 rounded-xl ml-1 border border-primary/20 inline-block shadow-inner">
-                        {orderId}
-                    </span>
-                </motion.p>
+                        <motion.p
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.2, duration: 0.5 }}
+                            className="text-store-muted text-base sm:text-lg"
+                        >
+                            کد پیگیری:{" "}
+                            <span className="font-mono text-primary bg-primary/10 px-3 py-1 sm:px-4 sm:py-1.5 rounded-xl ml-1 border border-primary/20 inline-block shadow-inner">
+                                {orderId}
+                            </span>
+                        </motion.p>
+                    </>
+                ) : (
+                    <motion.h2
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.12, duration: 0.5 }}
+                        className="text-2xl sm:text-3xl font-bold text-store-text"
+                    >
+                        اطلاعات رسید پرداخت و کارت بانکی
+                    </motion.h2>
+                )}
             </motion.div>
 
             <motion.div
@@ -134,21 +154,16 @@ export default function StepPayment({ orderId, totalPrice, supportLink, themeCol
                     را به شماره کارت زیر واریز بفرمایید.
                 </motion.p>
 
-                {/* کارت بانکی با تم Dark Cyber */}
                 <motion.div
                     //@ts-ignore
                     variants={cardVariants}
                     initial="rest"
                     whileHover="hover"
                     className="group relative w-full max-w-[450px] mx-auto aspect-[1.586/1] rounded-3xl overflow-hidden border border-primary/30 bg-store-panel text-left transform-gpu [transform-style:preserve-3d] shadow-[0_0_30px_rgba(6,182,212,0.1)]"
-                    style={{
-                        perspective: 1200,
-                    }}
+                    style={{ perspective: 1200 }}
                 >
-                    {/* پس‌زمینه اصلی کارت */}
                     <div className="absolute inset-0 bg-gradient-to-br from-store-panel via-store-base to-black z-0" />
 
-                    {/* لایه‌های نور (فیروزه‌ای و طلایی) */}
                     <motion.div
                         //@ts-ignore
                         variants={glowVariants}
@@ -160,17 +175,14 @@ export default function StepPayment({ orderId, totalPrice, supportLink, themeCol
                         className="absolute bottom-0 left-0 w-44 h-44 bg-accent/10 rounded-full blur-3xl z-0 pointer-events-none"
                     />
 
-                    {/* شاین متحرک */}
                     <motion.div
                         //@ts-ignore
                         variants={shimmerVariants}
                         className="absolute top-0 left-0 h-full w-1/3 bg-gradient-to-r from-transparent via-primary/10 to-transparent blur-xl pointer-events-none"
                     />
 
-                    {/* خطوط ظریف سایبری */}
                     <div className="absolute inset-0 z-0 opacity-20 pointer-events-none bg-[linear-gradient(to_right,rgba(6,182,212,0.05)_1px,transparent_1px),linear-gradient(to_bottom,rgba(6,182,212,0.05)_1px,transparent_1px)] bg-[size:22px_22px]" />
 
-                    {/* محتوای کارت */}
                     <div
                         className="relative z-10 h-full p-5 sm:p-6 flex flex-col justify-between"
                         style={{
@@ -179,7 +191,6 @@ export default function StepPayment({ orderId, totalPrice, supportLink, themeCol
                             WebkitBackfaceVisibility: "hidden",
                         }}
                     >
-                        {/* هدر */}
                         <div className="flex justify-between items-start w-full" dir="rtl">
                             <div className="flex flex-col items-start w-full">
                                 <motion.span
@@ -201,7 +212,6 @@ export default function StepPayment({ orderId, totalPrice, supportLink, themeCol
                             </div>
                         </div>
 
-                        {/* چیپ و وای‌فای (طلایی - Accent) */}
                         <div className="flex items-center gap-3 sm:gap-4 w-full mt-3 sm:mt-2">
                             <motion.div
                                 animate={{ y: [0, -1.5, 0] }}
@@ -221,7 +231,6 @@ export default function StepPayment({ orderId, totalPrice, supportLink, themeCol
                             </motion.div>
                         </div>
 
-                        {/* شماره کارت و دکمه کپی */}
                         <div className="w-full mt-4 sm:mt-5 flex items-center justify-between gap-2">
                             <motion.span
                                 dir="ltr"
@@ -248,7 +257,6 @@ export default function StepPayment({ orderId, totalPrice, supportLink, themeCol
                             </motion.button>
                         </div>
 
-                        {/* نام صاحب کارت */}
                         <div className="w-full mt-auto flex justify-between items-end">
                             <div className="flex flex-row items-center gap-3 text-right" dir="rtl">
                                 <span className="text-sm text-start text-store-muted tracking-widest mb-1">
@@ -279,51 +287,9 @@ export default function StepPayment({ orderId, totalPrice, supportLink, themeCol
                 </motion.div>
             </motion.div>
 
-            {/* بخش راهنمای ارسال رسید */}
-            <motion.div
-                //@ts-ignore
-                variants={itemVariants}
-                className="bg-slate-800/40 p-5 sm:p-6 rounded-3xl border border-slate-700 space-y-6 mt-8 relative overflow-hidden text-right"
-            >
-                <motion.div
-                    animate={{ scale: [1, 1.08, 1], opacity: [0.25, 0.45, 0.25] }}
-                    transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
-                    className="absolute top-0 right-0 w-20 h-20 bg-blue-500/10 rounded-full blur-2xl pointer-events-none"
-                />
-
-                <motion.p
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2, duration: 0.45 }}
-                    className="text-slate-300 text-sm leading-relaxed text-justify relative z-10"
-                >
-                    پس از واریز وجه، روی دکمه زیر کلیک کنید و{" "}
-                    <strong className="text-primary bg-primary/10 px-1 rounded whitespace-nowrap">
-                        تصویر رسید پرداختی
-                    </strong>{" "}
-                    را به همراه{" "}
-                    <strong className="text-white bg-slate-700 px-1 rounded whitespace-nowrap">کد پیگیری</strong> در
-                    تلگرام برای ما ارسال کنید تا <strong className="text-accent whitespace-nowrap">لینک اتصال</strong>{" "}
-                    شما در سریع‌ترین زمان ممکن صادر شود.
-                </motion.p>
-
-                <motion.a
-                    whileHover={{ scale: 1.02, y: -2 }}
-                    whileTap={{ scale: 0.98 }}
-                    href={supportLink}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="relative z-10 w-full py-3.5 sm:py-4 rounded-xl text-white font-bold transition-all flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(42,171,238,0.3)] bg-gradient-to-r from-[#2AABEE] to-[#2298D6] hover:shadow-[0_0_30px_rgba(42,171,238,0.5)] border border-[#2AABEE]/50 text-sm sm:text-base overflow-hidden"
-                >
-                    <motion.span
-                        animate={{ x: [-12, 12, -12] }}
-                        transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
-                        className="absolute inset-y-0 left-0 w-24 bg-white/10 blur-xl pointer-events-none"
-                    />
-                    <Send className="w-4 h-4 sm:w-5 sm:h-5 relative z-10" />
-                    <span className="relative z-10">ارسال رسید به پشتیبانی تلگرام</span>
-                </motion.a>
-            </motion.div>
+            <div className="mt-8">
+                <ReceiptForm orderId={orderId} />
+            </div>
         </motion.div>
     );
 }

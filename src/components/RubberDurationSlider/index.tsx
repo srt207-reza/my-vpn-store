@@ -61,7 +61,7 @@ export default function RubberDurationSlider({ allowedValues, value, onChange }:
             deltaY = Math.max(-maxStretch, Math.min(deltaY, maxStretch));
             dragY.set(deltaY);
         },
-        [dragX, dragY, allowedValues, maxIndex, onChange, value],
+        [dragX, dragY, allowedValues, maxIndex, onChange, value]
     );
 
     const handlePointerUp = useCallback(() => {
@@ -104,11 +104,9 @@ export default function RubberDurationSlider({ allowedValues, value, onChange }:
         `;
     });
 
-    // const durationLabel = value === 1 ? "۱ ماه" : value === 2 ? "۲ ماه" : value === 3 ? "۳ ماه" : "۶ ماه";
-
     return (
         <div
-            className="w-full max-w-sm mx-auto bg-store-panel p-6 rounded-2xl border border-store-border shadow-lg select-none"
+            className="w-full px-2 max-w-sm mx-auto bg-transparent p-0 rounded-none border-0 shadow-none select-none md:max-w-sm md:bg-store-panel md:p-6 md:rounded-2xl md:border md:border-store-border md:shadow-lg"
             dir="ltr"
         >
             <div className="flex justify-between items-center mb-6">
@@ -118,20 +116,6 @@ export default function RubberDurationSlider({ allowedValues, value, onChange }:
                 </div>
                 <h3 className="text-lg font-semibold uppercase tracking-wider mb-1">مدت زمان اشتراک</h3>
             </div>
-
-            {/* نشانگرهای مراحل */}
-            {/* <div className="flex justify-between px-0 mb-2">
-                {allowedValues.map((v) => (
-                    <span
-                        key={v}
-                        className={`text-xs font-medium transition-colors ${
-                            v === value ? "text-primary" : "text-slate-600"
-                        }`}
-                    >
-                        {v} ماه
-                    </span>
-                ))}
-            </div> */}
 
             <div
                 ref={containerRef}
@@ -162,13 +146,6 @@ export default function RubberDurationSlider({ allowedValues, value, onChange }:
                     }}
                 />
             </div>
-
-            {/* بج مدت انتخاب‌شده */}
-            {/* <div className="flex justify-center mt-2">
-                <span className="text-xs font-bold bg-violet-500/20 text-violet-300 border border-violet-500/30 px-3 py-1 rounded-full">
-                    اشتراک {durationLabel}
-                </span>
-            </div> */}
         </div>
     );
 }

@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     User,
-    Mail, // <<-- تغییر: استفاده از آیکون ایمیل به جای تلفن
+    Mail,
     Clock,
     CreditCard,
     AlertCircle,
@@ -12,12 +12,24 @@ import {
     Search,
     Filter,
     Trash2,
-    ShieldCheck,
     CheckCircle2,
     Activity,
+    Banknote,
+    Hash,
+    Building2,
+    ChevronDown,
+    ChevronUp,
+    Hourglass,
 } from "lucide-react";
+import * as XLSX from "xlsx";
 
-// ساختار داده‌ای همگام با بک‌اند جدید
+type Receipt = {
+    payerName: string;
+    trackingCode: string;
+    sourceBank: string;
+    submittedAt: string;
+};
+
 type VpnOrder = {
     id: string;
     type: string;
@@ -26,56 +38,104 @@ type VpnOrder = {
     contactInfo: string;
     price: number;
     status: "pending_payment" | "awaiting_receipt" | "processing" | "completed";
+    receipt?: Receipt;
     createdAt: string;
+};
+
+const STATUS_CONFIG: Record<
+    VpnOrder["status"] | "all",
+    {
+        label: string;
+        color: string;
+        bg: string;
+        border: string;
+        icon: React.ReactNode;
+    }
+> = {
+    all: {
+        label: "همه",
+        color: "text-white",
+        bg: "bg-white/10",
+        border: "border-white/20",
+        icon: <AlertCircle className="w-3.5 h-3.5" />,
+    },
+    pending_payment: {
+        label: "در انتظار پرداخت",
+        color: "text-amber-400",
+        bg: "bg-amber-500/10",
+        border: "border-amber-500/25",
+        icon: <AlertCircle className="w-3.5 h-3.5" />,
+    },
+    awaiting_receipt: {
+        label: "در انتظار تأیید رسید",
+        color: "text-blue-400",
+        bg: "bg-blue-500/10",
+        border: "border-blue-500/25",
+        icon: <Hourglass className="w-3.5 h-3.5" />,
+    },
+    processing: {
+        label: "در حال پردازش",
+        color: "text-violet-400",
+        bg: "bg-violet-500/10",
+        border: "border-violet-500/25",
+        icon: <Clock className="w-3.5 h-3.5" />,
+    },
+    completed: {
+        label: "تکمیل شده",
+        color: "text-emerald-400",
+        bg: "bg-emerald-500/10",
+        border: "border-emerald-500/25",
+        icon: <CheckCircle2 className="w-3.5 h-3.5" />,
+    },
 };
 
 export default function ClientOrders({ orders }: { orders: VpnOrder[] }) {
     const [orderList, setOrderList] = useState<VpnOrder[]>(orders);
     const [searchTerm, setSearchTerm] = useState("");
-    const [activeFilter, setActiveFilter] = useState<"all" | "pending_payment" | "completed">("all");
+    const [activeFilter, setActiveFilter] = useState<
+        "all" | "pending_payment" | "awaiting_receipt" | "processing" | "completed"
+    >("all");
     const [isDeleting, setIsDeleting] = useState<string | null>(null);
+    const [isUpdating, setIsUpdating] = useState<string | null>(null);
+    const [expandedReceipt, setExpandedReceipt] = useState<string | null>(null);
 
     const formatJalali = (dateString: string) => {
         if (!dateString) return "نامشخص";
-        const date = new Date(dateString);
         return new Intl.DateTimeFormat("fa-IR", {
             year: "numeric",
             month: "long",
             day: "numeric",
             hour: "2-digit",
             minute: "2-digit",
-        }).format(date);
+        }).format(new Date(dateString));
     };
 
     const totalOrders = orderList.length;
     const totalIncome = orderList.reduce((acc, order) => acc + (order.price || 0), 0);
+    const pendingCount = orderList.filter((o) => o.status === "pending_payment").length;
+    const awaitingReceiptCount = orderList.filter((o) => o.status === "awaiting_receipt").length;
+    const processingCount = orderList.filter((o) => o.status === "processing").length;
 
     const filteredOrders = useMemo(() => {
         return orderList.filter((order) => {
-            // فیلتر بر اساس وضعیت سفارش
-            let matchFilter = true;
-            if (activeFilter === "pending_payment") {
-                matchFilter = order.status === "pending_payment";
-            } else if (activeFilter === "completed") {
-                matchFilter = order.status === "completed";
-            }
-
+            const matchFilter = activeFilter === "all" || order.status === activeFilter;
             if (!searchTerm.trim()) return matchFilter;
 
-            const searchLower = searchTerm.toLowerCase().trim();
+            const q = searchTerm.toLowerCase().trim();
             const matchSearch =
-                (order.id || "").toLowerCase().includes(searchLower) ||
-                (order.fullName || "").toLowerCase().includes(searchLower) ||
-                (order.contactInfo || "").toLowerCase().includes(searchLower);
+                (order.id || "").toLowerCase().includes(q) ||
+                (order.fullName || "").toLowerCase().includes(q) ||
+                (order.contactInfo || "").toLowerCase().includes(q) ||
+                (order.receipt?.payerName || "").toLowerCase().includes(q) ||
+                (order.receipt?.trackingCode || "").toLowerCase().includes(q) ||
+                (order.receipt?.sourceBank || "").toLowerCase().includes(q);
 
             return matchFilter && matchSearch;
         });
     }, [orderList, searchTerm, activeFilter]);
 
     const handleDelete = async (id: string) => {
-        if (!window.confirm("آیا از حذف این سفارش اطمینان دارید؟ این عمل غیرقابل بازگشت است.")) {
-            return;
-        }
+        if (!window.confirm("آیا از حذف این سفارش اطمینان دارید؟ این عمل غیرقابل بازگشت است.")) return;
 
         setIsDeleting(id);
         try {
@@ -98,56 +158,84 @@ export default function ClientOrders({ orders }: { orders: VpnOrder[] }) {
         }
     };
 
-    // تابع کمکی برای رنگ‌بندی و متون وضعیت سفارشات
-    const getStatusDisplay = (status: string) => {
-        switch (status) {
-            case "pending_payment":
-                return {
-                    text: "در انتظار پرداخت",
-                    icon: AlertCircle,
-                    color: "text-amber-500",
-                    bg: "bg-amber-500/10",
-                    border: "border-amber-500/20",
-                };
-            case "awaiting_receipt":
-                return {
-                    text: "بررسی رسید",
-                    icon: Activity,
-                    color: "text-blue-500",
-                    bg: "bg-blue-500/10",
-                    border: "border-blue-500/20",
-                };
-            case "processing":
-                return {
-                    text: "در حال آماده‌سازی",
-                    icon: Clock,
-                    color: "text-purple-500",
-                    bg: "bg-purple-500/10",
-                    border: "border-purple-500/20",
-                };
-            case "completed":
-                return {
-                    text: "تکمیل شده",
-                    icon: CheckCircle2,
-                    color: "text-emerald-500",
-                    bg: "bg-emerald-500/10",
-                    border: "border-emerald-500/20",
-                };
-            default:
-                return {
-                    text: status,
-                    icon: AlertCircle,
-                    color: "text-slate-400",
-                    bg: "bg-slate-400/10",
-                    border: "border-slate-400/20",
-                };
+    const handleStatusUpdate = async (id: string, status: VpnOrder["status"]) => {
+        setIsUpdating(id);
+        try {
+            const res = await fetch("/api/order", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id, status }),
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+                setOrderList((prev) => prev.map((o) => (o.id === id ? { ...o, status } : o)));
+            } else {
+                alert(data.message || "خطا در بروزرسانی وضعیت");
+            }
+        } catch {
+            alert("خطا در برقراری ارتباط با سرور");
+        } finally {
+            setIsUpdating(null);
         }
+    };
+
+    const formatExcelDate = (dateString?: string) => {
+        if (!dateString) return "نامشخص";
+        return new Intl.DateTimeFormat("fa-IR", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+        }).format(new Date(dateString));
+    };
+
+    const handleExportExcel = () => {
+        const rows = filteredOrders.map((order) => ({
+            "شناسه سفارش": order.id,
+            نوع: order.type,
+            "حجم (GB)": order.volume,
+            "نام و نام خانوادگی": order.fullName || "ثبت نشده",
+            "راه ارتباطی": order.contactInfo || "ثبت نشده",
+            "مبلغ (تومان)": order.price || 0,
+            وضعیت: STATUS_CONFIG[order.status]?.label || order.status,
+            "نام واریزکننده": order.receipt?.payerName || "ندارد",
+            "کد رهگیری": order.receipt?.trackingCode || "ندارد",
+            "بانک مبدأ": order.receipt?.sourceBank ? `بانک ${order.receipt.sourceBank}` : "ندارد",
+            "زمان ثبت رسید": formatExcelDate(order.receipt?.submittedAt),
+            "زمان ایجاد سفارش": formatExcelDate(order.createdAt),
+        }));
+
+        const worksheet = XLSX.utils.json_to_sheet(rows);
+
+        worksheet["!cols"] = [
+            { wch: 12 },
+            { wch: 14 },
+            { wch: 12 },
+            { wch: 10 },
+            { wch: 24 },
+            { wch: 24 },
+            { wch: 16 },
+            { wch: 20 },
+            { wch: 20 },
+            { wch: 20 },
+            { wch: 18 },
+            { wch: 22 },
+            { wch: 22 },
+        ];
+
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Orders");
+
+        const fileName = `orders-${new Date().toISOString().slice(0, 10)}.xlsx`;
+        XLSX.writeFile(workbook, fileName);
     };
 
     return (
         <div className="min-h-screen bg-store-base text-white p-4 md:p-8 lg:p-12 font-sans" dir="rtl">
             <div className="max-w-7xl mx-auto space-y-8">
-                {/* هدر و آمار */}
                 <motion.div
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -169,74 +257,139 @@ export default function ClientOrders({ orders }: { orders: VpnOrder[] }) {
                         </div>
                     </div>
 
-                    <div className="flex flex-wrap gap-4 w-full xl:w-auto relative z-10">
+                    <div className="flex flex-wrap gap-4 w-full xl:w-3/5 relative z-10">
                         <div className="bg-store-card px-6 py-4 rounded-2xl border border-store-border flex-1 min-w-[140px] text-center shadow-lg">
                             <p className="text-slate-400 text-xs mb-1.5 font-semibold uppercase tracking-wider">
                                 کل درآمد (تومان)
                             </p>
                             <p className="font-black text-xl text-primary">{totalIncome.toLocaleString("fa-IR")}</p>
                         </div>
+
                         <div className="bg-store-card px-6 py-4 rounded-2xl border border-store-border flex-1 min-w-[140px] text-center shadow-lg">
                             <p className="text-slate-400 text-xs mb-1.5 font-semibold uppercase tracking-wider">
                                 کل سفارشات
                             </p>
                             <p className="font-black text-xl text-white">{totalOrders.toLocaleString("fa-IR")}</p>
                         </div>
+
+                        <div className="bg-store-card px-6 py-4 rounded-2xl border border-store-border flex-1 min-w-[140px] text-center shadow-lg">
+                            <p className="text-slate-400 text-xs mb-1.5 font-semibold uppercase tracking-wider">
+                                در انتظار پرداخت
+                            </p>
+                            <p className="font-black text-xl text-amber-400">{pendingCount.toLocaleString("fa-IR")}</p>
+                        </div>
+
+                        <div className="bg-store-card px-6 py-4 rounded-2xl border border-store-border flex-1 min-w-[140px] text-center shadow-lg">
+                            <p className="text-slate-400 text-xs mb-1.5 font-semibold uppercase tracking-wider">
+                                در انتظار رسید
+                            </p>
+                            <p className="font-black text-xl text-blue-400">
+                                {awaitingReceiptCount.toLocaleString("fa-IR")}
+                            </p>
+                        </div>
+
+                        <div className="bg-store-card px-6 py-4 rounded-2xl border border-store-border flex-1 min-w-[140px] text-center shadow-lg">
+                            <p className="text-slate-400 text-xs mb-1.5 font-semibold uppercase tracking-wider">
+                                در حال پردازش
+                            </p>
+                            <p className="font-black text-xl text-violet-400">
+                                {processingCount.toLocaleString("fa-IR")}
+                            </p>
+                        </div>
+                            <button
+                                onClick={handleExportExcel}
+                                className="px-4 cursor-pointer py-3 rounded-2xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 hover:bg-emerald-500/25 transition-all font-bold text-sm whitespace-nowrap"
+                            >
+                                خروجی اکسل
+                            </button>
                     </div>
                 </motion.div>
 
-                {/* فیلتر و جستجو */}
                 <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
-                    className="flex flex-col md:flex-row gap-4 items-center justify-between bg-store-panel p-3 rounded-2xl border border-store-border"
+                    className="flex flex-col gap-3 bg-store-panel p-3 rounded-2xl border border-store-border"
                 >
-                    <div className="relative w-full md:w-96 group">
-                        <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
-                            <Search className="w-5 h-5 text-slate-400 group-focus-within:text-primary transition-colors" />
+                    <div className="flex flex-col md:flex-row gap-3 items-center">
+                        <div className="relative w-full md:w-96 group">
+                            <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
+                                <Search className="w-5 h-5 text-slate-400 group-focus-within:text-primary transition-colors" />
+                            </div>
+                            <input
+                                type="text"
+                                placeholder="جستجو نام، ایمیل، کد رهگیری..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-full bg-store-card border border-store-border text-white text-sm rounded-xl py-3.5 pr-12 pl-4 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all placeholder:text-slate-500 shadow-inner"
+                            />
                         </div>
-                        <input
-                            type="text"
-                            placeholder="جستجو نام، ایمیل یا شناسه..." // <<-- تغییر: اصلاح کلمه جستجو
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full bg-store-card border border-store-border text-white text-sm rounded-xl py-3.5 pr-12 pl-4 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all placeholder:text-slate-500 shadow-inner"
-                        />
+
+                        <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0 scrollbar-hide">
+                            <div className="flex items-center gap-2 px-3 text-slate-400">
+                                <Filter className="w-4 h-4" />
+                                <span className="text-sm font-medium">فیلتر:</span>
+                            </div>
+
+                            <div className="flex gap-1 bg-store-card p-1.5 rounded-xl border border-store-border">
+                                {(
+                                    ["all", "pending_payment", "awaiting_receipt", "processing", "completed"] as const
+                                ).map((type) => (
+                                    <button
+                                        key={type}
+                                        onClick={() => setActiveFilter(type)}
+                                        className={`px-4 cursor-pointer py-2 rounded-lg text-sm font-bold transition-all duration-300 whitespace-nowrap ${
+                                            activeFilter === type
+                                                ? type === "pending_payment"
+                                                    ? "bg-amber-500/20 text-amber-400 shadow-sm"
+                                                    : type === "awaiting_receipt"
+                                                      ? "bg-blue-500/20 text-blue-400 shadow-sm"
+                                                      : type === "processing"
+                                                        ? "bg-violet-500/20 text-violet-400 shadow-sm"
+                                                        : type === "completed"
+                                                          ? "bg-emerald-500/20 text-emerald-400 shadow-sm"
+                                                          : "bg-primary/20 text-primary shadow-sm"
+                                                : "text-slate-400 hover:text-white hover:bg-store-hover"
+                                        }`}
+                                    >
+                                        {type === "all"
+                                            ? "همه سفارش‌ها"
+                                            : type === "pending_payment"
+                                              ? "در انتظار پرداخت"
+                                              : type === "awaiting_receipt"
+                                                ? "در انتظار رسید"
+                                                : type === "processing"
+                                                  ? "در حال پردازش"
+                                                  : "تکمیل شده"}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0 scrollbar-hide">
-                        <div className="flex items-center gap-2 px-3 text-slate-400">
-                            <Filter className="w-4 h-4" />
-                            <span className="text-sm font-medium">فیلتر:</span>
-                        </div>
-                        <div className="flex gap-1 bg-store-card p-1.5 rounded-xl border border-store-border">
-                            {(["all", "pending_payment", "completed"] as const).map((type) => (
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-slate-400 text-sm px-2">وضعیت:</span>
+                        {(["all", "pending_payment", "awaiting_receipt", "processing", "completed"] as const).map(
+                            (key) => (
                                 <button
-                                    key={type}
-                                    onClick={() => setActiveFilter(type)}
-                                    className={`px-4 cursor-pointer py-2 rounded-lg text-sm font-bold transition-all duration-300 whitespace-nowrap ${
-                                        activeFilter === type
-                                            ? type === "pending_payment"
-                                                ? "bg-amber-500/20 text-amber-500 shadow-sm"
-                                                : type === "completed"
-                                                  ? "bg-emerald-500/20 text-emerald-400 shadow-sm"
-                                                  : "bg-primary/20 text-primary shadow-sm"
-                                            : "text-slate-400 hover:text-white hover:bg-store-hover"
-                                    }`}
+                                    key={key}
+                                    onClick={() => setActiveFilter(key)}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap border
+                                        ${
+                                            activeFilter === key
+                                                ? key === "all"
+                                                    ? "bg-white/10 text-white border-white/20"
+                                                    : `${STATUS_CONFIG[key].bg} ${STATUS_CONFIG[key].color} ${STATUS_CONFIG[key].border}`
+                                                : "text-slate-500 border-transparent hover:text-slate-300 hover:bg-store-card"
+                                        }`}
                                 >
-                                    {type === "all"
-                                        ? "همه سفارش‌ها"
-                                        : type === "pending_payment"
-                                          ? "در انتظار پرداخت"
-                                          : "تکمیل شده"}
+                                    {key === "all" ? "همه" : STATUS_CONFIG[key].label}
                                 </button>
-                            ))}
-                        </div>
+                            ),
+                        )}
                     </div>
                 </motion.div>
 
-                {/* لیست سفارشات */}
                 {filteredOrders.length === 0 ? (
                     <motion.div
                         initial={{ opacity: 0 }}
@@ -253,8 +406,8 @@ export default function ClientOrders({ orders }: { orders: VpnOrder[] }) {
                     <motion.div layout className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                         <AnimatePresence mode="popLayout">
                             {filteredOrders.map((order) => {
-                                const statusInfo = getStatusDisplay(order.status);
-                                const StatusIcon = statusInfo.icon;
+                                const status = STATUS_CONFIG[order.status] ?? STATUS_CONFIG.pending_payment;
+                                const receiptOpen = expandedReceipt === order.id;
 
                                 return (
                                     <motion.div
@@ -263,13 +416,13 @@ export default function ClientOrders({ orders }: { orders: VpnOrder[] }) {
                                         initial={{ opacity: 0, scale: 0.9, y: 20 }}
                                         animate={{ opacity: 1, scale: 1, y: 0 }}
                                         exit={{ opacity: 0, scale: 0.9, filter: "blur(10px)" }}
-                                        transition={{ duration: 0.3, layout: { duration: 0.3 } }}
+                                        transition={{ duration: 0.3 }}
                                         className="group flex flex-col h-full bg-store-panel border border-store-border rounded-[1.5rem] overflow-hidden hover:border-store-hover transition-all duration-300 hover:shadow-2xl hover:-translate-y-1"
                                     >
                                         <div className="bg-gradient-to-b from-primary/10 to-transparent border-b border-primary/20 p-5 flex justify-between items-center relative overflow-hidden">
                                             <div className="flex items-center gap-3 relative z-10">
                                                 <div className="p-2.5 rounded-xl bg-store-card shadow-sm border border-store-border text-primary">
-                                                    <ShieldCheck className="w-5 h-5" />
+                                                    <Activity className="w-5 h-5" />
                                                 </div>
                                                 <div>
                                                     <span className="block text-[11px] font-bold tracking-wider text-slate-400 mb-0.5">
@@ -282,10 +435,10 @@ export default function ClientOrders({ orders }: { orders: VpnOrder[] }) {
                                             </div>
 
                                             <div
-                                                className={`flex items-center gap-1.5 ${statusInfo.bg} ${statusInfo.color} px-3 py-1.5 rounded-xl text-xs font-bold border ${statusInfo.border} relative z-10 shadow-sm`}
+                                                className={`flex items-center gap-1.5 ${status.bg} ${status.color} px-3 py-1.5 rounded-xl text-xs font-bold border ${status.border} relative z-10 shadow-sm`}
                                             >
-                                                <StatusIcon className="w-3.5 h-3.5" />
-                                                {statusInfo.text}
+                                                {status.icon}
+                                                {status.label}
                                             </div>
                                         </div>
 
@@ -315,7 +468,7 @@ export default function ClientOrders({ orders }: { orders: VpnOrder[] }) {
 
                                                 <div className="flex items-center gap-3 text-sm">
                                                     <div className="w-8 h-8 rounded-full bg-store-card flex items-center justify-center border border-store-border">
-                                                        <Mail className="w-4 h-4 text-slate-400" /> {/* <<-- تغییر: جایگزینی Phone با Mail */}
+                                                        <Mail className="w-4 h-4 text-slate-400" />
                                                     </div>
                                                     <span
                                                         className="text-slate-300 tracking-widest text-xs md:text-sm truncate w-full"
@@ -324,27 +477,157 @@ export default function ClientOrders({ orders }: { orders: VpnOrder[] }) {
                                                         {order.contactInfo || "ثبت نشده"}
                                                     </span>
                                                 </div>
+
+                                                {order.receipt ? (
+                                                    <div className="rounded-2xl border border-blue-500/20 overflow-hidden mt-3">
+                                                        <button
+                                                            onClick={() =>
+                                                                setExpandedReceipt(receiptOpen ? null : order.id)
+                                                            }
+                                                            className="w-full flex items-center justify-between px-4 py-3 bg-blue-500/10 text-blue-400 text-xs font-bold cursor-pointer hover:bg-blue-500/15 transition-colors"
+                                                        >
+                                                            <div className="flex items-center gap-2">
+                                                                <Banknote className="w-4 h-4" />
+                                                                رسید پرداخت ثبت شده
+                                                            </div>
+                                                            {receiptOpen ? (
+                                                                <ChevronUp className="w-4 h-4" />
+                                                            ) : (
+                                                                <ChevronDown className="w-4 h-4" />
+                                                            )}
+                                                        </button>
+
+                                                        <AnimatePresence>
+                                                            {receiptOpen && (
+                                                                <motion.div
+                                                                    initial={{ height: 0, opacity: 0 }}
+                                                                    animate={{ height: "auto", opacity: 1 }}
+                                                                    exit={{ height: 0, opacity: 0 }}
+                                                                    transition={{ duration: 0.25 }}
+                                                                    className="overflow-hidden"
+                                                                >
+                                                                    <div className="px-4 py-3 space-y-2.5 bg-store-base border-t border-blue-500/10">
+                                                                        {[
+                                                                            {
+                                                                                icon: (
+                                                                                    <User className="w-3.5 h-3.5 text-blue-400" />
+                                                                                ),
+                                                                                label: "نام واریزکننده",
+                                                                                value: order.receipt.payerName,
+                                                                            },
+                                                                            {
+                                                                                icon: (
+                                                                                    <Hash className="w-3.5 h-3.5 text-blue-400" />
+                                                                                ),
+                                                                                label: "کد رهگیری",
+                                                                                value: order.receipt.trackingCode,
+                                                                            },
+                                                                            {
+                                                                                icon: (
+                                                                                    <Building2 className="w-3.5 h-3.5 text-blue-400" />
+                                                                                ),
+                                                                                label: "بانک مبدأ",
+                                                                                value: `بانک ${order.receipt.sourceBank}`,
+                                                                            },
+                                                                            {
+                                                                                icon: (
+                                                                                    <Clock className="w-3.5 h-3.5 text-slate-500" />
+                                                                                ),
+                                                                                label: "زمان ثبت",
+                                                                                value: formatJalali(
+                                                                                    order.receipt.submittedAt,
+                                                                                ),
+                                                                            },
+                                                                        ].map(({ icon, label, value }) => (
+                                                                            <div
+                                                                                key={label}
+                                                                                className="flex items-start gap-2.5 text-xs"
+                                                                            >
+                                                                                <div className="w-6 h-6 rounded-lg bg-store-card flex items-center justify-center border border-store-border shrink-0 mt-0.5">
+                                                                                    {icon}
+                                                                                </div>
+                                                                                <div>
+                                                                                    <p className="text-slate-500 text-[10px]">
+                                                                                        {label}
+                                                                                    </p>
+                                                                                    <p className="text-slate-200 font-medium">
+                                                                                        {value}
+                                                                                    </p>
+                                                                                </div>
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                </motion.div>
+                                                            )}
+                                                        </AnimatePresence>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex items-center gap-2 px-4 py-3 rounded-2xl border border-store-border bg-store-base text-slate-500 text-xs">
+                                                        <Banknote className="w-4 h-4" />
+                                                        هنوز رسید پرداخت ثبت نشده
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
 
-                                        {/* فوتر کارت و دکمه حذف */}
-                                        <div className="px-5 py-3.5 bg-store-base border-t border-store-border flex items-center justify-between text-xs text-slate-500 transition-colors">
-                                            <div className="flex text-white items-center gap-2">
-                                                <Clock className="w-3.5 h-3.5" />
-                                                <span>{formatJalali(order.createdAt)}</span>
-                                            </div>
-                                            <button
-                                                onClick={() => handleDelete(order.id)}
-                                                disabled={isDeleting === order.id}
-                                                className="flex cursor-pointer items-center justify-center p-2 rounded-lg text-rose-500 hover:bg-rose-500/10 hover:text-rose-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                                title="حذف سفارش"
-                                            >
-                                                {isDeleting === order.id ? (
-                                                    <span className="w-4 h-4 border-2 border-rose-500 border-t-transparent rounded-full animate-spin"></span>
-                                                ) : (
-                                                    <Trash2 className="w-4 h-4" />
+                                        <div className="px-5 py-3.5 bg-store-base border-t border-store-border space-y-2">
+                                            <div className="flex gap-1.5 flex-wrap">
+                                                {order.status !== "processing" && order.status !== "completed" && (
+                                                    <button
+                                                        onClick={() => handleStatusUpdate(order.id, "processing")}
+                                                        disabled={isUpdating === order.id}
+                                                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold cursor-pointer bg-violet-500/10 text-violet-400 border border-violet-500/20 hover:bg-violet-500/20 transition-colors disabled:opacity-50"
+                                                    >
+                                                        {isUpdating === order.id ? (
+                                                            <span className="w-3.5 h-3.5 border-2 border-violet-400 border-t-transparent rounded-full animate-spin" />
+                                                        ) : (
+                                                            <Clock className="w-3.5 h-3.5" />
+                                                        )}
+                                                        در حال پردازش
+                                                    </button>
                                                 )}
-                                            </button>
+
+                                                {order.status !== "completed" && (
+                                                    <button
+                                                        onClick={() => handleStatusUpdate(order.id, "completed")}
+                                                        disabled={isUpdating === order.id}
+                                                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold cursor-pointer bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors disabled:opacity-50"
+                                                    >
+                                                        {isUpdating === order.id ? (
+                                                            <span className="w-3.5 h-3.5 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
+                                                        ) : (
+                                                            <CheckCircle2 className="w-3.5 h-3.5" />
+                                                        )}
+                                                        تأیید پرداخت
+                                                    </button>
+                                                )}
+
+                                                {order.status === "completed" && (
+                                                    <div className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-emerald-500/5 text-emerald-500/60 border border-emerald-500/10">
+                                                        <CheckCircle2 className="w-3.5 h-3.5" />
+                                                        پرداخت تأیید شده
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                                                    <Clock className="w-3 h-3" />
+                                                    <span>{formatJalali(order.createdAt)}</span>
+                                                </div>
+                                                <button
+                                                    onClick={() => handleDelete(order.id)}
+                                                    disabled={isDeleting === order.id}
+                                                    className="flex cursor-pointer items-center justify-center p-1.5 rounded-lg text-rose-500 hover:bg-rose-500/10 transition-colors disabled:opacity-50"
+                                                    title="حذف سفارش"
+                                                >
+                                                    {isDeleting === order.id ? (
+                                                        <span className="w-3.5 h-3.5 border-2 border-rose-500 border-t-transparent rounded-full animate-spin" />
+                                                    ) : (
+                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                    )}
+                                                </button>
+                                            </div>
                                         </div>
                                     </motion.div>
                                 );

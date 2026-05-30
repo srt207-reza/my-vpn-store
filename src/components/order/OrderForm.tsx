@@ -15,8 +15,8 @@ import { ALLOWED_VOLUMES, ALLOWED_DURATIONS, PRICING_DATA } from "@/constants/or
 export default function OrderForm() {
     const searchParams = useSearchParams();
     const router = useRouter();
-    const productType = searchParams.get("product") || "vpn";
 
+    const productType = searchParams.get("product") || "vpn";
     const urlVolumeParam = parseInt(searchParams.get("volume") || "0", 10);
     const initialVolume = ALLOWED_VOLUMES.includes(urlVolumeParam) ? urlVolumeParam : ALLOWED_VOLUMES[0];
 
@@ -32,7 +32,6 @@ export default function OrderForm() {
         contactInfo: "",
     });
 
-    // قیمت بر اساس هر دو پارامتر حجم و مدت
     const totalPrice = PRICING_DATA[formData.volume][formData.duration];
 
     const themeBg = "bg-primary hover:bg-cyan-400 text-slate-900";
@@ -48,8 +47,7 @@ export default function OrderForm() {
         return /^[A-Za-z]+(?:\s+[A-Za-z]+)+$/.test(value);
     };
 
-    const canProceedToNextStep =
-        isValidEmail(formData.contactInfo) && isValidFullName(formData.fullName);
+    const canProceedToNextStep = isValidEmail(formData.contactInfo) && isValidFullName(formData.fullName);
 
     const handleSubmit = async () => {
         setLoading(true);
@@ -94,6 +92,7 @@ export default function OrderForm() {
             toast.error("لطفاً یک ایمیل معتبر وارد کنید.");
             return;
         }
+
         if (!isValidFullName(fullName)) {
             toast.error("نام و نام خانوادگی را کامل وارد کنید. مثال: Ali Hosseini");
             return;
@@ -119,69 +118,42 @@ export default function OrderForm() {
                                     {num}
                                 </div>
                                 {num < 3 && (
-                                    <div
-                                        className={`w-12 h-1 transition-colors ${step > num ? "bg-primary" : "bg-slate-800"}`}
-                                    />
+                                    <div className={`w-12 h-1 transition-colors ${step > num ? "bg-primary" : "bg-slate-800"}`} />
                                 )}
                             </div>
                         ))}
                     </div>
                 )}
+
                 {step === 1 ? (
                     <>
                         <div className="inline-flex my-6 items-center justify-center p-4 rounded-full bg-slate-800/50 border border-slate-700 shadow-[0_0_20px_rgba(6,182,212,0.15)]">
-                            <Image
-                                src="/assets/images/clock.png"
-                                alt="support"
-                                width={50}
-                                height={50}
-                                className={`${themeColor}`}
-                            />
+                            <Image src="/assets/images/clock.png" alt="support" width={50} height={50} className={themeColor} />
                         </div>
                         <h1 className="text-2xl font-bold text-white mb-2">انتخاب طرح راهکار اتصال</h1>
                     </>
                 ) : step === 2 ? (
                     <>
                         <div className="inline-flex my-6 items-center justify-center p-4 rounded-full bg-slate-800/50 border border-slate-700 shadow-[0_0_20px_rgba(6,182,212,0.15)]">
-                            <Image
-                                src="/assets/images/information2.png"
-                                alt="support"
-                                width={50}
-                                height={50}
-                                className={`${themeColor}`}
-                            />
+                            <Image src="/assets/images/information2.png" alt="support" width={50} height={50} className={themeColor} />
                         </div>
-                        <h1 className="text-2xl font-bold text-white mb-2">وارد نمودن اطلاعات </h1>
+                        <h1 className="text-2xl font-bold text-white mb-2">وارد نمودن اطلاعات</h1>
                     </>
-                ) : step === 2 && (
-                   <>
+                ) : step === 3 ? (
+                    <>
                         <div className="inline-flex my-6 items-center justify-center p-4 rounded-full bg-slate-800/50 border border-slate-700 shadow-[0_0_20px_rgba(6,182,212,0.15)]">
-                            <Image
-                                src="/assets/images/approved.png"
-                                alt="support"
-                                width={50}
-                                height={50}
-                                className={`${themeColor}`}
-                            />
+                            <Image src="/assets/images/approved.png" alt="support" width={50} height={50} className={themeColor} />
                         </div>
                         <h1 className="text-2xl font-bold text-white mb-2">تأیید اطلاعات</h1>
                     </>
-                )}
-
-                {/* {step !== 4 && (
+                ) : (
                     <>
                         <div className="inline-flex my-6 items-center justify-center p-4 rounded-full bg-slate-800/50 border border-slate-700 shadow-[0_0_20px_rgba(6,182,212,0.15)]">
-                            <Image
-                                src="/assets/images/clock.png"
-                                alt="support"
-                                width={50}
-                                height={50}
-                                className={`${themeColor}`}
-                            />
+                            <Image src="/assets/images/approved.png" alt="support" width={50} height={50} className={themeColor} />
                         </div>
-                        <h1 className="text-2xl font-bold text-white mb-2">انتخاب طرح راهکار اتصال</h1>
+                        <h1 className="text-2xl font-bold text-white mb-2">پرداخت و ثبت رسید</h1>
                     </>
-                )} */}
+                )}
             </div>
 
             <AnimatePresence mode="wait">
@@ -196,6 +168,7 @@ export default function OrderForm() {
                         themeColor={themeColor}
                     />
                 )}
+
                 {step === 2 && (
                     <StepContactInfo
                         formData={formData}
@@ -209,6 +182,7 @@ export default function OrderForm() {
                         canProceedToNextStep={canProceedToNextStep}
                     />
                 )}
+
                 {step === 3 && (
                     <StepCheckout
                         formData={formData}
@@ -220,6 +194,7 @@ export default function OrderForm() {
                         themeColor={themeColor}
                     />
                 )}
+
                 {step === 4 && (
                     <StepPayment
                         orderId={orderId}

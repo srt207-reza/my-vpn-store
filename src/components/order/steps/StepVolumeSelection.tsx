@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, Tags } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import RubberVolumeSlider from "@/components/RubberVolumeSlider";
 import RubberDurationSlider from "@/components/RubberDurationSlider";
 import { ALLOWED_VOLUMES, ALLOWED_DURATIONS, PRICING_DATA } from "@/constants/order";
@@ -36,38 +36,33 @@ export default function StepVolumeSelection({
             exit={{ opacity: 0, x: 20 }}
             className="bg-slate-800/40 p-4 md:p-8 rounded-3xl border border-slate-700"
         >
-            {/* توضیحات بالا */}
             <div className="mb-6 p-4 bg-slate-900/60 border border-slate-700/50 rounded-xl text-center">
                 <p className="text-slate-300 text-sm leading-relaxed">
                     لطفاً با توجه به مشخصات طرح‌های موجود، حجم و مدت زمان مورد نظر را انتخاب نمایید و سپس بر روی گزینه
                     <strong className="text-primary"> تأیید طرح اشتراک</strong>، کلیک بفرمایید.
                 </p>
-                {/* <div className="flex justify-center mt-3">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-slate-800 text-slate-300 text-xs border border-slate-700/60">
-                        <Tags className="w-3.5 h-3.5 text-primary" />
-                        قیمت‌ها بر اساس حجم و مدت اشتراک انتخابی محاسبه می‌شوند
-                    </span>
-                </div> */}
             </div>
 
             <div className="flex flex-col items-center justify-center space-y-6">
-                {/* اسلایدرها */}
-                <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="w-full">
-                        <p className="text-primary font-medium text-sm text-center mb-4">حجم ترافیک مورد نیاز:</p>
-                        <RubberVolumeSlider
-                            allowedValues={ALLOWED_VOLUMES}
-                            value={formData.volume}
-                            onChange={(val: any) => setFormData({ ...formData, volume: val })}
-                        />
-                    </div>
-                    <div className="w-full">
-                        <p className="text-primary font-medium text-sm text-center mb-4">مدت زمان اشتراک:</p>
-                        <RubberDurationSlider
-                            allowedValues={ALLOWED_DURATIONS}
-                            value={formData.duration}
-                            onChange={(val: any) => setFormData({ ...formData, duration: val })}
-                        />
+                <div className="w-full rounded-2xl border border-slate-700/60 overflow-hidden md:overflow-visible md:border-0 md:rounded-none">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-0 md:gap-6">
+                        <div className="w-full order-1 md:order-2 p-4 md:p-0 border-slate-700/50 md:border-0">
+                            {/* <p className="text-primary font-medium text-sm text-center mb-4">مدت زمان اشتراک:</p> */}
+                            <RubberDurationSlider
+                                allowedValues={ALLOWED_DURATIONS}
+                                value={formData.duration}
+                                onChange={(val: any) => setFormData({ ...formData, duration: val })}
+                            />
+                        </div>
+
+                        <div className="w-full order-2 md:order-1 p-4 md:p-0">
+                            {/* <p className="text-primary font-medium text-sm text-center mb-4">حجم ترافیک مورد نیاز:</p> */}
+                            <RubberVolumeSlider
+                                allowedValues={ALLOWED_VOLUMES}
+                                value={formData.volume}
+                                onChange={(val: any) => setFormData({ ...formData, volume: val })}
+                            />
+                        </div>
                     </div>
                 </div>
 
@@ -76,7 +71,6 @@ export default function StepVolumeSelection({
                     نمایید.
                 </p>
 
-                {/* جدول قیمت‌ها */}
                 <div className="w-full overflow-x-auto rounded-2xl border border-slate-700/60 scrollbar-hide">
                     <table className="w-full text-sm border-collapse scrollbar-hide" dir="ltr">
                         <thead>
@@ -112,6 +106,7 @@ export default function StepVolumeSelection({
                                 })}
                             </tr>
                         </thead>
+
                         <tbody>
                             {ALLOWED_VOLUMES.map((gb, idx) => {
                                 const isActiveRow = formData.volume === gb;
@@ -123,14 +118,9 @@ export default function StepVolumeSelection({
                                         }}
                                         transition={{ duration: 0.2 }}
                                         className={`cursor-pointer border-b border-slate-700/20 last:border-0 ${
-                                            !isActiveRow
-                                                ? idx % 2 === 0
-                                                    ? "hover:bg-slate-700/25"
-                                                    : "hover:bg-slate-700/25"
-                                                : ""
+                                            !isActiveRow ? "hover:bg-slate-700/25" : ""
                                         }`}
                                     >
-                                        {/* ستون حجم */}
                                         <td
                                             className="py-2.5 px-3 text-center"
                                             onClick={() => setFormData({ ...formData, volume: gb })}
@@ -152,7 +142,6 @@ export default function StepVolumeSelection({
                                             </span>
                                         </td>
 
-                                        {/* سلول‌های قیمت */}
                                         {ALLOWED_DURATIONS.map((d) => {
                                             const isActiveCell = isActiveRow && formData.duration === d;
                                             const isActiveCol = formData.duration === d;
@@ -168,7 +157,6 @@ export default function StepVolumeSelection({
                                                         layout
                                                         className="inline-flex flex-col items-center relative"
                                                     >
-                                                        {/* پس‌زمینه سلول فعال */}
                                                         <AnimatePresence>
                                                             {isActiveCell && (
                                                                 <motion.span
@@ -186,7 +174,6 @@ export default function StepVolumeSelection({
                                                             )}
                                                         </AnimatePresence>
 
-                                                        {/* عدد قیمت */}
                                                         <motion.span
                                                             animate={{
                                                                 color: isActiveCell
@@ -208,7 +195,6 @@ export default function StepVolumeSelection({
                                                             {price.toLocaleString("fa-IR")}
                                                         </motion.span>
 
-                                                        {/* تومان زیر سلول فعال */}
                                                         <AnimatePresence>
                                                             {isActiveCell && (
                                                                 <motion.span
@@ -234,7 +220,6 @@ export default function StepVolumeSelection({
                     </table>
                 </div>
 
-                {/* باکس قیمت نهایی */}
                 <motion.div
                     key={`${formData.volume}-${formData.duration}`}
                     initial={{ opacity: 0.6, y: 4 }}
@@ -254,6 +239,7 @@ export default function StepVolumeSelection({
                             {formData.volume} گیگابایت
                         </motion.span>
                     </div>
+
                     <div className="flex justify-between items-center text-sm">
                         <span className="text-slate-400">مدت زمان انتخابی:</span>
                         <motion.span
