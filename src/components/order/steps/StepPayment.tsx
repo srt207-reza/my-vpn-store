@@ -12,7 +12,7 @@ type Props = {
     themeColor?: string;
 };
 
-export default function StepPayment({ orderId, totalPrice, supportLink, themeColor = "text-primary" }: Props) {
+export default function StepPayment({ orderId, totalPrice}: Props) {
     const copyToClipboard = (text: string) => {
         navigator.clipboard.writeText(text);
         toast.success("شماره کارت کپی شد!");
