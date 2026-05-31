@@ -106,15 +106,15 @@ export default function RubberDurationSlider({ allowedValues, value, onChange }:
 
     return (
         <div
-            className="w-full px-2 max-w-sm mx-auto bg-transparent p-0 rounded-none border-0 shadow-none select-none md:max-w-sm md:bg-store-panel md:p-6 md:rounded-2xl md:border md:border-store-border md:shadow-lg"
+            className="w-full px-2 mx-auto bg-transparent p-0 rounded-none border-0 shadow-none select-none"
             dir="ltr"
         >
             <div className="flex justify-between items-center mb-6">
-                <div className="text-3xl font-black text-white flex items-baseline gap-1">
+                <div className="text-4xl font-black text-white flex items-baseline gap-1">
                     <span className="text-sm text-primary font-bold mr-1">ماه</span>
                     {value.toLocaleString("fa-IR")}
                 </div>
-                <h3 className="text-lg font-semibold uppercase tracking-wider mb-1">مدت زمان اشتراک</h3>
+                <h3 className="text-xl font-semibold uppercase tracking-wider mb-1">مدت زمان اشتراک</h3>
             </div>
 
             <div

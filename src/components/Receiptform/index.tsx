@@ -33,16 +33,26 @@ const IRANIAN_BANKS = [
     "سایر",
 ];
 
-type Props = {
-    orderId: string;
+type ReceiptPayload = {
+    payerName: string;
+    trackingCode: string;
+    sourceBank: string;
 };
 
-export default function ReceiptForm({ orderId }: Props) {
+type Props = {
+    orderId?: string;
+    loading?: boolean;
+    onBack: () => void;
+    onSubmit: (receiptData: ReceiptPayload) => Promise<string>;
+};
+
+export default function ReceiptForm({ orderId, loading = false, onSubmit, onBack }: Props) {
     const [payerName, setPayerName] = useState("");
     const [trackingCode, setTrackingCode] = useState("");
     const [sourceBank, setSourceBank] = useState("");
-    const [loading, setLoading] = useState(false);
+    const [localLoading, setLocalLoading] = useState(false);
     const [submitted, setSubmitted] = useState(false);
+    const [submittedOrderId, setSubmittedOrderId] = useState("");
     const [bankOpen, setBankOpen] = useState(false);
     const [touched, setTouched] = useState({
         payerName: false,
@@ -53,37 +63,27 @@ export default function ReceiptForm({ orderId }: Props) {
     const payerNameValid = payerName.trim().length >= 3;
     const trackingCodeValid = trackingCode.trim().length >= 6;
     const sourceBankValid = sourceBank.trim().length > 0;
-    const canSubmit = payerNameValid && trackingCodeValid && sourceBankValid && !!orderId;
+    const canSubmit = payerNameValid && trackingCodeValid && sourceBankValid;
 
     const handleSubmit = async () => {
         setTouched({ payerName: true, trackingCode: true, sourceBank: true });
         if (!canSubmit) return;
 
-        setLoading(true);
+        setLocalLoading(true);
         try {
-            const res = await fetch("/api/order", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    orderId,
-                    payerName: payerName.trim(),
-                    trackingCode: trackingCode.trim(),
-                    sourceBank,
-                }),
+            const createdOrderId = await onSubmit({
+                payerName: payerName.trim(),
+                trackingCode: trackingCode.trim(),
+                sourceBank,
             });
 
-            const data = await res.json();
-
-            if (!res.ok || !data.success) {
-                throw new Error(data.message || "خطا در ثبت رسید");
-            }
-
+            setSubmittedOrderId(createdOrderId || "");
             setSubmitted(true);
             toast.success("رسید پرداخت با موفقیت ثبت شد.");
         } catch (err: any) {
             toast.error(err?.message || "خطایی رخ داد. دوباره تلاش کنید.");
         } finally {
-            setLoading(false);
+            setLocalLoading(false);
         }
     };
 
@@ -93,6 +93,7 @@ export default function ReceiptForm({ orderId }: Props) {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 className="bg-slate-950/80 border border-primary/20 rounded-3xl p-6 sm:p-8 text-center space-y-5"
+                dir="rtl"
             >
                 <motion.div
                     initial={{ scale: 0, rotate: -20 }}
@@ -112,7 +113,7 @@ export default function ReceiptForm({ orderId }: Props) {
                     <p className="text-slate-500 text-xs">کد سفارش</p>
                     <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-2xl px-5 py-3">
                         <span className="font-mono text-primary text-xl sm:text-2xl font-bold tracking-widest">
-                            {orderId}
+                            {submittedOrderId || orderId || "در حال ساخت..."}
                         </span>
                     </div>
                 </div>
@@ -150,7 +151,13 @@ export default function ReceiptForm({ orderId }: Props) {
                         onChange={(e) => setPayerName(e.target.value)}
                         onBlur={() => setTouched((p) => ({ ...p, payerName: true }))}
                         className={`w-full bg-store-base border rounded-xl pr-11 pl-4 py-3 text-store-text placeholder:text-slate-600 text-sm outline-none transition-all duration-200
-                            ${touched.payerName && !payerNameValid ? "border-red-500/60" : payerNameValid ? "border-primary/40 focus:border-primary" : "border-store-border focus:border-slate-500"}`}
+                            ${
+                                touched.payerName && !payerNameValid
+                                    ? "border-red-500/60"
+                                    : payerNameValid
+                                      ? "border-primary/40 focus:border-primary"
+                                      : "border-store-border focus:border-slate-500"
+                            }`}
                     />
                 </div>
                 {touched.payerName && !payerNameValid && (
@@ -173,7 +180,13 @@ export default function ReceiptForm({ orderId }: Props) {
                         onBlur={() => setTouched((p) => ({ ...p, trackingCode: true }))}
                         dir="ltr"
                         className={`w-full bg-store-base border rounded-xl pr-11 pl-4 py-3 text-store-text placeholder:text-slate-600 text-sm outline-none transition-all duration-200 text-right
-                            ${touched.trackingCode && !trackingCodeValid ? "border-red-500/60" : trackingCodeValid ? "border-primary/40 focus:border-primary" : "border-store-border focus:border-slate-500"}`}
+                            ${
+                                touched.trackingCode && !trackingCodeValid
+                                    ? "border-red-500/60"
+                                    : trackingCodeValid
+                                      ? "border-primary/40 focus:border-primary"
+                                      : "border-store-border focus:border-slate-500"
+                            }`}
                     />
                 </div>
                 {touched.trackingCode && !trackingCodeValid && (
@@ -222,7 +235,11 @@ export default function ReceiptForm({ orderId }: Props) {
                                                 setTouched((p) => ({ ...p, sourceBank: true }));
                                             }}
                                             className={`w-full text-right px-4 py-2.5 text-sm transition-colors
-                                                ${sourceBank === bank ? "text-primary bg-primary/10" : "text-slate-300 hover:bg-slate-800 hover:text-white"}`}
+                                                ${
+                                                    sourceBank === bank
+                                                        ? "text-primary bg-primary/10"
+                                                        : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                                                }`}
                                         >
                                             {bank === "سایر" ? bank : `بانک ${bank}`}
                                         </button>
@@ -238,18 +255,27 @@ export default function ReceiptForm({ orderId }: Props) {
                 )}
             </div>
 
-            <div className="pt-1">
-                <motion.button
-                    whileHover={canSubmit && !loading ? { scale: 1.02, y: -2 } : {}}
-                    whileTap={canSubmit && !loading ? { scale: 0.98 } : {}}
-                    onClick={handleSubmit}
-                    disabled={loading || !canSubmit}
-                    className={`relative w-full py-3.5 rounded-xl font-bold text-sm sm:text-base transition-all flex items-center justify-center gap-2 overflow-hidden
-                        ${canSubmit && !loading
-                            ? "bg-primary text-slate-900 hover:bg-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.25)] cursor-pointer"
-                            : "bg-slate-800 text-slate-500 cursor-not-allowed"}`}
+            <div className="relative z-10 flex flex-col-reverse gap-3 pt-2 sm:flex-row">
+                <button
+                    onClick={onBack}
+                    className="px-6 cursor-pointer py-4 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 transition-colors"
                 >
-                    {loading ? (
+                    بازگشت
+                </button>
+
+                <motion.button
+                    whileHover={canSubmit && !loading && !localLoading ? { scale: 1.02, y: -2 } : {}}
+                    whileTap={canSubmit && !loading && !localLoading ? { scale: 0.98 } : {}}
+                    onClick={handleSubmit}
+                    disabled={loading || !canSubmit || localLoading}
+                    className={`relative w-full py-3.5 rounded-xl font-bold text-sm sm:text-base transition-all flex items-center justify-center gap-2 overflow-hidden
+                        ${
+                            canSubmit && !loading && !localLoading
+                                ? "bg-primary text-slate-900 hover:bg-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.25)] cursor-pointer"
+                                : "bg-primary hover:bg-cyan-400 text-slate-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                        }`}
+                >
+                    {loading || localLoading ? (
                         <Loader2 className="w-5 h-5 animate-spin" />
                     ) : (
                         <span className="relative z-10">تأیید و ثبت رسید پرداخت</span>

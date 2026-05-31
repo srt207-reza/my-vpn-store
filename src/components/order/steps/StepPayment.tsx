@@ -2,17 +2,27 @@
 
 import ReceiptForm from "@/components/Receiptform";
 import { motion } from "framer-motion";
-import { CheckCircle2, Copy, Send, CreditCard, Wifi } from "lucide-react";
+import { CheckCircle2, Copy, CreditCard, Wifi, ArrowLeft } from "lucide-react";
 import toast from "react-hot-toast";
 
-type Props = {
-    orderId: string;
-    totalPrice: number;
-    supportLink: string;
-    themeColor?: string;
+type ReceiptPayload = {
+    payerName: string;
+    trackingCode: string;
+    sourceBank: string;
 };
 
-export default function StepPayment({ orderId, totalPrice}: Props) {
+type Props = {
+    totalPrice: number;
+    supportLink: string;
+    orderId: string;
+    themeColor?: string;
+    onBack: () => void;
+    onConfirmReceipt: (receiptData: ReceiptPayload) => Promise<string>;
+    loading?: boolean;
+    
+};
+
+export default function StepPayment({ totalPrice, orderId, onBack, onConfirmReceipt, loading }: Props) {
     const copyToClipboard = (text: string) => {
         navigator.clipboard.writeText(text);
         toast.success("شماره کارت کپی شد!");
@@ -101,25 +111,34 @@ export default function StepPayment({ orderId, totalPrice}: Props) {
                     <CheckCircle2 className="w-10 h-10 sm:w-12 sm:h-12 relative z-10" />
                 </motion.div>
 
+                {/* <motion.h2
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.12, duration: 0.5 }}
+                    className="text-2xl sm:text-3xl font-bold text-store-text"
+                >
+                    اطلاعات پرداخت و کارت بانکی
+                </motion.h2> */}
+
                 {orderId ? (
                     <>
                         <motion.h2
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.12, duration: 0.5 }}
-                            className="text-2xl sm:text-3xl font-bold text-store-text"
+                            className="text-2xl sm:text-3xl font-bold text-white"
                         >
-                            ثبت سفارش اشتراک راهکار اتصال انجام شد!
+                            ثبت سفارش شما با موفقیت انجام شد!
                         </motion.h2>
 
                         <motion.p
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.2, duration: 0.5 }}
-                            className="text-store-muted text-base sm:text-lg"
+                            className="text-zinc-400 text-base sm:text-lg"
                         >
-                            کد پیگیری:{" "}
-                            <span className="font-mono text-primary bg-primary/10 px-3 py-1 sm:px-4 sm:py-1.5 rounded-xl ml-1 border border-primary/20 inline-block shadow-inner">
+                            کد سفارش :{" "}
+                            <span className="font-mono text-primary bg-[#22D3EE]/10 px-3 py-1 sm:px-4 sm:py-1.5 rounded-xl ml-1 border border-[#22D3EE]/20 inline-block shadow-inner">
                                 {orderId}
                             </span>
                         </motion.p>
@@ -129,7 +148,7 @@ export default function StepPayment({ orderId, totalPrice}: Props) {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.12, duration: 0.5 }}
-                        className="text-2xl sm:text-3xl font-bold text-store-text"
+                        className="text-2xl sm:text-3xl font-bold text-white"
                     >
                         اطلاعات رسید پرداخت و کارت بانکی
                     </motion.h2>
@@ -148,7 +167,7 @@ export default function StepPayment({ orderId, totalPrice}: Props) {
                     className="text-store-muted text-sm leading-relaxed mb-6 px-2"
                 >
                     جهت پرداخت وجه، لطفاً مبلغ{" "}
-                    <strong className={`text-lg sm:text-xl text-primary`}>
+                    <strong className="text-lg sm:text-xl text-primary">
                         {totalPrice.toLocaleString("fa-IR")} تومان
                     </strong>{" "}
                     را به شماره کارت زیر واریز بفرمایید.
@@ -252,6 +271,7 @@ export default function StepPayment({ orderId, totalPrice}: Props) {
                                 onClick={() => copyToClipboard("5022291584389710")}
                                 className="p-2 shrink-0 cursor-pointer text-primary hover:text-white hover:bg-primary/20 rounded-lg transition-colors bg-store-base/50 backdrop-blur-sm border border-primary/30 flex items-center justify-center"
                                 title="کپی شماره کارت"
+                                type="button"
                             >
                                 <Copy className="w-4 h-4 sm:w-5 sm:h-5" />
                             </motion.button>
@@ -287,8 +307,8 @@ export default function StepPayment({ orderId, totalPrice}: Props) {
                 </motion.div>
             </motion.div>
 
-            <div className="mt-8">
-                <ReceiptForm orderId={orderId} />
+            <div className="mt-8 w-full">
+                <ReceiptForm onSubmit={onConfirmReceipt} loading={loading} onBack={onBack} />
             </div>
         </motion.div>
     );

@@ -44,10 +44,9 @@ export default function StepVolumeSelection({
             </div>
 
             <div className="flex flex-col items-center justify-center space-y-6">
-                <div className="w-full rounded-2xl border border-slate-700/60 overflow-hidden md:overflow-visible md:border-0 md:rounded-none">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-0 md:gap-6">
-                        <div className="w-full order-1 md:order-2 p-4 md:p-0 border-slate-700/50 md:border-0">
-                            {/* <p className="text-primary font-medium text-sm text-center mb-4">مدت زمان اشتراک:</p> */}
+                <div className="w-full rounded-2xl bg-slate-900/30 p-4 md:p-6">
+                    <div className="flex flex-col gap-6">
+                        <div className="w-full">
                             <RubberDurationSlider
                                 allowedValues={ALLOWED_DURATIONS}
                                 value={formData.duration}
@@ -55,8 +54,7 @@ export default function StepVolumeSelection({
                             />
                         </div>
 
-                        <div className="w-full order-2 md:order-1 p-4 md:p-0">
-                            {/* <p className="text-primary font-medium text-sm text-center mb-4">حجم ترافیک مورد نیاز:</p> */}
+                        <div className="w-full pt-4 border-t border-slate-700/40">
                             <RubberVolumeSlider
                                 allowedValues={ALLOWED_VOLUMES}
                                 value={formData.volume}

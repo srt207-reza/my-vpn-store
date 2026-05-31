@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     User,
@@ -19,9 +19,13 @@ import {
     Building2,
     ChevronDown,
     ChevronUp,
+    Upload,
+    FileSpreadsheet,
+    RotateCcw,
     Hourglass,
 } from "lucide-react";
 import * as XLSX from "xlsx";
+import toast from "react-hot-toast";
 
 type Receipt = {
     payerName: string;
@@ -37,10 +41,12 @@ type VpnOrder = {
     fullName: string;
     contactInfo: string;
     price: number;
-    status: "pending_payment" | "awaiting_receipt" | "processing" | "completed";
+    status: "processing" | "completed";
     receipt?: Receipt;
     createdAt: string;
 };
+
+type StatusFilter = "all" | "processing" | "completed";
 
 const STATUS_CONFIG: Record<
     VpnOrder["status"] | "all",
@@ -59,20 +65,6 @@ const STATUS_CONFIG: Record<
         border: "border-white/20",
         icon: <AlertCircle className="w-3.5 h-3.5" />,
     },
-    pending_payment: {
-        label: "در انتظار پرداخت",
-        color: "text-amber-400",
-        bg: "bg-amber-500/10",
-        border: "border-amber-500/25",
-        icon: <AlertCircle className="w-3.5 h-3.5" />,
-    },
-    awaiting_receipt: {
-        label: "در انتظار تأیید رسید",
-        color: "text-blue-400",
-        bg: "bg-blue-500/10",
-        border: "border-blue-500/25",
-        icon: <Hourglass className="w-3.5 h-3.5" />,
-    },
     processing: {
         label: "در حال پردازش",
         color: "text-violet-400",
@@ -89,32 +81,150 @@ const STATUS_CONFIG: Record<
     },
 };
 
+function toLatinDigits(input: string) {
+    const map: Record<string, string> = {
+        "۰": "0",
+        "۱": "1",
+        "۲": "2",
+        "۳": "3",
+        "۴": "4",
+        "۵": "5",
+        "۶": "6",
+        "۷": "7",
+        "۸": "8",
+        "۹": "9",
+        "٠": "0",
+        "١": "1",
+        "٢": "2",
+        "٣": "3",
+        "٤": "4",
+        "٥": "5",
+        "٦": "6",
+        "٧": "7",
+        "٨": "8",
+        "٩": "9",
+    };
+
+    return input.replace(/[۰-۹٠-٩]/g, (d) => map[d] ?? d);
+}
+
+function normalizeText(value: unknown): string {
+    if (typeof value === "string") return value.trim();
+    if (value === null || value === undefined) return "";
+    return String(value).trim();
+}
+
+function parseNumber(value: unknown): number {
+    const cleaned = toLatinDigits(normalizeText(value)).replace(/[^\d.-]/g, "");
+    const parsed = Number(cleaned);
+    return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function parseStatus(value: unknown): VpnOrder["status"] {
+    const v = normalizeText(value).toLowerCase();
+
+    if (v === "completed" || v.includes("تکمیل")) return "completed";
+    return "processing";
+}
+
+function getCell(row: Record<string, unknown>, keys: string[]) {
+    for (const key of keys) {
+        const value = row[key];
+        if (value !== undefined && value !== null && normalizeText(value) !== "") {
+            return value;
+        }
+    }
+    return "";
+}
+
+function parseDateSafe(dateString?: string) {
+    if (!dateString) return "نامشخص";
+    const date = new Date(dateString);
+    if (Number.isNaN(date.getTime())) return dateString;
+
+    return new Intl.DateTimeFormat("fa-IR", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+    }).format(date);
+}
+
+function parseDateForExcel(dateString?: string) {
+    if (!dateString) return "نامشخص";
+    const date = new Date(dateString);
+    if (Number.isNaN(date.getTime())) return dateString;
+
+    return new Intl.DateTimeFormat("fa-IR", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+    }).format(date);
+}
+
+function normalizeImportedRow(row: Record<string, unknown>): VpnOrder | null {
+    const id =
+        normalizeText(getCell(row, ["شناسه سفارش", "ID", "id", "orderId"])) ||
+        `CN-IMP-${Date.now().toString().slice(-6)}`;
+
+    const type = normalizeText(getCell(row, ["نوع", "type"])) || "vpn";
+    const volume = parseNumber(getCell(row, ["حجم (GB)", "حجم", "volume"]));
+    const fullName = normalizeText(getCell(row, ["نام و نام خانوادگی", "fullName", "name"]));
+    const contactInfo = normalizeText(getCell(row, ["راه ارتباطی", "contactInfo", "ایمیل", "email"]));
+    const price = parseNumber(getCell(row, ["مبلغ (تومان)", "price", "مبلغ"]));
+    const status = parseStatus(getCell(row, ["وضعیت", "status"]));
+    const createdAt =
+        normalizeText(getCell(row, ["زمان ایجاد سفارش", "createdAt"])) || new Date().toISOString();
+
+    if (!volume || !fullName || !contactInfo || !price) {
+        return null;
+    }
+
+    const payerName = normalizeText(getCell(row, ["نام واریزکننده", "payerName"]));
+    const trackingCode = normalizeText(getCell(row, ["کد رهگیری", "trackingCode"]));
+    const sourceBank = normalizeText(getCell(row, ["بانک مبدأ", "sourceBank"])).replace(/^بانک\s+/g, "");
+    const submittedAt = normalizeText(getCell(row, ["زمان ثبت رسید", "submittedAt"]));
+
+    const receipt =
+        payerName && trackingCode && sourceBank
+            ? {
+                  payerName,
+                  trackingCode,
+                  sourceBank,
+                  submittedAt: submittedAt || new Date().toISOString(),
+              }
+            : undefined;
+
+    return {
+        id,
+        type,
+        volume,
+        fullName,
+        contactInfo,
+        price,
+        status,
+        receipt,
+        createdAt,
+    };
+}
+
 export default function ClientOrders({ orders }: { orders: VpnOrder[] }) {
     const [orderList, setOrderList] = useState<VpnOrder[]>(orders);
     const [searchTerm, setSearchTerm] = useState("");
-    const [activeFilter, setActiveFilter] = useState<
-        "all" | "pending_payment" | "awaiting_receipt" | "processing" | "completed"
-    >("all");
+    const [activeFilter, setActiveFilter] = useState<StatusFilter>("all");
     const [isDeleting, setIsDeleting] = useState<string | null>(null);
     const [isUpdating, setIsUpdating] = useState<string | null>(null);
     const [expandedReceipt, setExpandedReceipt] = useState<string | null>(null);
-
-    const formatJalali = (dateString: string) => {
-        if (!dateString) return "نامشخص";
-        return new Intl.DateTimeFormat("fa-IR", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-        }).format(new Date(dateString));
-    };
+    const [importing, setImporting] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
 
     const totalOrders = orderList.length;
     const totalIncome = orderList.reduce((acc, order) => acc + (order.price || 0), 0);
-    const pendingCount = orderList.filter((o) => o.status === "pending_payment").length;
-    const awaitingReceiptCount = orderList.filter((o) => o.status === "awaiting_receipt").length;
     const processingCount = orderList.filter((o) => o.status === "processing").length;
+    const completedCount = orderList.filter((o) => o.status === "completed").length;
 
     const filteredOrders = useMemo(() => {
         return orderList.filter((order) => {
@@ -139,7 +249,7 @@ export default function ClientOrders({ orders }: { orders: VpnOrder[] }) {
 
         setIsDeleting(id);
         try {
-            const response = await fetch(`/api/order?id=${id}`, {
+            const response = await fetch(`/api/order?id=${encodeURIComponent(id)}`, {
                 method: "DELETE",
             });
 
@@ -147,12 +257,13 @@ export default function ClientOrders({ orders }: { orders: VpnOrder[] }) {
 
             if (data.success) {
                 setOrderList((prev) => prev.filter((order) => order.id !== id));
+                toast.success("سفارش حذف شد.");
             } else {
-                alert(data.message || "خطا در حذف سفارش");
+                toast.error(data.message || "خطا در حذف سفارش");
             }
         } catch (error) {
             console.error("Delete error:", error);
-            alert("خطا در برقراری ارتباط با سرور");
+            toast.error("خطا در برقراری ارتباط با سرور");
         } finally {
             setIsDeleting(null);
         }
@@ -171,25 +282,15 @@ export default function ClientOrders({ orders }: { orders: VpnOrder[] }) {
 
             if (data.success) {
                 setOrderList((prev) => prev.map((o) => (o.id === id ? { ...o, status } : o)));
+                toast.success("وضعیت سفارش بروزرسانی شد.");
             } else {
-                alert(data.message || "خطا در بروزرسانی وضعیت");
+                toast.error(data.message || "خطا در بروزرسانی وضعیت");
             }
         } catch {
-            alert("خطا در برقراری ارتباط با سرور");
+            toast.error("خطا در برقراری ارتباط با سرور");
         } finally {
             setIsUpdating(null);
         }
-    };
-
-    const formatExcelDate = (dateString?: string) => {
-        if (!dateString) return "نامشخص";
-        return new Intl.DateTimeFormat("fa-IR", {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-        }).format(new Date(dateString));
     };
 
     const handleExportExcel = () => {
@@ -204,8 +305,8 @@ export default function ClientOrders({ orders }: { orders: VpnOrder[] }) {
             "نام واریزکننده": order.receipt?.payerName || "ندارد",
             "کد رهگیری": order.receipt?.trackingCode || "ندارد",
             "بانک مبدأ": order.receipt?.sourceBank ? `بانک ${order.receipt.sourceBank}` : "ندارد",
-            "زمان ثبت رسید": formatExcelDate(order.receipt?.submittedAt),
-            "زمان ایجاد سفارش": formatExcelDate(order.createdAt),
+            "زمان ثبت رسید": parseDateForExcel(order.receipt?.submittedAt),
+            "زمان ایجاد سفارش": parseDateForExcel(order.createdAt),
         }));
 
         const worksheet = XLSX.utils.json_to_sheet(rows);
@@ -214,15 +315,14 @@ export default function ClientOrders({ orders }: { orders: VpnOrder[] }) {
             { wch: 12 },
             { wch: 14 },
             { wch: 12 },
-            { wch: 10 },
+            { wch: 20 },
             { wch: 24 },
-            { wch: 24 },
+            { wch: 16 },
             { wch: 16 },
             { wch: 20 },
             { wch: 20 },
             { wch: 20 },
             { wch: 18 },
-            { wch: 22 },
             { wch: 22 },
         ];
 
@@ -231,6 +331,72 @@ export default function ClientOrders({ orders }: { orders: VpnOrder[] }) {
 
         const fileName = `orders-${new Date().toISOString().slice(0, 10)}.xlsx`;
         XLSX.writeFile(workbook, fileName);
+        toast.success("خروجی اکسل ساخته شد.");
+    };
+
+    const handleImportExcel = async (file: File) => {
+        setImporting(true);
+        try {
+            const buffer = await file.arrayBuffer();
+            const workbook = XLSX.read(buffer, { type: "array" });
+
+            const firstSheetName = workbook.SheetNames[0];
+            if (!firstSheetName) {
+                toast.error("فایل اکسل معتبر نیست.");
+                return;
+            }
+
+            const sheet = workbook.Sheets[firstSheetName];
+            const rawRows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, {
+                defval: "",
+                blankrows: false,
+            });
+
+            if (rawRows.length === 0) {
+                toast.error("هیچ ردیفی در فایل پیدا نشد.");
+                return;
+            }
+
+            const normalizedOrders = rawRows
+                .map(normalizeImportedRow)
+                .filter((row): row is VpnOrder => Boolean(row));
+
+            if (normalizedOrders.length === 0) {
+                toast.error("هیچ ردیف معتبری برای وارد کردن پیدا نشد.");
+                return;
+            }
+
+            const res = await fetch("/api/order", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    action: "import",
+                    orders: normalizedOrders,
+                }),
+            });
+
+            const data = await res.json();
+
+            if (!res.ok || !data.success) {
+                toast.error(data.message || "خطا در ورود فایل اکسل");
+                return;
+            }
+
+            setOrderList((prev) => {
+                const map = new Map<string, VpnOrder>();
+                for (const order of prev) map.set(order.id, order);
+                for (const order of normalizedOrders) map.set(order.id, order);
+                return Array.from(map.values());
+            });
+
+            toast.success(`فایل وارد شد. ${data.importedCount || normalizedOrders.length} ردیف ذخیره شد.`);
+        } catch (err) {
+            console.error(err);
+            toast.error("خطا در خواندن یا ارسال فایل اکسل");
+        } finally {
+            setImporting(false);
+            if (fileInputRef.current) fileInputRef.current.value = "";
+        }
     };
 
     return (
@@ -262,29 +428,17 @@ export default function ClientOrders({ orders }: { orders: VpnOrder[] }) {
                             <p className="text-slate-400 text-xs mb-1.5 font-semibold uppercase tracking-wider">
                                 کل درآمد (تومان)
                             </p>
-                            <p className="font-black text-xl text-primary">{totalIncome.toLocaleString("fa-IR")}</p>
+                            <p className="font-black text-xl text-primary">
+                                {totalIncome.toLocaleString("fa-IR")}
+                            </p>
                         </div>
 
                         <div className="bg-store-card px-6 py-4 rounded-2xl border border-store-border flex-1 min-w-[140px] text-center shadow-lg">
                             <p className="text-slate-400 text-xs mb-1.5 font-semibold uppercase tracking-wider">
                                 کل سفارشات
                             </p>
-                            <p className="font-black text-xl text-white">{totalOrders.toLocaleString("fa-IR")}</p>
-                        </div>
-
-                        <div className="bg-store-card px-6 py-4 rounded-2xl border border-store-border flex-1 min-w-[140px] text-center shadow-lg">
-                            <p className="text-slate-400 text-xs mb-1.5 font-semibold uppercase tracking-wider">
-                                در انتظار پرداخت
-                            </p>
-                            <p className="font-black text-xl text-amber-400">{pendingCount.toLocaleString("fa-IR")}</p>
-                        </div>
-
-                        <div className="bg-store-card px-6 py-4 rounded-2xl border border-store-border flex-1 min-w-[140px] text-center shadow-lg">
-                            <p className="text-slate-400 text-xs mb-1.5 font-semibold uppercase tracking-wider">
-                                در انتظار رسید
-                            </p>
-                            <p className="font-black text-xl text-blue-400">
-                                {awaitingReceiptCount.toLocaleString("fa-IR")}
+                            <p className="font-black text-xl text-white">
+                                {totalOrders.toLocaleString("fa-IR")}
                             </p>
                         </div>
 
@@ -296,12 +450,51 @@ export default function ClientOrders({ orders }: { orders: VpnOrder[] }) {
                                 {processingCount.toLocaleString("fa-IR")}
                             </p>
                         </div>
-                            <button
-                                onClick={handleExportExcel}
-                                className="px-4 cursor-pointer py-3 rounded-2xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 hover:bg-emerald-500/25 transition-all font-bold text-sm whitespace-nowrap"
-                            >
-                                خروجی اکسل
-                            </button>
+
+                        <div className="bg-store-card px-6 py-4 rounded-2xl border border-store-border flex-1 min-w-[140px] text-center shadow-lg">
+                            <p className="text-slate-400 text-xs mb-1.5 font-semibold uppercase tracking-wider">
+                                تکمیل شده
+                            </p>
+                            <p className="font-black text-xl text-emerald-400">
+                                {completedCount.toLocaleString("fa-IR")}
+                            </p>
+                        </div>
+
+                        <button
+                            onClick={handleExportExcel}
+                            className="px-4 cursor-pointer py-3 rounded-2xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 hover:bg-emerald-500/25 transition-all font-bold text-sm whitespace-nowrap"
+                        >
+                            خروجی اکسل
+                        </button>
+
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept=".xlsx,.xls,.csv"
+                            className="hidden"
+                            onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) handleImportExcel(file);
+                            }}
+                        />
+
+                        <button
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={importing}
+                            className="px-4 cursor-pointer py-3 rounded-2xl bg-sky-500/15 text-sky-400 border border-sky-500/25 hover:bg-sky-500/25 transition-all font-bold text-sm whitespace-nowrap disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
+                        >
+                            {importing ? (
+                                <>
+                                    <RotateCcw className="w-4 h-4 animate-spin" />
+                                    در حال ورود
+                                </>
+                            ) : (
+                                <>
+                                    <FileSpreadsheet className="w-4 h-4" />
+                                    آپلود اکسل
+                                </>
+                            )}
+                        </button>
                     </div>
                 </motion.div>
 
@@ -318,7 +511,7 @@ export default function ClientOrders({ orders }: { orders: VpnOrder[] }) {
                             </div>
                             <input
                                 type="text"
-                                placeholder="جستجو نام، ایمیل، کد رهگیری..."
+                                placeholder="جستجو نام، تماس، کد رهگیری..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="w-full bg-store-card border border-store-border text-white text-sm rounded-xl py-3.5 pr-12 pl-4 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all placeholder:text-slate-500 shadow-inner"
@@ -332,35 +525,25 @@ export default function ClientOrders({ orders }: { orders: VpnOrder[] }) {
                             </div>
 
                             <div className="flex gap-1 bg-store-card p-1.5 rounded-xl border border-store-border">
-                                {(
-                                    ["all", "pending_payment", "awaiting_receipt", "processing", "completed"] as const
-                                ).map((type) => (
+                                {(["all", "processing", "completed"] as const).map((type) => (
                                     <button
                                         key={type}
                                         onClick={() => setActiveFilter(type)}
                                         className={`px-4 cursor-pointer py-2 rounded-lg text-sm font-bold transition-all duration-300 whitespace-nowrap ${
                                             activeFilter === type
-                                                ? type === "pending_payment"
-                                                    ? "bg-amber-500/20 text-amber-400 shadow-sm"
-                                                    : type === "awaiting_receipt"
-                                                      ? "bg-blue-500/20 text-blue-400 shadow-sm"
-                                                      : type === "processing"
-                                                        ? "bg-violet-500/20 text-violet-400 shadow-sm"
-                                                        : type === "completed"
-                                                          ? "bg-emerald-500/20 text-emerald-400 shadow-sm"
-                                                          : "bg-primary/20 text-primary shadow-sm"
+                                                ? type === "processing"
+                                                    ? "bg-violet-500/20 text-violet-400 shadow-sm"
+                                                    : type === "completed"
+                                                      ? "bg-emerald-500/20 text-emerald-400 shadow-sm"
+                                                      : "bg-primary/20 text-primary shadow-sm"
                                                 : "text-slate-400 hover:text-white hover:bg-store-hover"
                                         }`}
                                     >
                                         {type === "all"
                                             ? "همه سفارش‌ها"
-                                            : type === "pending_payment"
-                                              ? "در انتظار پرداخت"
-                                              : type === "awaiting_receipt"
-                                                ? "در انتظار رسید"
-                                                : type === "processing"
-                                                  ? "در حال پردازش"
-                                                  : "تکمیل شده"}
+                                            : type === "processing"
+                                              ? "در حال پردازش"
+                                              : "تکمیل شده"}
                                     </button>
                                 ))}
                             </div>
@@ -369,24 +552,22 @@ export default function ClientOrders({ orders }: { orders: VpnOrder[] }) {
 
                     <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-slate-400 text-sm px-2">وضعیت:</span>
-                        {(["all", "pending_payment", "awaiting_receipt", "processing", "completed"] as const).map(
-                            (key) => (
-                                <button
-                                    key={key}
-                                    onClick={() => setActiveFilter(key)}
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap border
-                                        ${
-                                            activeFilter === key
-                                                ? key === "all"
-                                                    ? "bg-white/10 text-white border-white/20"
-                                                    : `${STATUS_CONFIG[key].bg} ${STATUS_CONFIG[key].color} ${STATUS_CONFIG[key].border}`
-                                                : "text-slate-500 border-transparent hover:text-slate-300 hover:bg-store-card"
-                                        }`}
-                                >
-                                    {key === "all" ? "همه" : STATUS_CONFIG[key].label}
-                                </button>
-                            ),
-                        )}
+                        {(["all", "processing", "completed"] as const).map((key) => (
+                            <button
+                                key={key}
+                                onClick={() => setActiveFilter(key)}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap border
+                                    ${
+                                        activeFilter === key
+                                            ? key === "all"
+                                                ? "bg-white/10 text-white border-white/20"
+                                                : `${STATUS_CONFIG[key].bg} ${STATUS_CONFIG[key].color} ${STATUS_CONFIG[key].border}`
+                                            : "text-slate-500 border-transparent hover:text-slate-300 hover:bg-store-card"
+                                    }`}
+                            >
+                                {key === "all" ? "همه" : STATUS_CONFIG[key].label}
+                            </button>
+                        ))}
                     </div>
                 </motion.div>
 
@@ -406,7 +587,7 @@ export default function ClientOrders({ orders }: { orders: VpnOrder[] }) {
                     <motion.div layout className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                         <AnimatePresence mode="popLayout">
                             {filteredOrders.map((order) => {
-                                const status = STATUS_CONFIG[order.status] ?? STATUS_CONFIG.pending_payment;
+                                const status = STATUS_CONFIG[order.status] ?? STATUS_CONFIG.processing;
                                 const receiptOpen = expandedReceipt === order.id;
 
                                 return (
@@ -534,9 +715,7 @@ export default function ClientOrders({ orders }: { orders: VpnOrder[] }) {
                                                                                     <Clock className="w-3.5 h-3.5 text-slate-500" />
                                                                                 ),
                                                                                 label: "زمان ثبت",
-                                                                                value: formatJalali(
-                                                                                    order.receipt.submittedAt,
-                                                                                ),
+                                                                                value: parseDateSafe(order.receipt.submittedAt),
                                                                             },
                                                                         ].map(({ icon, label, value }) => (
                                                                             <div
@@ -613,7 +792,7 @@ export default function ClientOrders({ orders }: { orders: VpnOrder[] }) {
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-1.5 text-xs text-slate-500">
                                                     <Clock className="w-3 h-3" />
-                                                    <span>{formatJalali(order.createdAt)}</span>
+                                                    <span>{parseDateSafe(order.createdAt)}</span>
                                                 </div>
                                                 <button
                                                     onClick={() => handleDelete(order.id)}

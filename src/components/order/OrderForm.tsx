@@ -12,6 +12,12 @@ import StepCheckout from "./steps/StepCheckout";
 import StepPayment from "./steps/StepPayment";
 import { ALLOWED_VOLUMES, ALLOWED_DURATIONS, PRICING_DATA } from "@/constants/order";
 
+type ReceiptPayload = {
+    payerName: string;
+    trackingCode: string;
+    sourceBank: string;
+};
+
 export default function OrderForm() {
     const searchParams = useSearchParams();
     const router = useRouter();
@@ -49,35 +55,6 @@ export default function OrderForm() {
 
     const canProceedToNextStep = isValidEmail(formData.contactInfo) && isValidFullName(formData.fullName);
 
-    const handleSubmit = async () => {
-        setLoading(true);
-        try {
-            const res = await fetch("/api/order", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    ...formData,
-                    price: totalPrice,
-                    type: productType,
-                }),
-            });
-
-            const data = await res.json();
-
-            if (res.ok && data.success) {
-                setOrderId(data.orderId);
-                setStep(4);
-                toast.success("سفارش شما با موفقیت ثبت شد.");
-            } else {
-                throw new Error(data.message || "خطا در ثبت اطلاعات");
-            }
-        } catch (error: any) {
-            toast.error(error.message || "ارتباط با سرور برقرار نشد.");
-        } finally {
-            setLoading(false);
-        }
-    };
-
     const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const rawValue = e.target.value;
         const cleanedValue = rawValue.replace(/[^a-zA-Z\s]/g, "");
@@ -102,12 +79,49 @@ export default function OrderForm() {
         setStep(3);
     };
 
+    // فقط رفتن به صفحه پرداخت، بدون ساخت سفارش
+    const handleCheckoutConfirm = () => {
+        setStep(4);
+    };
+
+    // ساخت سفارش فقط بعد از ثبت رسید
+    const handleCreateOrder = async (receiptData: ReceiptPayload) => {
+        setLoading(true);
+        try {
+            const res = await fetch("/api/order", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    ...formData,
+                    price: totalPrice,
+                    type: productType,
+                    receipt: receiptData,
+                }),
+            });
+
+            const data = await res.json();
+
+            if (res.ok && data.success) {
+                setOrderId(data.orderId || "");
+                toast.success("سفارش و رسید با موفقیت ثبت شد.");
+                return data.orderId as string;
+            }
+
+            throw new Error(data.message || "خطا در ثبت اطلاعات");
+        } catch (error: any) {
+            toast.error(error.message || "ارتباط با سرور برقرار نشد.");
+            throw error;
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div className="max-w-3xl mx-auto w-full">
             <div className="text-center mb-10">
-                {step < 4 && (
-                    <div className="flex items-center justify-center gap-2 mb-2">
-                        {[1, 2, 3].map((num) => (
+                {step < 5 && (
+                    <div className="flex items-center justify-center gap-2 mb-2 flex-wrap">
+                        {[1, 2, 3, 4].map((num) => (
                             <div key={num} className="flex items-center">
                                 <div
                                     onClick={() => (num === 1 && step > 1 ? setStep(1) : undefined)}
@@ -117,9 +131,9 @@ export default function OrderForm() {
                                 >
                                     {num}
                                 </div>
-                                {num < 3 && (
+                                {num < 4 && (
                                     <div
-                                        className={`w-12 h-1 transition-colors ${step > num ? "bg-primary" : "bg-slate-800"}`}
+                                        className={`w-10 sm:w-12 h-1 transition-colors ${step > num ? "bg-primary" : "bg-slate-800"}`}
                                     />
                                 )}
                             </div>
@@ -166,9 +180,7 @@ export default function OrderForm() {
                         </div>
                         <h1 className="text-2xl font-bold text-white mb-2">تأیید اطلاعات</h1>
                     </>
-                ) : (
-                    <></>
-                )}
+                ) : <></>}
             </div>
 
             <AnimatePresence mode="wait">
@@ -203,8 +215,8 @@ export default function OrderForm() {
                         formData={formData}
                         totalPrice={totalPrice}
                         setStep={setStep}
-                        handleSubmit={handleSubmit}
-                        loading={loading}
+                        handleSubmit={handleCheckoutConfirm}
+                        loading={false}
                         themeBg={themeBg}
                         themeColor={themeColor}
                     />
@@ -216,6 +228,9 @@ export default function OrderForm() {
                         totalPrice={totalPrice}
                         supportLink={supportLink}
                         themeColor={themeColor}
+                        onBack={() => setStep(3)}
+                        onConfirmReceipt={handleCreateOrder}
+                        loading={loading}
                     />
                 )}
             </AnimatePresence>

@@ -107,14 +107,14 @@ export default function RubberVolumeSlider({ allowedValues, value, onChange }: R
 
     return (
         <div
-            className="w-full px-2 max-w-sm mx-auto bg-transparent p-0 rounded-none border-0 shadow-none select-none md:max-w-sm md:bg-store-panel md:p-6 md:rounded-2xl md:border md:border-store-border md:shadow-lg"
+            className="w-full px-2 mx-auto bg-transparent p-0 rounded-none border-0 shadow-none select-none "
             dir="ltr"
         >
             <div className="flex justify-between items-center mb-6">
-                <div className="text-3xl font-black text-white flex items-baseline gap-1">
+                <div className="text-4xl font-black text-white flex items-baseline gap-1">
                     {value.toLocaleString("fa-IR")} <span className="text-sm text-primary font-bold">GB</span>
                 </div>
-                <h3 className="text-lg font-semibold uppercase tracking-wider mb-1">حجم ترافیک</h3>
+                <h3 className="text-xl font-semibold uppercase tracking-wider mb-1">حجم ترافیک</h3>
             </div>
 
             <div
