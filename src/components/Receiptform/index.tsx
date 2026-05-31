@@ -79,7 +79,7 @@ export default function ReceiptForm({ orderId, loading = false, onSubmit, onBack
 
             setSubmittedOrderId(createdOrderId || "");
             setSubmitted(true);
-            toast.success("رسید پرداخت با موفقیت ثبت شد.");
+            // toast.success("رسید پرداخت با موفقیت ثبت شد.");
         } catch (err: any) {
             toast.error(err?.message || "خطایی رخ داد. دوباره تلاش کنید.");
         } finally {

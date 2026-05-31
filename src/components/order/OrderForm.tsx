@@ -119,7 +119,7 @@ export default function OrderForm() {
     return (
         <div className="max-w-3xl mx-auto w-full">
             <div className="text-center mb-10">
-                {step < 5 && (
+                {step < 5 && !orderId && (
                     <div className="flex items-center justify-center gap-2 mb-2 flex-wrap">
                         {[1, 2, 3, 4].map((num) => (
                             <div key={num} className="flex items-center">
