@@ -82,7 +82,7 @@ export default function StepVolumeSelection({
                                         <th
                                             key={d}
                                             onClick={() => setFormData({ ...formData, duration: d })}
-                                            className={`text-center py-3 px-2 md:px-4 font-semibold border-b cursor-pointer select-none transition-all min-w-[80px] md:min-w-[110px] ${
+                                            className={`text-center py-3 px-2 md:px-4 font-semibold border-b cursor-pointer select-none transition-all min-w-[65px] md:min-w-[110px] ${
                                                 isActiveCol
                                                     ? "text-primary border-b-2 border-b-primary bg-primary/5"
                                                     : "text-slate-400 border-b-slate-700/60 hover:text-slate-200 hover:bg-slate-800/60"
