@@ -13,7 +13,7 @@ export default function StepCheckout({
     themeColor,
 }: any) {
     // محاسبه قیمت پایه و مقدار تخفیف (سود کاربر)
-    const BASE_PRICE_PER_GB = 299000;
+    const BASE_PRICE_PER_GB = 25_000;
     const calculatedBasePrice = formData.volume * BASE_PRICE_PER_GB;
     const discountAmount = calculatedBasePrice - totalPrice;
     const hasDiscount = discountAmount > 0;

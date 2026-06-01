@@ -16,7 +16,7 @@ export default function StepVolumeSelection({
     themeColor,
 }: any) {
     // محاسبه قیمت پایه و تخفیف
-    const BASE_PRICE_PER_GB = 299000;
+    const BASE_PRICE_PER_GB = 25_000;
     const calculatedBasePrice = formData.volume * BASE_PRICE_PER_GB;
     const discountAmount = calculatedBasePrice - totalPrice;
     const hasDiscount = discountAmount > 0;
@@ -37,7 +37,7 @@ export default function StepVolumeSelection({
                 <div className="flex justify-center mt-3">
                     <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-slate-800 text-slate-300 text-xs border border-slate-700/60">
                         <Tags className="w-3.5 h-3.5 text-primary" />
-                        تعرفه پایه: هر گیگابایت ۲۹۹,۰۰۰ تومان
+                        تعرفه پایه: هر گیگابایت ۲۵,۰۰۰ تومان
                     </span>
                 </div>
             </div>
