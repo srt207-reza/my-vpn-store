@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     User,
-    Mail, // <<-- تغییر: استفاده از آیکون ایمیل به جای تلفن
+    Users,
+    Mail,
     Clock,
     CreditCard,
     AlertCircle,
@@ -12,61 +13,254 @@ import {
     Search,
     Filter,
     Trash2,
-    ShieldCheck,
     CheckCircle2,
-    Activity,
+    Hourglass,
+    Banknote,
+    Hash,
+    Building2,
+    ChevronDown,
+    ChevronUp,
+    FileSpreadsheet,
+    Upload,
+    RotateCcw,
+    ReceiptText,
 } from "lucide-react";
 
-// ساختار داده‌ای همگام با بک‌اند جدید
-type VpnOrder = {
+import type { LucideIcon } from "lucide-react";
+import * as XLSX from "xlsx";
+import toast from "react-hot-toast";
+
+type Receipt = {
+    payerName: string;
+    trackingCode: string;
+    sourceBank: string;
+    submittedAt: string;
+};
+
+type OrderStatus = "pending_payment" | "awaiting_receipt" | "processing" | "completed";
+type StatusFilter = "all" | "pending_payment" | "awaiting_receipt" | "processing" | "completed";
+
+type Order = {
     id: string;
     type: string;
     volume: number;
     fullName: string;
     contactInfo: string;
     price: number;
-    status: "pending_payment" | "awaiting_receipt" | "processing" | "completed";
+    status: OrderStatus;
+    receipt?: Receipt;
     createdAt: string;
+    updatedAt?: string;
+    importedFromExcel?: boolean;
 };
 
-export default function ClientOrders({ orders }: { orders: VpnOrder[] }) {
-    const [orderList, setOrderList] = useState<VpnOrder[]>(orders);
-    const [searchTerm, setSearchTerm] = useState("");
-    const [activeFilter, setActiveFilter] = useState<"all" | "pending_payment" | "completed">("all");
-    const [isDeleting, setIsDeleting] = useState<string | null>(null);
-
-    const formatJalali = (dateString: string) => {
-        if (!dateString) return "نامشخص";
-        const date = new Date(dateString);
-        return new Intl.DateTimeFormat("fa-IR", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-        }).format(date);
+const STATUS_META: Record<OrderStatus, { label: string; color: string; bg: string; border: string; icon: LucideIcon }> =
+    {
+        pending_payment: {
+            label: "در انتظار پرداخت",
+            color: "text-amber-400",
+            bg: "bg-amber-500/10",
+            border: "border-amber-500/25",
+            icon: AlertCircle,
+        },
+        awaiting_receipt: {
+            label: "در انتظار رسید",
+            color: "text-blue-400",
+            bg: "bg-blue-500/10",
+            border: "border-blue-500/25",
+            icon: Hourglass,
+        },
+        processing: {
+            label: "در حال پردازش",
+            color: "text-violet-400",
+            bg: "bg-violet-500/10",
+            border: "border-violet-500/25",
+            icon: Clock,
+        },
+        completed: {
+            label: "تکمیل شده",
+            color: "text-emerald-400",
+            bg: "bg-emerald-500/10",
+            border: "border-emerald-500/25",
+            icon: CheckCircle2,
+        },
     };
+
+function getStatusMeta(status: string) {
+    return STATUS_META[(status as OrderStatus) || "processing"] ?? STATUS_META.processing;
+}
+
+function toLatinDigits(input: string) {
+    const map: Record<string, string> = {
+        "۰": "0",
+        "۱": "1",
+        "۲": "2",
+        "۳": "3",
+        "۴": "4",
+        "۵": "5",
+        "۶": "6",
+        "۷": "7",
+        "۸": "8",
+        "۹": "9",
+        "٠": "0",
+        "١": "1",
+        "٢": "2",
+        "٣": "3",
+        "٤": "4",
+        "٥": "5",
+        "٦": "6",
+        "٧": "7",
+        "٨": "8",
+        "٩": "9",
+    };
+
+    return input.replace(/[۰-۹٠-٩]/g, (d) => map[d] ?? d);
+}
+
+function normalizeText(value: unknown): string {
+    if (typeof value === "string") return value.trim();
+    if (value === null || value === undefined) return "";
+    return String(value).trim();
+}
+
+function parseNumber(value: unknown): number {
+    const cleaned = toLatinDigits(normalizeText(value)).replace(/[^\d.-]/g, "");
+    const parsed = Number(cleaned);
+    return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function parseStatus(value: unknown): OrderStatus {
+    const v = normalizeText(value).toLowerCase();
+
+    if (v.includes("تکمیل") || v === "completed") return "completed";
+    if (v.includes("پردازش") || v === "processing") return "processing";
+    if (v.includes("رسید") || v.includes("در انتظار رسید") || v === "awaiting_receipt") return "awaiting_receipt";
+    if (v.includes("پرداخت") || v === "pending_payment") return "pending_payment";
+
+    return "pending_payment";
+}
+
+function cleanSourceBank(value: unknown): string {
+    return normalizeText(value)
+        .replace(/^بانک\s+/g, "")
+        .trim();
+}
+
+function parseDateSafe(dateString?: string) {
+    if (!dateString) return "نامشخص";
+    const date = new Date(dateString);
+    if (Number.isNaN(date.getTime())) return dateString;
+
+    return new Intl.DateTimeFormat("fa-IR", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+    }).format(date);
+}
+
+function parseDateForExcel(dateString?: string) {
+    if (!dateString) return "نامشخص";
+    const date = new Date(dateString);
+    if (Number.isNaN(date.getTime())) return dateString;
+
+    return new Intl.DateTimeFormat("fa-IR", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+    }).format(date);
+}
+
+function getCell(row: Record<string, unknown>, keys: string[]) {
+    for (const key of keys) {
+        const value = row[key];
+        if (value !== undefined && value !== null && normalizeText(value) !== "") {
+            return value;
+        }
+    }
+    return "";
+}
+
+function normalizeImportedRow(row: Record<string, unknown>): Order | null {
+    const id = normalizeText(getCell(row, ["شناسه سفارش", "ID", "id", "orderId", "کد سفارش"]));
+    const type = normalizeText(getCell(row, ["نوع", "type", "productType"])).toLowerCase() || "vpn";
+    const volume = parseNumber(getCell(row, ["حجم", "volume", "gb", "ترافیک"]));
+    const fullName = normalizeText(getCell(row, ["نام و نام خانوادگی", "fullName", "name"]));
+    const contactInfo = normalizeText(getCell(row, ["ایمیل", "contactInfo", "email", "راه ارتباطی"]));
+    const price = parseNumber(getCell(row, ["مبلغ (تومان)", "price", "مبلغ", "finalPrice"]));
+
+    if (!fullName || !contactInfo || !price) {
+        return null;
+    }
+
+    const receiptPayerName = normalizeText(getCell(row, ["نام واریزکننده", "payerName"]));
+    const receiptTrackingCode = normalizeText(getCell(row, ["کد رهگیری", "trackingCode"]));
+    const receiptSourceBank = cleanSourceBank(getCell(row, ["بانک مبدأ", "sourceBank"]));
+    const receiptSubmittedAt = normalizeText(getCell(row, ["زمان ثبت رسید", "submittedAt"]));
+
+    const hasReceipt = receiptPayerName.length > 0 && receiptTrackingCode.length > 0 && receiptSourceBank.length > 0;
+
+    return {
+        id: id || `CN-IMP-${Date.now().toString(36).slice(-5).toUpperCase()}`,
+        type,
+        volume,
+        fullName,
+        contactInfo,
+        price,
+        status: parseStatus(getCell(row, ["وضعیت", "status"])),
+        receipt: hasReceipt
+            ? {
+                  payerName: receiptPayerName,
+                  trackingCode: receiptTrackingCode,
+                  sourceBank: receiptSourceBank,
+                  submittedAt: receiptSubmittedAt || new Date().toISOString(),
+              }
+            : undefined,
+        createdAt: normalizeText(getCell(row, ["زمان ایجاد سفارش", "createdAt"])) || new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        importedFromExcel: true,
+    };
+}
+
+export default function ClientOrders({ orders }: { orders: Order[] }) {
+    const [orderList, setOrderList] = useState<Order[]>(orders || []);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [activeFilter, setActiveFilter] = useState<StatusFilter>("all");
+    const [isDeleting, setIsDeleting] = useState<string | null>(null);
+    const [isUpdating, setIsUpdating] = useState<string | null>(null);
+    const [expandedReceipt, setExpandedReceipt] = useState<string | null>(null);
+    const [importing, setImporting] = useState(false);
+    const [exporting, setExporting] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+    useEffect(() => {
+        setOrderList(orders || []);
+    }, [orders]);
 
     const totalOrders = orderList.length;
     const totalIncome = orderList.reduce((acc, order) => acc + (order.price || 0), 0);
+    const processingCount = orderList.filter((o) => o.status === "processing").length;
+    const completedCount = orderList.filter((o) => o.status === "completed").length;
+    const receiptCount = orderList.filter((o) => Boolean(o.receipt)).length;
 
     const filteredOrders = useMemo(() => {
         return orderList.filter((order) => {
-            // فیلتر بر اساس وضعیت سفارش
-            let matchFilter = true;
-            if (activeFilter === "pending_payment") {
-                matchFilter = order.status === "pending_payment";
-            } else if (activeFilter === "completed") {
-                matchFilter = order.status === "completed";
-            }
+            const matchFilter = activeFilter === "all" || order.status === activeFilter;
 
             if (!searchTerm.trim()) return matchFilter;
 
-            const searchLower = searchTerm.toLowerCase().trim();
+            const q = searchTerm.toLowerCase().trim();
+
             const matchSearch =
-                (order.id || "").toLowerCase().includes(searchLower) ||
-                (order.fullName || "").toLowerCase().includes(searchLower) ||
-                (order.contactInfo || "").toLowerCase().includes(searchLower);
+                (order.id || "").toLowerCase().includes(q) ||
+                (order.fullName || "").toLowerCase().includes(q) ||
+                (order.contactInfo || "").toLowerCase().includes(q) ||
+                (order.receipt?.payerName || "").toLowerCase().includes(q) ||
+                (order.receipt?.trackingCode || "").toLowerCase().includes(q) ||
+                (order.receipt?.sourceBank || "").toLowerCase().includes(q);
 
             return matchFilter && matchSearch;
         });
@@ -79,7 +273,7 @@ export default function ClientOrders({ orders }: { orders: VpnOrder[] }) {
 
         setIsDeleting(id);
         try {
-            const response = await fetch(`/api/order?id=${id}`, {
+            const response = await fetch(`/api/order?id=${encodeURIComponent(id)}`, {
                 method: "DELETE",
             });
 
@@ -87,105 +281,263 @@ export default function ClientOrders({ orders }: { orders: VpnOrder[] }) {
 
             if (data.success) {
                 setOrderList((prev) => prev.filter((order) => order.id !== id));
+                toast.success("سفارش حذف شد.");
             } else {
-                alert(data.message || "خطا در حذف سفارش");
+                toast.error(data.message || "خطا در حذف سفارش");
             }
-        } catch (error) {
-            console.error("Delete error:", error);
-            alert("خطا در برقراری ارتباط با سرور");
+        } catch {
+            toast.error("خطا در برقراری ارتباط با سرور");
         } finally {
             setIsDeleting(null);
         }
     };
 
-    // تابع کمکی برای رنگ‌بندی و متون وضعیت سفارشات
-    const getStatusDisplay = (status: string) => {
-        switch (status) {
-            case "pending_payment":
-                return {
-                    text: "در انتظار پرداخت",
-                    icon: AlertCircle,
-                    color: "text-amber-500",
-                    bg: "bg-amber-500/10",
-                    border: "border-amber-500/20",
-                };
-            case "awaiting_receipt":
-                return {
-                    text: "بررسی رسید",
-                    icon: Activity,
-                    color: "text-blue-500",
-                    bg: "bg-blue-500/10",
-                    border: "border-blue-500/20",
-                };
-            case "processing":
-                return {
-                    text: "در حال آماده‌سازی",
-                    icon: Clock,
-                    color: "text-purple-500",
-                    bg: "bg-purple-500/10",
-                    border: "border-purple-500/20",
-                };
-            case "completed":
-                return {
-                    text: "تکمیل شده",
-                    icon: CheckCircle2,
-                    color: "text-emerald-500",
-                    bg: "bg-emerald-500/10",
-                    border: "border-emerald-500/20",
-                };
-            default:
-                return {
-                    text: status,
-                    icon: AlertCircle,
-                    color: "text-slate-400",
-                    bg: "bg-slate-400/10",
-                    border: "border-slate-400/20",
-                };
+    const handleStatusUpdate = async (id: string, status: OrderStatus) => {
+        setIsUpdating(id);
+        try {
+            const response = await fetch("/api/order", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id, status }),
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                setOrderList((prev) =>
+                    prev.map((order) =>
+                        order.id === id ? { ...order, status, updatedAt: new Date().toISOString() } : order,
+                    ),
+                );
+                toast.success("وضعیت سفارش بروزرسانی شد.");
+            } else {
+                toast.error(data.message || "خطا در بروزرسانی وضعیت");
+            }
+        } catch {
+            toast.error("خطا در برقراری ارتباط با سرور");
+        } finally {
+            setIsUpdating(null);
+        }
+    };
+
+    const handleExportExcel = () => {
+        try {
+            setExporting(true);
+
+            const rows = orderList.map((order) => ({
+                "شناسه سفارش": order.id,
+                "نوع سرویس": order.type || "vpn",
+                حجم: order.volume || 0,
+                "نام و نام خانوادگی": order.fullName || "ثبت نشده",
+                ایمیل: order.contactInfo || "ثبت نشده",
+                "مبلغ (تومان)": order.price || 0,
+                وضعیت: getStatusMeta(order.status).label,
+                "نام واریزکننده": order.receipt?.payerName || "ندارد",
+                "کد رهگیری": order.receipt?.trackingCode || "ندارد",
+                "بانک مبدأ": order.receipt?.sourceBank ? `بانک ${order.receipt.sourceBank}` : "ندارد",
+                "زمان ثبت رسید": parseDateForExcel(order.receipt?.submittedAt),
+                "زمان ایجاد سفارش": parseDateForExcel(order.createdAt),
+                "زمان بروزرسانی": parseDateForExcel(order.updatedAt),
+            }));
+
+            const worksheet = XLSX.utils.json_to_sheet(rows);
+            worksheet["!cols"] = [
+                { wch: 16 },
+                { wch: 12 },
+                { wch: 10 },
+                { wch: 22 },
+                { wch: 28 },
+                { wch: 14 },
+                { wch: 18 },
+                { wch: 18 },
+                { wch: 18 },
+                { wch: 18 },
+                { wch: 20 },
+                { wch: 20 },
+                { wch: 20 },
+            ];
+
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Orders");
+
+            const fileName = `orders-${new Date().toISOString().slice(0, 10)}.xlsx`;
+            XLSX.writeFile(workbook, fileName);
+
+            toast.success("فایل اکسل خروجی گرفته شد.");
+        } catch {
+            toast.error("خطا در ساخت فایل اکسل");
+        } finally {
+            setExporting(false);
+        }
+    };
+
+    const handleImportExcel = async (file: File) => {
+        setImporting(true);
+        try {
+            const buffer = await file.arrayBuffer();
+            const workbook = XLSX.read(buffer, { type: "array" });
+
+            const sheetName = workbook.SheetNames[0];
+            if (!sheetName) {
+                toast.error("فایل اکسل معتبر نیست.");
+                return;
+            }
+
+            const sheet = workbook.Sheets[sheetName];
+            const rawRows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, {
+                defval: "",
+                blankrows: false,
+            });
+
+            if (rawRows.length === 0) {
+                toast.error("هیچ ردیفی در فایل پیدا نشد.");
+                return;
+            }
+
+            const normalizedOrders = rawRows.map(normalizeImportedRow).filter((row): row is Order => Boolean(row));
+
+            if (normalizedOrders.length === 0) {
+                toast.error("هیچ ردیف معتبری برای وارد کردن پیدا نشد.");
+                return;
+            }
+
+            const response = await fetch("/api/order", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    action: "import",
+                    orders: normalizedOrders,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok || !data.success) {
+                toast.error(data.message || "خطا در ورود فایل اکسل");
+                return;
+            }
+
+            setOrderList((prev) => {
+                const map = new Map<string, Order>();
+                for (const order of prev) map.set(order.id, order);
+                for (const order of normalizedOrders) map.set(order.id, order);
+                return Array.from(map.values());
+            });
+
+            toast.success(`فایل وارد شد. ${data.importedCount || normalizedOrders.length} ردیف ذخیره شد.`);
+        } catch (error) {
+            console.error(error);
+            toast.error("خطا در خواندن یا ارسال فایل اکسل");
+        } finally {
+            setImporting(false);
+            if (fileInputRef.current) fileInputRef.current.value = "";
         }
     };
 
     return (
         <div className="min-h-screen bg-store-base text-white p-4 md:p-8 lg:p-12 font-sans" dir="rtl">
-            <div className="max-w-7xl mx-auto space-y-8">
-                {/* هدر و آمار */}
+            <div className="max-w-7xl mx-auto space-y-6">
                 <motion.div
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 bg-store-panel border border-store-border p-6 md:p-8 rounded-[2rem] shadow-2xl relative overflow-hidden"
+                    className="bg-store-panel border border-store-border p-6 md:p-8 rounded-[2rem] shadow-2xl relative overflow-hidden"
                 >
                     <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
 
-                    <div className="flex items-center gap-5 relative z-10">
-                        <div className="bg-gradient-to-br from-primary/20 to-blue-500/20 p-4 rounded-2xl text-primary border border-primary/20 shadow-inner">
-                            <LayoutDashboard className="w-8 h-8" />
+                    <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 relative z-10">
+                        <div className="flex items-center gap-5">
+                            <div className="bg-gradient-to-br from-primary/20 to-cyan-500/20 p-4 rounded-2xl text-primary border border-primary/20 shadow-inner">
+                                <LayoutDashboard className="w-8 h-8" />
+                            </div>
+                            <div>
+                                <h1 className="text-2xl md:text-3xl font-black bg-clip-text text-transparent bg-gradient-to-l from-white to-slate-400">
+                                    داشبورد سفارشات
+                                </h1>
+                                <p className="text-slate-400 text-sm mt-1.5 font-medium">
+                                    مدیریت، پیگیری و گزارش‌گیری یکپارچه
+                                </p>
+                            </div>
                         </div>
-                        <div>
-                            <h1 className="text-2xl md:text-3xl font-black bg-clip-text text-transparent bg-gradient-to-l from-white to-slate-400">
-                                داشبورد سفارشات
-                            </h1>
-                            <p className="text-slate-400 text-sm mt-1.5 font-medium">
-                                مدیریت، پیگیری و گزارش‌گیری یکپارچه
-                            </p>
-                        </div>
-                    </div>
 
-                    <div className="flex flex-wrap gap-4 w-full xl:w-auto relative z-10">
-                        <div className="bg-store-card px-6 py-4 rounded-2xl border border-store-border flex-1 min-w-[140px] text-center shadow-lg">
-                            <p className="text-slate-400 text-xs mb-1.5 font-semibold uppercase tracking-wider">
-                                کل درآمد (تومان)
-                            </p>
-                            <p className="font-black text-xl text-primary">{totalIncome.toLocaleString("fa-IR")}</p>
-                        </div>
-                        <div className="bg-store-card px-6 py-4 rounded-2xl border border-store-border flex-1 min-w-[140px] text-center shadow-lg">
-                            <p className="text-slate-400 text-xs mb-1.5 font-semibold uppercase tracking-wider">
-                                کل سفارشات
-                            </p>
-                            <p className="font-black text-xl text-white">{totalOrders.toLocaleString("fa-IR")}</p>
+                        <div className="flex flex-wrap gap-3 w-full xl:w-auto">
+                            {[
+                                {
+                                    label: "کل درآمد",
+                                    value: totalIncome.toLocaleString("fa-IR"),
+                                    color: "text-primary",
+                                },
+                                {
+                                    label: "کل سفارشات",
+                                    value: totalOrders.toLocaleString("fa-IR"),
+                                    color: "text-white",
+                                },
+                                {
+                                    label: "در حال پردازش",
+                                    value: processingCount.toLocaleString("fa-IR"),
+                                    color: "text-violet-400",
+                                },
+                                {
+                                    label: "تکمیل شده",
+                                    value: completedCount.toLocaleString("fa-IR"),
+                                    color: "text-emerald-400",
+                                },
+                                {
+                                    label: "دارای رسید",
+                                    value: receiptCount.toLocaleString("fa-IR"),
+                                    color: "text-blue-400",
+                                },
+                            ].map(({ label, value, color }) => (
+                                <div
+                                    key={label}
+                                    className="bg-store-card px-5 py-3.5 rounded-2xl border border-store-border flex-1 min-w-[130px] text-center shadow-lg"
+                                >
+                                    <p className="text-slate-400 text-[11px] mb-1.5 font-semibold uppercase tracking-wider">
+                                        {label}
+                                    </p>
+                                    <p className={`font-black text-xl ${color}`}>{value}</p>
+                                </div>
+                            ))}
+
+                            <button
+                                onClick={handleExportExcel}
+                                disabled={exporting}
+                                className="px-4 cursor-pointer py-3 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 hover:bg-emerald-500/25 transition-all font-bold text-sm whitespace-nowrap disabled:opacity-60 inline-flex items-center justify-center gap-2"
+                            >
+                                {exporting ? (
+                                    <RotateCcw className="w-4 h-4 animate-spin" />
+                                ) : (
+                                    <FileSpreadsheet className="w-4 h-4" />
+                                )}
+                                خروجی اکسل
+                            </button>
+
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept=".xlsx,.xls,.csv"
+                                className="hidden"
+                                onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) handleImportExcel(file);
+                                }}
+                            />
+
+                            <button
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={importing}
+                                className="px-4 cursor-pointer py-3 rounded-xl bg-sky-500/15 text-sky-400 border border-sky-500/25 hover:bg-sky-500/25 transition-all font-bold text-sm whitespace-nowrap disabled:opacity-60 inline-flex items-center justify-center gap-2"
+                            >
+                                {importing ? (
+                                    <RotateCcw className="w-4 h-4 animate-spin" />
+                                ) : (
+                                    <Upload className="w-4 h-4" />
+                                )}
+                                آپلود اکسل
+                            </button>
                         </div>
                     </div>
                 </motion.div>
 
-                {/* فیلتر و جستجو */}
                 <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -198,7 +550,7 @@ export default function ClientOrders({ orders }: { orders: VpnOrder[] }) {
                         </div>
                         <input
                             type="text"
-                            placeholder="جستجو نام، ایمیل یا شناسه..." // <<-- تغییر: اصلاح کلمه جستجو
+                            placeholder="جستجو نام، ایمیل، کد رهگیری..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="w-full bg-store-card border border-store-border text-white text-sm rounded-xl py-3.5 pr-12 pl-4 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all placeholder:text-slate-500 shadow-inner"
@@ -208,35 +560,42 @@ export default function ClientOrders({ orders }: { orders: VpnOrder[] }) {
                     <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0 scrollbar-hide">
                         <div className="flex items-center gap-2 px-3 text-slate-400">
                             <Filter className="w-4 h-4" />
-                            <span className="text-sm font-medium">فیلتر:</span>
+                            <span className="text-sm font-medium">فیلتر وضعیت:</span>
                         </div>
                         <div className="flex gap-1 bg-store-card p-1.5 rounded-xl border border-store-border">
-                            {(["all", "pending_payment", "completed"] as const).map((type) => (
-                                <button
-                                    key={type}
-                                    onClick={() => setActiveFilter(type)}
-                                    className={`px-4 cursor-pointer py-2 rounded-lg text-sm font-bold transition-all duration-300 whitespace-nowrap ${
-                                        activeFilter === type
-                                            ? type === "pending_payment"
-                                                ? "bg-amber-500/20 text-amber-500 shadow-sm"
-                                                : type === "completed"
-                                                  ? "bg-emerald-500/20 text-emerald-400 shadow-sm"
-                                                  : "bg-primary/20 text-primary shadow-sm"
-                                            : "text-slate-400 hover:text-white hover:bg-store-hover"
-                                    }`}
-                                >
-                                    {type === "all"
-                                        ? "همه سفارش‌ها"
-                                        : type === "pending_payment"
-                                          ? "در انتظار پرداخت"
-                                          : "تکمیل شده"}
-                                </button>
-                            ))}
+                            {(["all", "pending_payment", "awaiting_receipt", "processing", "completed"] as const).map(
+                                (type: any) => (
+                                    <button
+                                        key={type}
+                                        onClick={() => setActiveFilter(type)}
+                                        className={`px-4 cursor-pointer py-2 rounded-lg text-sm font-bold transition-all duration-300 whitespace-nowrap ${
+                                            activeFilter === type
+                                                ? type === "pending_payment"
+                                                    ? "bg-amber-500/20 text-amber-400 shadow-sm"
+                                                    : type === "awaiting_receipt"
+                                                      ? "bg-blue-500/20 text-blue-400 shadow-sm"
+                                                      : type === "processing"
+                                                        ? "bg-violet-500/20 text-violet-400 shadow-sm"
+                                                        : type === "bg-emerald-500/20 text-emerald-400 shadow-sm"
+                                                : "text-slate-400 hover:text-white hover:bg-store-hover"
+                                        }`}
+                                    >
+                                        {type === "all"
+                                            ? "همه"
+                                            : type === "pending_payment"
+                                              ? "در انتظار پرداخت"
+                                              : type === "awaiting_receipt"
+                                                ? "در انتظار رسید"
+                                                : type === "processing"
+                                                  ? "در حال پردازش"
+                                                  : "تکمیل شده"}
+                                    </button>
+                                ),
+                            )}
                         </div>
                     </div>
                 </motion.div>
 
-                {/* لیست سفارشات */}
                 {filteredOrders.length === 0 ? (
                     <motion.div
                         initial={{ opacity: 0 }}
@@ -253,8 +612,9 @@ export default function ClientOrders({ orders }: { orders: VpnOrder[] }) {
                     <motion.div layout className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                         <AnimatePresence mode="popLayout">
                             {filteredOrders.map((order) => {
-                                const statusInfo = getStatusDisplay(order.status);
-                                const StatusIcon = statusInfo.icon;
+                                const statusInfo = getStatusMeta(order.status);
+                                const StatusIcon: any = statusInfo.icon;
+                                const receiptOpen = expandedReceipt === order.id;
 
                                 return (
                                     <motion.div
@@ -269,7 +629,7 @@ export default function ClientOrders({ orders }: { orders: VpnOrder[] }) {
                                         <div className="bg-gradient-to-b from-primary/10 to-transparent border-b border-primary/20 p-5 flex justify-between items-center relative overflow-hidden">
                                             <div className="flex items-center gap-3 relative z-10">
                                                 <div className="p-2.5 rounded-xl bg-store-card shadow-sm border border-store-border text-primary">
-                                                    <ShieldCheck className="w-5 h-5" />
+                                                    <ReceiptText className="w-5 h-5" />
                                                 </div>
                                                 <div>
                                                     <span className="block text-[11px] font-bold tracking-wider text-slate-400 mb-0.5">
@@ -285,7 +645,7 @@ export default function ClientOrders({ orders }: { orders: VpnOrder[] }) {
                                                 className={`flex items-center gap-1.5 ${statusInfo.bg} ${statusInfo.color} px-3 py-1.5 rounded-xl text-xs font-bold border ${statusInfo.border} relative z-10 shadow-sm`}
                                             >
                                                 <StatusIcon className="w-3.5 h-3.5" />
-                                                {statusInfo.text}
+                                                {statusInfo.label}
                                             </div>
                                         </div>
 
@@ -315,36 +675,165 @@ export default function ClientOrders({ orders }: { orders: VpnOrder[] }) {
 
                                                 <div className="flex items-center gap-3 text-sm">
                                                     <div className="w-8 h-8 rounded-full bg-store-card flex items-center justify-center border border-store-border">
-                                                        <Mail className="w-4 h-4 text-slate-400" /> {/* <<-- تغییر: جایگزینی Phone با Mail */}
+                                                        <Mail className="w-4 h-4 text-slate-400" />
                                                     </div>
-                                                    <span
-                                                        className="text-slate-300 tracking-widest text-xs md:text-sm truncate w-full"
-                                                        dir="ltr"
-                                                    >
+                                                    <span className="text-slate-300 tracking-widest text-xs md:text-sm truncate w-full">
                                                         {order.contactInfo || "ثبت نشده"}
                                                     </span>
                                                 </div>
+
+                                                <div className="flex items-center gap-3 text-sm">
+                                                    <div className="w-8 h-8 rounded-full bg-store-card flex items-center justify-center border border-store-border">
+                                                        <Hash className="w-4 h-4 text-slate-400" />
+                                                    </div>
+                                                    <span className="text-slate-300 text-xs md:text-sm">
+                                                        {order.type || "vpn"} / {order.volume || 0}GB
+                                                    </span>
+                                                </div>
                                             </div>
+
+                                            {order.receipt ? (
+                                                <div className="rounded-2xl border border-blue-500/20 overflow-hidden">
+                                                    <button
+                                                        onClick={() =>
+                                                            setExpandedReceipt(receiptOpen ? null : order.id)
+                                                        }
+                                                        className="w-full flex items-center justify-between px-4 py-3 bg-blue-500/10 text-blue-400 text-xs font-bold cursor-pointer hover:bg-blue-500/15 transition-colors"
+                                                    >
+                                                        <div className="flex items-center gap-2">
+                                                            <Banknote className="w-4 h-4" />
+                                                            رسید پرداخت ثبت شده
+                                                        </div>
+                                                        {receiptOpen ? (
+                                                            <ChevronUp className="w-4 h-4" />
+                                                        ) : (
+                                                            <ChevronDown className="w-4 h-4" />
+                                                        )}
+                                                    </button>
+
+                                                    <AnimatePresence>
+                                                        {receiptOpen && (
+                                                            <motion.div
+                                                                initial={{ height: 0, opacity: 0 }}
+                                                                animate={{ height: "auto", opacity: 1 }}
+                                                                exit={{ height: 0, opacity: 0 }}
+                                                                transition={{ duration: 0.25 }}
+                                                                className="overflow-hidden"
+                                                            >
+                                                                <div className="px-4 py-3 space-y-2.5 bg-store-base border-t border-blue-500/10">
+                                                                    {[
+                                                                        {
+                                                                            icon: (
+                                                                                <User className="w-3.5 h-3.5 text-blue-400" />
+                                                                            ),
+                                                                            label: "نام واریزکننده",
+                                                                            value: order.receipt.payerName,
+                                                                        },
+                                                                        {
+                                                                            icon: (
+                                                                                <Hash className="w-3.5 h-3.5 text-blue-400" />
+                                                                            ),
+                                                                            label: "کد رهگیری",
+                                                                            value: order.receipt.trackingCode,
+                                                                        },
+                                                                        {
+                                                                            icon: (
+                                                                                <Building2 className="w-3.5 h-3.5 text-blue-400" />
+                                                                            ),
+                                                                            label: "بانک مبدأ",
+                                                                            value: `بانک ${order.receipt.sourceBank}`,
+                                                                        },
+                                                                        {
+                                                                            icon: (
+                                                                                <Clock className="w-3.5 h-3.5 text-slate-500" />
+                                                                            ),
+                                                                            label: "زمان ثبت",
+                                                                            value: parseDateSafe(
+                                                                                order.receipt.submittedAt,
+                                                                            ),
+                                                                        },
+                                                                    ].map(({ icon, label, value }) => (
+                                                                        <div
+                                                                            key={label}
+                                                                            className="flex items-start gap-2.5 text-xs"
+                                                                        >
+                                                                            <div className="w-6 h-6 rounded-lg bg-store-card flex items-center justify-center border border-store-border shrink-0 mt-0.5">
+                                                                                {icon}
+                                                                            </div>
+                                                                            <div>
+                                                                                <p className="text-slate-500 text-[10px]">
+                                                                                    {label}
+                                                                                </p>
+                                                                                <p className="text-slate-200 font-medium">
+                                                                                    {value}
+                                                                                </p>
+                                                                            </div>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            </motion.div>
+                                                        )}
+                                                    </AnimatePresence>
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center gap-2 px-4 py-3 rounded-2xl border border-store-border bg-store-base text-slate-500 text-xs">
+                                                    <Banknote className="w-4 h-4" />
+                                                    هنوز رسید پرداخت ثبت نشده
+                                                </div>
+                                            )}
                                         </div>
 
-                                        {/* فوتر کارت و دکمه حذف */}
-                                        <div className="px-5 py-3.5 bg-store-base border-t border-store-border flex items-center justify-between text-xs text-slate-500 transition-colors">
-                                            <div className="flex text-white items-center gap-2">
-                                                <Clock className="w-3.5 h-3.5" />
-                                                <span>{formatJalali(order.createdAt)}</span>
-                                            </div>
-                                            <button
-                                                onClick={() => handleDelete(order.id)}
-                                                disabled={isDeleting === order.id}
-                                                className="flex cursor-pointer items-center justify-center p-2 rounded-lg text-rose-500 hover:bg-rose-500/10 hover:text-rose-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                                title="حذف سفارش"
-                                            >
-                                                {isDeleting === order.id ? (
-                                                    <span className="w-4 h-4 border-2 border-rose-500 border-t-transparent rounded-full animate-spin"></span>
-                                                ) : (
-                                                    <Trash2 className="w-4 h-4" />
+                                        <div className="px-5 py-3.5 bg-store-base border-t border-store-border space-y-2">
+                                            <div className="flex flex-wrap gap-2">
+                                                {order.status !== "processing" && (
+                                                    <button
+                                                        onClick={() => handleStatusUpdate(order.id, "processing")}
+                                                        disabled={isUpdating === order.id}
+                                                        className="flex-1 min-w-[120px] flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold cursor-pointer bg-violet-500/10 text-violet-400 border border-violet-500/20 hover:bg-violet-500/20 transition-colors disabled:opacity-50"
+                                                    >
+                                                        {isUpdating === order.id ? (
+                                                            <span className="w-3.5 h-3.5 border-2 border-violet-400 border-t-transparent rounded-full animate-spin" />
+                                                        ) : (
+                                                            <Clock className="w-3.5 h-3.5" />
+                                                        )}
+                                                        در حال پردازش
+                                                    </button>
                                                 )}
-                                            </button>
+
+                                                {order.status !== "completed" && (
+                                                    <button
+                                                        onClick={() => handleStatusUpdate(order.id, "completed")}
+                                                        disabled={isUpdating === order.id}
+                                                        className="flex-1 min-w-[120px] flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold cursor-pointer bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors disabled:opacity-50"
+                                                    >
+                                                        {isUpdating === order.id ? (
+                                                            <span className="w-3.5 h-3.5 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
+                                                        ) : (
+                                                            <CheckCircle2 className="w-3.5 h-3.5" />
+                                                        )}
+                                                        تأیید پرداخت
+                                                    </button>
+                                                )}
+                                            </div>
+
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                                                    <Clock className="w-3 h-3" />
+                                                    <span>{parseDateSafe(order.createdAt)}</span>
+                                                </div>
+                                                <button
+                                                    onClick={() => handleDelete(order.id)}
+                                                    disabled={isDeleting === order.id}
+                                                    className="flex cursor-pointer items-center justify-center p-2 rounded-lg text-rose-500 hover:bg-rose-500/10 hover:text-rose-400 transition-colors disabled:opacity-50"
+                                                    title="حذف سفارش"
+                                                >
+                                                    {isDeleting === order.id ? (
+                                                        <span className="w-4 h-4 border-2 border-rose-500 border-t-transparent rounded-full animate-spin"></span>
+                                                    ) : (
+                                                        <Trash2 className="w-4 h-4" />
+                                                    )}
+                                                </button>
+                                            </div>
                                         </div>
                                     </motion.div>
                                 );

@@ -12,6 +12,12 @@ import StepCheckout from "./steps/StepCheckout";
 import StepPayment from "./steps/StepPayment";
 import { ALLOWED_VOLUMES, PRICING_DATA } from "@/constants/order";
 
+type ReceiptPayload = {
+    payerName: string;
+    trackingCode: string;
+    sourceBank: string;
+};
+
 export default function OrderForm() {
     const searchParams = useSearchParams();
     const router = useRouter();
@@ -44,46 +50,14 @@ export default function OrderForm() {
 
     const isValidFullName = (name: string) => {
         const value = name.trim().replace(/\s+/g, " ");
-        // حداقل دو کلمه، فقط حروف انگلیسی، هر کلمه حداقل یک حرف
         return /^[A-Za-z]+(?:\s+[A-Za-z]+)+$/.test(value);
     };
 
     const canProceedToNextStep =
         isValidEmail(formData.contactInfo) && isValidFullName(formData.fullName);
 
-    const handleSubmit = async () => {
-        setLoading(true);
-        try {
-            const res = await fetch("/api/order", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    ...formData,
-                    price: totalPrice,
-                    type: productType,
-                }),
-            });
-
-            const data = await res.json();
-
-            if (res.ok && data.success) {
-                setOrderId(data.orderId);
-                setStep(4);
-                toast.success("سفارش شما با موفقیت ثبت شد.");
-            } else {
-                throw new Error(data.message || "خطا در ثبت اطلاعات");
-            }
-        } catch (error: any) {
-            toast.error(error.message || "ارتباط با سرور برقرار نشد.");
-        } finally {
-            setLoading(false);
-        }
-    };
-
     const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const rawValue = e.target.value;
-
-        // فقط حروف انگلیسی و فاصله
         const cleanedValue = rawValue.replace(/[^a-zA-Z\s]/g, "");
 
         setFormData((prev) => ({
@@ -115,6 +89,40 @@ export default function OrderForm() {
         setStep(3);
     };
 
+    const handleContinueToPayment = () => {
+        setStep(4);
+    };
+
+    const handleCreateOrder = async (receiptData: ReceiptPayload) => {
+        setLoading(true);
+
+        try {
+            const res = await fetch("/api/order", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    ...formData,
+                    price: totalPrice,
+                    type: productType,
+                    receipt: receiptData,
+                }),
+            });
+
+            const data = await res.json();
+
+            if (res.ok && data.success) {
+                setOrderId(data.orderId);
+                toast.success("سفارش شما با موفقیت ثبت شد.");
+            } else {
+                throw new Error(data.message || "خطا در ثبت اطلاعات");
+            }
+        } catch (error: any) {
+            toast.error(error.message || "ارتباط با سرور برقرار نشد.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div className="max-w-2xl mx-auto w-full">
             <div className="text-center mb-10">
@@ -126,6 +134,7 @@ export default function OrderForm() {
                         <h1 className="text-2xl font-bold text-white mb-2">خرید ترافیک و اتصال پرسرعت</h1>
                     </>
                 )}
+
                 {step < 4 && (
                     <div className="flex items-center justify-center gap-2 mt-6">
                         {[1, 2, 3].map((num) => (
@@ -134,10 +143,15 @@ export default function OrderForm() {
                                     onClick={() => (num === 1 && step > 1 ? setStep(1) : undefined)}
                                     className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all 
                                         ${step >= num ? "bg-primary text-slate-900" : "bg-slate-800 text-slate-400"} 
-                                        ${num === 1 && step > 1 ? "cursor-pointer hover:ring-2 hover:ring-offset-2 hover:ring-offset-slate-900 hover:ring-primary" : ""}`}
+                                        ${
+                                            num === 1 && step > 1
+                                                ? "cursor-pointer hover:ring-2 hover:ring-offset-2 hover:ring-offset-slate-900 hover:ring-primary"
+                                                : ""
+                                        }`}
                                 >
                                     {num}
                                 </div>
+
                                 {num < 3 && (
                                     <div
                                         className={`w-12 h-1 transition-colors ${step > num ? "bg-primary" : "bg-slate-800"}`}
@@ -156,7 +170,6 @@ export default function OrderForm() {
                         setFormData={setFormData}
                         setStep={setStep}
                         router={router}
-                        // currentPricing={currentPricing}
                         totalPrice={totalPrice}
                         themeBg={themeBg}
                         themeColor={themeColor}
@@ -182,8 +195,8 @@ export default function OrderForm() {
                         formData={formData}
                         totalPrice={totalPrice}
                         setStep={setStep}
-                        handleSubmit={handleSubmit}
-                        loading={loading}
+                        handleSubmit={handleContinueToPayment}
+                        loading={false}
                         themeBg={themeBg}
                         themeColor={themeColor}
                     />
@@ -195,6 +208,9 @@ export default function OrderForm() {
                         totalPrice={totalPrice}
                         supportLink={supportLink}
                         themeColor={themeColor}
+                        loading={loading}
+                        onBack={() => setStep(3)}
+                        onConfirmReceipt={handleCreateOrder}
                     />
                 )}
             </AnimatePresence>

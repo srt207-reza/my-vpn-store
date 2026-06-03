@@ -277,16 +277,16 @@ export default function HomePage() {
                         <h1 className="mt-8 text-4xl font-black leading-tight text-white sm:text-5xl md:text-6xl lg:leading-[1.15]">
                             تنها یک اشتراک برای <br className="hidden lg:block" />
                             <span className="mt-1 inline-block bg-gradient-to-r from-cyan-400 via-sky-400 to-blue-500 bg-clip-text pb-2 text-transparent">
-                                تمام نیاز های اینترنتی!
+                                تمام نیازهای اینترنتی!
                             </span>
                         </h1>
 
-                        <p className="mx-auto mt-6 w-full px-6 text-base leading-relaxed text-slate-300/90 sm:text-lg md:text-xl md:leading-9 lg:mx-0">
+                        <p className="mt-6 w-full px-6 text-base text-right leading-relaxed text-slate-300/90 sm:text-lg md:text-xl md:leading-9 lg:mx-0">
                             با استفاده از این راهکار، محدودیت‌های دسترسی به اینترنت بین‌الملل برطرف شده و اتصال پایدار
                             با سرعت بالا در اختیار شما قرار خواهد گرفت.
                         </p>
 
-                        <div className="mt-10 flex justify-center lg:justify-start">
+                        <div className="mt-10 flex justify-center">
                             <Link
                                 href="/order?product=vpn"
                                 className="group inline-flex items-center justify-center gap-3 rounded-[1.5rem] border border-cyan-300/20 bg-gradient-to-r from-cyan-400 to-sky-300 px-6 py-3.5 text-base font-black text-slate-950 shadow-[0_16px_50px_rgba(6,182,212,0.18)] transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_20px_60px_rgba(6,182,212,0.25)] sm:px-8 sm:py-4 sm:text-lg"
