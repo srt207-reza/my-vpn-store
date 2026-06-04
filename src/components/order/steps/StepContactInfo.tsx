@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { ChevronLeft, Mail, User } from "lucide-react";
+import { useEffect } from "react";
 
 export default function StepContactInfo({
     formData,
@@ -20,13 +21,17 @@ export default function StepContactInfo({
     const emailInvalid = email.length > 0 && !isValidEmail(email);
     const nameInvalid = fullName.length > 0 && !isValidFullName(fullName);
 
+    useEffect(() => {
+        window.scrollTo(0,0)
+    },[])
+
     return (
         <motion.div
             key="step2"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 20 }}
-            className="bg-slate-800/40 p-8 rounded-3xl border border-slate-700 space-y-6"
+            className="bg-slate-800/40 md:p-8 p-4 rounded-3xl border border-slate-700 space-y-6"
         >
             <h2 className="text-lg font-medium text-slate-200 mb-6">مشخصات خود را جهت ثبت در سیستم، در کادر زیر وارد نمایید:</h2>
 

@@ -77,7 +77,13 @@ export default function Header() {
                             className="relative inline-flex overflow-hidden rounded-full p-[2px] group hover:scale-105 transition-transform duration-300 shadow-lg shadow-[#06b6d4]/20"
                         >
                             <span className="absolute inset-[-1000%] animate-[spin_3s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#06b6d4_0%,transparent_50%,#06b6d4_100%)]" />
-                            <span className="inline-flex h-full w-full items-center justify-center rounded-full bg-slate-950 px-6 py-2.5 text-sm font-bold text-white backdrop-blur-3xl z-10 group-hover:bg-slate-900 transition-colors">
+                            <span className="inline-flex gap-3 h-full w-full items-center justify-center rounded-full bg-slate-950 px-6 py-2.5 text-sm font-bold text-white backdrop-blur-3xl z-10 group-hover:bg-slate-900 transition-colors">
+                                <Image
+                                    src="/assets/images/spotify_style_support_icon2.png"
+                                    alt="Telegram"
+                                    width={22}
+                                    height={22}
+                                />
                                 ارتباط با پشتیبانی
                             </span>
                         </a>
@@ -137,7 +143,13 @@ export default function Header() {
                                 className="mt-4 relative flex overflow-hidden rounded-full p-[2px] group hover:scale-105 active:scale-95 transition-transform duration-300 shadow-lg shadow-[#06b6d4]/20"
                             >
                                 <span className="absolute inset-[-1000%] animate-[spin_3s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#06b6d4_0%,transparent_50%,#06b6d4_100%)]" />
-                                <span className="inline-flex h-full w-full items-center justify-center rounded-full bg-slate-950 px-4 py-3.5 text-sm font-bold text-white backdrop-blur-3xl z-10 group-hover:bg-slate-900 transition-colors">
+                                <span className="inline-flex gap-3 h-full w-full items-center justify-center rounded-full bg-slate-950 px-4 py-3.5 text-sm font-bold text-white backdrop-blur-3xl z-10 group-hover:bg-slate-900 transition-colors">
+                                    <Image
+                                        src="/assets/images/spotify_style_support_icon2.png"
+                                        alt="Telegram"
+                                        width={22}
+                                        height={22}
+                                    />
                                     ارتباط با پشتیبانی
                                 </span>
                             </motion.a>

@@ -20,6 +20,7 @@
 # production
 /build
 orders.json
+discount-codes.json
 
 # misc
 .DS_Store

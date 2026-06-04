@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import type { ChangeEvent } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { AnimatePresence } from "framer-motion";
 import { ShieldCheck } from "lucide-react";
@@ -18,6 +19,48 @@ type ReceiptPayload = {
     sourceBank: string;
 };
 
+type DiscountType = "percent" | "fixed";
+
+type DiscountCode = {
+    code: string;
+    type: DiscountType;
+    value: number;
+    active: boolean;
+    maxUses?: number;
+    usedCount: number;
+    minOrderAmount?: number;
+    expiresAt?: string;
+    createdAt: string;
+    updatedAt: string;
+};
+
+function normalizeCouponCode(value: string) {
+    return value.trim().replace(/\s+/g, "").toUpperCase();
+}
+
+function isExpired(expiresAt?: string): boolean {
+    if (!expiresAt) return false;
+    const date = new Date(expiresAt);
+    return Number.isNaN(date.getTime()) ? false : date.getTime() < Date.now();
+}
+
+function calculateDiscount(price: number, code: DiscountCode) {
+    let discountAmount = 0;
+
+    if (code.type === "percent") {
+        discountAmount = Math.floor((price * code.value) / 100);
+    } else {
+        discountAmount = Math.floor(code.value);
+    }
+
+    discountAmount = Math.max(0, Math.min(discountAmount, price));
+
+    return {
+        discountAmount,
+        finalPrice: Math.max(0, price - discountAmount),
+    };
+}
+
 export default function OrderForm() {
     const searchParams = useSearchParams();
     const router = useRouter();
@@ -31,6 +74,13 @@ export default function OrderForm() {
     const [orderId, setOrderId] = useState("");
     const [supportLink] = useState("https://t.me/GetPremium_support");
 
+    const [discountCodes, setDiscountCodes] = useState<DiscountCode[]>([]);
+    const [couponCode, setCouponCode] = useState("");
+    const [appliedCouponCode, setAppliedCouponCode] = useState("");
+    const [couponDiscount, setCouponDiscount] = useState(0);
+    const [payablePrice, setPayablePrice] = useState(0);
+    const [couponApplying, setCouponApplying] = useState(false);
+
     const [formData, setFormData] = useState({
         volume: initialVolume,
         fullName: "",
@@ -42,6 +92,30 @@ export default function OrderForm() {
 
     const themeBg = "bg-primary hover:bg-cyan-400 text-slate-900";
     const themeColor = "text-primary";
+
+    useEffect(() => {
+        const loadDiscountCodes = async () => {
+            try {
+                const res = await fetch("/api/discount-code");
+                const data = await res.json();
+
+                if (data.success) {
+                    setDiscountCodes(Array.isArray(data.codes) ? data.codes : []);
+                }
+            } catch {
+                // بی‌صدا رد می‌شود؛ کد تخفیف فقط یک قابلیت افزوده است
+            }
+        };
+
+        loadDiscountCodes();
+    }, []);
+
+    useEffect(() => {
+        setCouponCode("");
+        setAppliedCouponCode("");
+        setCouponDiscount(0);
+        setPayablePrice(currentPricing?.price || 0);
+    }, [currentPricing?.price]);
 
     const isValidEmail = (email: string) => {
         const value = email.trim();
@@ -56,7 +130,7 @@ export default function OrderForm() {
     const canProceedToNextStep =
         isValidEmail(formData.contactInfo) && isValidFullName(formData.fullName);
 
-    const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleNameChange = (e: ChangeEvent<HTMLInputElement>) => {
         const rawValue = e.target.value;
         const cleanedValue = rawValue.replace(/[^a-zA-Z\s]/g, "");
 
@@ -89,6 +163,93 @@ export default function OrderForm() {
         setStep(3);
     };
 
+const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) {
+        toast.error("کد تخفیف را وارد کنید.");
+        return;
+    }
+
+    if (!totalPrice || totalPrice <= 0) {
+        toast.error("ابتدا حجم مورد نظر را انتخاب کنید.");
+        return;
+    }
+
+    setCouponApplying(true);
+    try {
+        const normalizedCode = normalizeCouponCode(couponCode);
+
+        const res = await fetch("/api/discount-code", {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                "Cache-Control": "no-store",
+            },
+        });
+
+        const data = await res.json();
+
+        if (!res.ok || !data.success) {
+            toast.error(data.message || "خطا در دریافت کدهای تخفیف");
+            return;
+        }
+
+        const codes: DiscountCode[] = Array.isArray(data.codes) ? data.codes : [];
+        const matched = codes.find((item) => normalizeCouponCode(item.code) === normalizedCode);
+
+        if (!matched) {
+            setAppliedCouponCode("");
+            setCouponDiscount(0);
+            setPayablePrice(totalPrice);
+            toast.error("کد تخفیف معتبر نیست.");
+            return;
+        }
+
+        if (!matched.active) {
+            setAppliedCouponCode("");
+            setCouponDiscount(0);
+            setPayablePrice(totalPrice);
+            toast.error("این کد تخفیف غیرفعال است.");
+            return;
+        }
+
+        if (isExpired(matched.expiresAt)) {
+            setAppliedCouponCode("");
+            setCouponDiscount(0);
+            setPayablePrice(totalPrice);
+            toast.error("این کد تخفیف منقضی شده است.");
+            return;
+        }
+
+        if (typeof matched.maxUses === "number" && matched.usedCount >= matched.maxUses) {
+            setAppliedCouponCode("");
+            setCouponDiscount(0);
+            setPayablePrice(totalPrice);
+            toast.error("این کد تخفیف دیگر قابل استفاده نیست.");
+            return;
+        }
+
+        if (typeof matched.minOrderAmount === "number" && totalPrice < matched.minOrderAmount) {
+            setAppliedCouponCode("");
+            setCouponDiscount(0);
+            setPayablePrice(totalPrice);
+            toast.error("مبلغ سفارش برای این کد تخفیف کافی نیست.");
+            return;
+        }
+
+        const result = calculateDiscount(totalPrice, matched);
+
+        setAppliedCouponCode(normalizedCode);
+        setCouponDiscount(result.discountAmount);
+        setPayablePrice(result.finalPrice);
+
+        toast.success("کد تخفیف اعمال شد.");
+    } catch {
+        toast.error("ارتباط با سرور برقرار نشد.");
+    } finally {
+        setCouponApplying(false);
+    }
+};
+
     const handleContinueToPayment = () => {
         setStep(4);
     };
@@ -103,6 +264,7 @@ export default function OrderForm() {
                 body: JSON.stringify({
                     ...formData,
                     price: totalPrice,
+                    couponCode: appliedCouponCode,
                     type: productType,
                     receipt: receiptData,
                 }),
@@ -194,6 +356,21 @@ export default function OrderForm() {
                     <StepCheckout
                         formData={formData}
                         totalPrice={totalPrice}
+                        payablePrice={payablePrice || totalPrice}
+                        couponCode={couponCode}
+                        couponDiscount={couponDiscount}
+                        couponApplying={couponApplying}
+                        onCouponChange={(value: string) => {
+                            setCouponCode(value);
+
+                            const normalized = normalizeCouponCode(value);
+                            if (appliedCouponCode && normalized !== appliedCouponCode) {
+                                setAppliedCouponCode("");
+                                setCouponDiscount(0);
+                                setPayablePrice(totalPrice);
+                            }
+                        }}
+                        onApplyCoupon={handleApplyCoupon}
                         setStep={setStep}
                         handleSubmit={handleContinueToPayment}
                         loading={false}
@@ -205,7 +382,7 @@ export default function OrderForm() {
                 {step === 4 && (
                     <StepPayment
                         orderId={orderId}
-                        totalPrice={totalPrice}
+                        totalPrice={payablePrice || totalPrice}
                         supportLink={supportLink}
                         themeColor={themeColor}
                         loading={loading}

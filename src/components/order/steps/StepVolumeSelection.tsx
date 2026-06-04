@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { ChevronLeft, Tags } from "lucide-react"; // اضافه شدن آیکون Tags
 import RubberVolumeSlider from "@/components/RubberVolumeSlider";
 import { ALLOWED_VOLUMES } from "@/constants/order";
+import { useEffect } from "react";
 
 export default function StepVolumeSelection({
     formData,
@@ -20,6 +21,10 @@ export default function StepVolumeSelection({
     const calculatedBasePrice = formData.volume * BASE_PRICE_PER_GB;
     const discountAmount = calculatedBasePrice - totalPrice;
     const hasDiscount = discountAmount > 0;
+
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, []);
 
     return (
         <motion.div
@@ -56,11 +61,12 @@ export default function StepVolumeSelection({
 
                 {/* باکس فاکتور محاسبه قیمت */}
                 <div className="bg-slate-900/80 p-5 rounded-2xl border border-primary/30 w-full max-w-sm flex flex-col gap-3 shadow-inner">
-                    
                     {/* ردیف قیمت پایه */}
                     <div className="flex justify-between items-center text-sm">
                         <span className="text-slate-400">مبلغ پایه ({formData.volume} گیگابایت):</span>
-                        <span className={`font-medium ${hasDiscount ? "text-slate-500 line-through" : "text-slate-300"}`}>
+                        <span
+                            className={`font-medium ${hasDiscount ? "text-slate-500 line-through" : "text-slate-300"}`}
+                        >
                             {calculatedBasePrice.toLocaleString("fa-IR")} تومان
                         </span>
                     </div>

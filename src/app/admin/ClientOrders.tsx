@@ -24,6 +24,10 @@ import {
     Upload,
     RotateCcw,
     ReceiptText,
+    Tag,
+    X,
+    BadgePercent,
+    Wallet,
 } from "lucide-react";
 
 import type { LucideIcon } from "lucide-react";
@@ -40,6 +44,21 @@ type Receipt = {
 type OrderStatus = "pending_payment" | "awaiting_receipt" | "processing" | "completed";
 type StatusFilter = "all" | "pending_payment" | "awaiting_receipt" | "processing" | "completed";
 
+type DiscountType = "percent" | "fixed";
+
+type DiscountCode = {
+    code: string;
+    type: DiscountType;
+    value: number;
+    active: boolean;
+    maxUses?: number;
+    usedCount: number;
+    minOrderAmount?: number;
+    expiresAt?: string;
+    createdAt: string;
+    updatedAt: string;
+};
+
 type Order = {
     id: string;
     type: string;
@@ -47,6 +66,12 @@ type Order = {
     fullName: string;
     contactInfo: string;
     price: number;
+
+    originalPrice?: number;
+    discountAmount?: number;
+    couponCode?: string;
+    finalPrice?: number;
+
     status: OrderStatus;
     receipt?: Receipt;
     createdAt: string;
@@ -190,9 +215,23 @@ function normalizeImportedRow(row: Record<string, unknown>): Order | null {
     const volume = parseNumber(getCell(row, ["حجم", "volume", "gb", "ترافیک"]));
     const fullName = normalizeText(getCell(row, ["نام و نام خانوادگی", "fullName", "name"]));
     const contactInfo = normalizeText(getCell(row, ["ایمیل", "contactInfo", "email", "راه ارتباطی"]));
-    const price = parseNumber(getCell(row, ["مبلغ (تومان)", "price", "مبلغ", "finalPrice"]));
 
-    if (!fullName || !contactInfo || !price) {
+    const priceCell = getCell(row, ["مبلغ (تومان)", "price", "مبلغ", "finalPrice"]);
+    const originalPriceCell = getCell(row, ["مبلغ اصلی", "originalPrice"]);
+    const discountAmountCell = getCell(row, ["مبلغ تخفیف", "discountAmount"]);
+    const couponCodeCell = getCell(row, ["کد تخفیف", "couponCode"]);
+    const finalPriceCell = getCell(row, ["مبلغ نهایی", "finalPrice"]);
+
+    const importedPrice = parseNumber(priceCell);
+    const originalPrice = normalizeText(originalPriceCell) ? parseNumber(originalPriceCell) : importedPrice;
+    const discountAmount = normalizeText(discountAmountCell) ? parseNumber(discountAmountCell) : 0;
+    const finalPrice = normalizeText(finalPriceCell)
+        ? parseNumber(finalPriceCell)
+        : discountAmount > 0
+          ? Math.max(0, originalPrice - discountAmount)
+          : importedPrice;
+
+    if (!fullName || !contactInfo || !finalPrice) {
         return null;
     }
 
@@ -209,7 +248,11 @@ function normalizeImportedRow(row: Record<string, unknown>): Order | null {
         volume,
         fullName,
         contactInfo,
-        price,
+        price: finalPrice,
+        originalPrice: originalPrice || finalPrice,
+        discountAmount,
+        couponCode: normalizeText(couponCodeCell) || undefined,
+        finalPrice,
         status: parseStatus(getCell(row, ["وضعیت", "status"])),
         receipt: hasReceipt
             ? {
@@ -225,8 +268,46 @@ function normalizeImportedRow(row: Record<string, unknown>): Order | null {
     };
 }
 
+function normalizeCouponCode(value: unknown): string {
+    return normalizeText(value).replace(/\s+/g, "").toUpperCase();
+}
+
+function isExpired(expiresAt?: string): boolean {
+    if (!expiresAt) return false;
+    const date = new Date(expiresAt);
+    return Number.isNaN(date.getTime()) ? false : date.getTime() < Date.now();
+}
+
+function calculateDiscount(price: number, code: DiscountCode) {
+    let discountAmount = 0;
+
+    if (code.type === "percent") {
+        discountAmount = Math.floor((price * code.value) / 100);
+    } else {
+        discountAmount = Math.floor(code.value);
+    }
+
+    discountAmount = Math.max(0, Math.min(discountAmount, price));
+
+    return {
+        discountAmount,
+        finalPrice: Math.max(0, price - discountAmount),
+    };
+}
+
 export default function ClientOrders({ orders }: { orders: Order[] }) {
     const [orderList, setOrderList] = useState<Order[]>(orders || []);
+    const [discountCodes, setDiscountCodes] = useState<DiscountCode[]>([]);
+    const [discountForm, setDiscountForm] = useState({
+        code: "",
+        type: "percent" as DiscountType,
+        value: "",
+        maxUses: "",
+        minOrderAmount: "",
+        expiresAt: "",
+    });
+    const [creatingDiscount, setCreatingDiscount] = useState(false);
+
     const [searchTerm, setSearchTerm] = useState("");
     const [activeFilter, setActiveFilter] = useState<StatusFilter>("all");
     const [isDeleting, setIsDeleting] = useState<string | null>(null);
@@ -240,11 +321,32 @@ export default function ClientOrders({ orders }: { orders: Order[] }) {
         setOrderList(orders || []);
     }, [orders]);
 
+    useEffect(() => {
+        const loadDiscountCodes = async () => {
+            try {
+                const res = await fetch("/api/discount-code");
+                const data = await res.json();
+
+                if (data.success) {
+                    setDiscountCodes(Array.isArray(data.codes) ? data.codes : []);
+                } else {
+                    toast.error(data.message || "خطا در دریافت کدهای تخفیف");
+                }
+            } catch {
+                toast.error("خطا در دریافت کدهای تخفیف");
+            }
+        };
+
+        loadDiscountCodes();
+    }, []);
+
     const totalOrders = orderList.length;
-    const totalIncome = orderList.reduce((acc, order) => acc + (order.price || 0), 0);
+    const totalIncome = orderList.reduce((acc, order) => acc + ((order.finalPrice ?? order.price) || 0), 0);
+    const totalDiscount = orderList.reduce((acc, order) => acc + (order.discountAmount || 0), 0);
     const processingCount = orderList.filter((o) => o.status === "processing").length;
     const completedCount = orderList.filter((o) => o.status === "completed").length;
     const receiptCount = orderList.filter((o) => Boolean(o.receipt)).length;
+    const activeDiscountCount = discountCodes.filter((d) => d.active).length;
 
     const filteredOrders = useMemo(() => {
         return orderList.filter((order) => {
@@ -258,6 +360,7 @@ export default function ClientOrders({ orders }: { orders: Order[] }) {
                 (order.id || "").toLowerCase().includes(q) ||
                 (order.fullName || "").toLowerCase().includes(q) ||
                 (order.contactInfo || "").toLowerCase().includes(q) ||
+                (order.couponCode || "").toLowerCase().includes(q) ||
                 (order.receipt?.payerName || "").toLowerCase().includes(q) ||
                 (order.receipt?.trackingCode || "").toLowerCase().includes(q) ||
                 (order.receipt?.sourceBank || "").toLowerCase().includes(q);
@@ -265,6 +368,107 @@ export default function ClientOrders({ orders }: { orders: Order[] }) {
             return matchFilter && matchSearch;
         });
     }, [orderList, searchTerm, activeFilter]);
+
+    const handleCreateDiscountCode = async () => {
+        const code = normalizeCouponCode(discountForm.code);
+        const value = Number(discountForm.value);
+
+        if (!code || !discountForm.value.trim()) {
+            toast.error("کد و مقدار تخفیف الزامی است.");
+            return;
+        }
+
+        if (!Number.isFinite(value) || value <= 0) {
+            toast.error("مقدار تخفیف معتبر نیست.");
+            return;
+        }
+
+        if (discountForm.type === "percent" && (value < 1 || value > 100)) {
+            toast.error("درصد تخفیف باید بین ۱ تا ۱۰۰ باشد.");
+            return;
+        }
+
+        setCreatingDiscount(true);
+        try {
+            const res = await fetch("/api/discount-code", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    code,
+                    type: discountForm.type,
+                    value,
+                    maxUses: discountForm.maxUses ? Number(discountForm.maxUses) : undefined,
+                    minOrderAmount: discountForm.minOrderAmount ? Number(discountForm.minOrderAmount) : undefined,
+                    expiresAt: discountForm.expiresAt || undefined,
+                }),
+            });
+
+            const data = await res.json();
+
+            if (!res.ok || !data.success) {
+                toast.error(data.message || "خطا در ثبت کد");
+                return;
+            }
+
+            setDiscountCodes((prev) => [data.code, ...prev]);
+            setDiscountForm({
+                code: "",
+                type: "percent",
+                value: "",
+                maxUses: "",
+                minOrderAmount: "",
+                expiresAt: "",
+            });
+            toast.success("کد تخفیف ثبت شد.");
+        } catch {
+            toast.error("خطا در ارتباط با سرور");
+        } finally {
+            setCreatingDiscount(false);
+        }
+    };
+
+    const handleToggleDiscount = async (code: string, active: boolean) => {
+        try {
+            const res = await fetch("/api/discount-code", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ code, active }),
+            });
+
+            const data = await res.json();
+
+            if (!res.ok || !data.success) {
+                toast.error(data.message || "خطا در بروزرسانی کد");
+                return;
+            }
+
+            setDiscountCodes((prev) => prev.map((item) => (item.code === code ? { ...item, active } : item)));
+            toast.success("وضعیت کد بروزرسانی شد.");
+        } catch {
+            toast.error("خطا در ارتباط با سرور");
+        }
+    };
+
+    const handleDeleteDiscount = async (code: string) => {
+        if (!window.confirm("کد تخفیف حذف شود؟")) return;
+
+        try {
+            const res = await fetch(`/api/discount-code?code=${encodeURIComponent(code)}`, {
+                method: "DELETE",
+            });
+            const data = await res.json();
+
+            if (!res.ok || !data.success) {
+                toast.error(data.message || "خطا در حذف کد");
+                return;
+            }
+
+            setDiscountCodes((prev) => prev.filter((item) => item.code !== code));
+            toast.success("کد تخفیف حذف شد.");
+        } catch {
+            toast.error("خطا در ارتباط با سرور");
+        }
+    };
 
     const handleDelete = async (id: string) => {
         if (!window.confirm("آیا از حذف این سفارش اطمینان دارید؟ این عمل غیرقابل بازگشت است.")) {
@@ -330,7 +534,11 @@ export default function ClientOrders({ orders }: { orders: Order[] }) {
                 حجم: order.volume || 0,
                 "نام و نام خانوادگی": order.fullName || "ثبت نشده",
                 ایمیل: order.contactInfo || "ثبت نشده",
-                "مبلغ (تومان)": order.price || 0,
+                "کد تخفیف": order.couponCode || "ندارد",
+                "مبلغ اصلی": order.originalPrice ?? order.price ?? 0,
+                "مبلغ تخفیف": order.discountAmount ?? 0,
+                "مبلغ نهایی": order.finalPrice ?? order.price ?? 0,
+                "مبلغ (تومان)": order.finalPrice ?? order.price ?? 0,
                 وضعیت: getStatusMeta(order.status).label,
                 "نام واریزکننده": order.receipt?.payerName || "ندارد",
                 "کد رهگیری": order.receipt?.trackingCode || "ندارد",
@@ -347,6 +555,10 @@ export default function ClientOrders({ orders }: { orders: Order[] }) {
                 { wch: 10 },
                 { wch: 22 },
                 { wch: 28 },
+                { wch: 16 },
+                { wch: 14 },
+                { wch: 14 },
+                { wch: 14 },
                 { wch: 14 },
                 { wch: 18 },
                 { wch: 18 },
@@ -467,6 +679,11 @@ export default function ClientOrders({ orders }: { orders: Order[] }) {
                                     color: "text-primary",
                                 },
                                 {
+                                    label: "کل تخفیف",
+                                    value: totalDiscount.toLocaleString("fa-IR"),
+                                    color: "text-emerald-400",
+                                },
+                                {
                                     label: "کل سفارشات",
                                     value: totalOrders.toLocaleString("fa-IR"),
                                     color: "text-white",
@@ -541,6 +758,172 @@ export default function ClientOrders({ orders }: { orders: Order[] }) {
                 <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.05 }}
+                    className="bg-store-panel p-4 rounded-2xl border border-store-border space-y-4"
+                >
+                    <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                            <div className="w-11 h-11 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center">
+                                <Tag className="w-5 h-5" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-black text-white">مدیریت کدهای تخفیف</h3>
+                                <p className="text-xs text-slate-400 mt-1">ثبت، فعال/غیرفعال‌سازی و حذف کدها</p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 text-xs text-slate-400">
+                            <BadgePercent className="w-4 h-4" />
+                            <span>{activeDiscountCount.toLocaleString("fa-IR")} کد فعال</span>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+                        <input
+                            value={discountForm.code}
+                            onChange={(e) => setDiscountForm((p) => ({ ...p, code: e.target.value }))}
+                            placeholder="کد مثلا NEW20"
+                            dir="ltr"
+                            className="md:col-span-1 bg-store-card border border-store-border rounded-xl px-3 py-2.5 text-sm text-white outline-none"
+                        />
+
+                        <select
+                            value={discountForm.type}
+                            onChange={(e) =>
+                                setDiscountForm((p) => ({
+                                    ...p,
+                                    type: e.target.value as DiscountType,
+                                }))
+                            }
+                            className="bg-store-card border border-store-border rounded-xl px-3 py-2.5 text-sm text-white outline-none"
+                        >
+                            <option value="percent">درصدی</option>
+                            <option value="fixed">مبلغی</option>
+                        </select>
+
+                        <input
+                            value={discountForm.value}
+                            onChange={(e) => setDiscountForm((p) => ({ ...p, value: e.target.value }))}
+                            placeholder="مقدار"
+                            type="number"
+                            className="bg-store-card border border-store-border rounded-xl px-3 py-2.5 text-sm text-white outline-none"
+                        />
+
+                        <input
+                            value={discountForm.maxUses}
+                            onChange={(e) => setDiscountForm((p) => ({ ...p, maxUses: e.target.value }))}
+                            placeholder="حداکثر استفاده"
+                            type="number"
+                            className="bg-store-card border border-store-border rounded-xl px-3 py-2.5 text-sm text-white outline-none"
+                        />
+
+                        <input
+                            value={discountForm.minOrderAmount}
+                            onChange={(e) => setDiscountForm((p) => ({ ...p, minOrderAmount: e.target.value }))}
+                            placeholder="حداقل سفارش"
+                            type="number"
+                            className="bg-store-card border border-store-border rounded-xl px-3 py-2.5 text-sm text-white outline-none"
+                        />
+                    </div>
+
+                    <div className="flex flex-col md:flex-row gap-3">
+                        <input
+                            value={discountForm.expiresAt}
+                            onChange={(e) => setDiscountForm((p) => ({ ...p, expiresAt: e.target.value }))}
+                            type="datetime-local"
+                            className="bg-store-card border border-store-border rounded-xl px-3 py-2.5 text-sm text-white outline-none"
+                        />
+
+                        <button
+                            onClick={handleCreateDiscountCode}
+                            disabled={creatingDiscount}
+                            className="px-4 cursor-pointer py-2.5 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 font-bold text-sm disabled:opacity-60 inline-flex items-center justify-center gap-2"
+                        >
+                            {creatingDiscount ? (
+                                <>
+                                    <RotateCcw className="w-4 h-4 animate-spin" />
+                                    در حال ثبت...
+                                </>
+                            ) : (
+                                <>
+                                    <Wallet className="w-4 h-4" />
+                                    ثبت کد تخفیف
+                                </>
+                            )}
+                        </button>
+                    </div>
+
+                    <div className="space-y-2">
+                        {discountCodes.length === 0 ? (
+                            <p className="text-sm text-slate-500">هنوز کد تخفیفی ثبت نشده است.</p>
+                        ) : (
+                            discountCodes.map((item) => {
+                                const expired = isExpired(item.expiresAt);
+
+                                return (
+                                    <div
+                                        key={item.code}
+                                        className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 bg-store-card border border-store-border rounded-xl px-4 py-3"
+                                    >
+                                        <div className="space-y-1">
+                                            <div className="font-black text-white flex items-center gap-2">
+                                                <span>{item.code}</span>
+                                                {item.active ? (
+                                                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                                        فعال
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-500/10 text-slate-400 border border-slate-500/20">
+                                                        غیرفعال
+                                                    </span>
+                                                )}
+                                                {expired && (
+                                                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                                                        منقضی
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            <div className="text-xs text-slate-400 mt-1 leading-6">
+                                                {item.type === "percent"
+                                                    ? `${item.value}% تخفیف`
+                                                    : `${item.value.toLocaleString("fa-IR")} تومان تخفیف`}
+                                                {" • "}
+                                                استفاده: {item.usedCount.toLocaleString("fa-IR")}
+                                                {typeof item.maxUses === "number"
+                                                    ? ` / ${item.maxUses.toLocaleString("fa-IR")}`
+                                                    : ""}
+                                                {typeof item.minOrderAmount === "number"
+                                                    ? ` • حداقل سفارش ${item.minOrderAmount.toLocaleString("fa-IR")} تومان`
+                                                    : ""}
+                                                {item.expiresAt ? ` • انقضا: ${parseDateSafe(item.expiresAt)}` : ""}
+                                            </div>
+                                        </div>
+
+                                        <div className="flex gap-2 flex-wrap">
+                                            <button
+                                                onClick={() => handleToggleDiscount(item.code, !item.active)}
+                                                className="px-3 cursor-pointer py-2 rounded-lg text-xs font-bold bg-sky-500/10 text-sky-400 border border-sky-500/20"
+                                            >
+                                                {item.active ? "غیرفعال کن" : "فعال کن"}
+                                            </button>
+                                            <button
+                                                onClick={() => handleDeleteDiscount(item.code)}
+                                                className="px-3 cursor-pointer py-2 rounded-lg text-xs font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20"
+                                            >
+                                                حذف
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            })
+                        )}
+                    </div>
+                </motion.div>
+
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
                     className="flex flex-col md:flex-row gap-4 items-center justify-between bg-store-panel p-3 rounded-2xl border border-store-border"
                 >
@@ -550,7 +933,7 @@ export default function ClientOrders({ orders }: { orders: Order[] }) {
                         </div>
                         <input
                             type="text"
-                            placeholder="جستجو نام، ایمیل، کد رهگیری..."
+                            placeholder="جستجو نام، ایمیل، کد تخفیف، کد رهگیری..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="w-full bg-store-card border border-store-border text-white text-sm rounded-xl py-3.5 pr-12 pl-4 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all placeholder:text-slate-500 shadow-inner"
@@ -564,7 +947,7 @@ export default function ClientOrders({ orders }: { orders: Order[] }) {
                         </div>
                         <div className="flex gap-1 bg-store-card p-1.5 rounded-xl border border-store-border">
                             {(["all", "pending_payment", "awaiting_receipt", "processing", "completed"] as const).map(
-                                (type: any) => (
+                                (type) => (
                                     <button
                                         key={type}
                                         onClick={() => setActiveFilter(type)}
@@ -576,7 +959,7 @@ export default function ClientOrders({ orders }: { orders: Order[] }) {
                                                       ? "bg-blue-500/20 text-blue-400 shadow-sm"
                                                       : type === "processing"
                                                         ? "bg-violet-500/20 text-violet-400 shadow-sm"
-                                                        : type === "bg-emerald-500/20 text-emerald-400 shadow-sm"
+                                                        : "bg-emerald-500/20 text-emerald-400 shadow-sm"
                                                 : "text-slate-400 hover:text-white hover:bg-store-hover"
                                         }`}
                                     >
@@ -615,6 +998,7 @@ export default function ClientOrders({ orders }: { orders: Order[] }) {
                                 const statusInfo = getStatusMeta(order.status);
                                 const StatusIcon: any = statusInfo.icon;
                                 const receiptOpen = expandedReceipt === order.id;
+                                const hasDiscount = (order.discountAmount || 0) > 0;
 
                                 return (
                                     <motion.div
@@ -655,11 +1039,41 @@ export default function ClientOrders({ orders }: { orders: Order[] }) {
                                                     <CreditCard className="w-4 h-4 text-slate-500" />
                                                     <span>مبلغ پرداختی</span>
                                                 </div>
-                                                <div className="font-black text-white bg-store-card px-3 py-1 rounded-lg border border-store-border">
-                                                    {(order.price || 0).toLocaleString("fa-IR")}{" "}
-                                                    <span className="text-[10px] text-slate-400 font-normal">
-                                                        تومان
-                                                    </span>
+
+                                                <div className="flex flex-col items-end gap-1">
+                                                    {hasDiscount ? (
+                                                        <>
+                                                            <div className="text-[11px] text-slate-400 line-through">
+                                                                {(
+                                                                    (order.originalPrice ?? order.price) ||
+                                                                    0
+                                                                ).toLocaleString("fa-IR")}{" "}
+                                                                تومان
+                                                            </div>
+                                                            <div className="font-black text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-lg border border-emerald-500/20 text-sm">
+                                                                {(
+                                                                    (order.finalPrice ?? order.price) ||
+                                                                    0
+                                                                ).toLocaleString("fa-IR")}
+                                                                <span className="text-[10px] text-slate-400 font-normal">
+                                                                    {" "}
+                                                                    تومان
+                                                                </span>
+                                                            </div>
+                                                            <div className="text-[10px] text-emerald-400">
+                                                                تخفیف {order.discountAmount?.toLocaleString("fa-IR")}{" "}
+                                                                تومان
+                                                            </div>
+                                                        </>
+                                                    ) : (
+                                                        <div className="font-black text-white bg-store-card px-3 py-1 rounded-lg border border-store-border text-sm">
+                                                            {(order.price || 0).toLocaleString("fa-IR")}
+                                                            <span className="text-[10px] text-slate-400 font-normal">
+                                                                {" "}
+                                                                تومان
+                                                            </span>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
 
@@ -690,6 +1104,17 @@ export default function ClientOrders({ orders }: { orders: Order[] }) {
                                                         {order.type || "vpn"} / {order.volume || 0}GB
                                                     </span>
                                                 </div>
+
+                                                {order.couponCode ? (
+                                                    <div className="flex items-center gap-3 text-sm">
+                                                        <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
+                                                            <Tag className="w-4 h-4 text-emerald-400" />
+                                                        </div>
+                                                        <span className="text-emerald-300 text-xs md:text-sm font-medium">
+                                                            کد تخفیف: {order.couponCode}
+                                                        </span>
+                                                    </div>
+                                                ) : null}
                                             </div>
 
                                             {order.receipt ? (
@@ -813,6 +1238,13 @@ export default function ClientOrders({ orders }: { orders: Order[] }) {
                                                         )}
                                                         تأیید پرداخت
                                                     </button>
+                                                )}
+
+                                                {order.status === "completed" && (
+                                                    <div className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-emerald-500/5 text-emerald-500/60 border border-emerald-500/10">
+                                                        <CheckCircle2 className="w-3.5 h-3.5" />
+                                                        پرداخت تأیید شده
+                                                    </div>
                                                 )}
                                             </div>
 
