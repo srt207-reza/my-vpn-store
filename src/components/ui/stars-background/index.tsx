@@ -73,13 +73,14 @@ export const StarsBackground: React.FC<StarBackgroundProps> = ({
         updateStars();
 
         const resizeObserver = new ResizeObserver(updateStars);
-        if (canvasRef.current) {
-            resizeObserver.observe(canvasRef.current);
+        const canvas = canvasRef.current;
+        if (canvas) {
+            resizeObserver.observe(canvas);
         }
 
         return () => {
-            if (canvasRef.current) {
-                resizeObserver.unobserve(canvasRef.current);
+            if (canvas) {
+                resizeObserver.unobserve(canvas);
             }
         };
     }, [starDensity, allStarsTwinkle, twinkleProbability, minTwinkleSpeed, maxTwinkleSpeed, generateStars]);
@@ -117,6 +118,9 @@ export const StarsBackground: React.FC<StarBackgroundProps> = ({
     }, [stars]);
 
     return (
-        <canvas ref={canvasRef} className={cn("h-full w-full absolute inset-0 pointer-events-none -z-10", className)} />
+        <canvas
+            ref={canvasRef}
+            className={cn("fixed inset-0 -z-10 h-screen w-screen pointer-events-none", className)}
+        />
     );
 };
