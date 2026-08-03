@@ -7,7 +7,8 @@ import BackgroundProvider from "@/components/layout/BackgroundProvider";
 
 export const metadata: Metadata = {
     title: "Get Premium | خرید اشتراک راهکار اتصال",
-    description: "خرید اشتراک VPN و فیلترشکن با بهترین قیمت، امنیت بالا، تحویل آنی و پشتیبانی تلگرامی GetPremium.",
+    description:
+        "دسترسی آزاد و امن به اینترنت با اتصال پایدار، تحویل آنی، سرورهای پرسرعت و پشتیبانی ۲۴ ساعته در تلگرام | Get Premium",
 };
 
 export default function RootLayout({

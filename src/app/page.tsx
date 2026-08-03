@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import { AnimatePresence, motion } from "framer-motion";
 import { ShieldCheck, ArrowLeft, Globe2 } from "lucide-react";
 import BrandIcons from "@/data/brand-icons";
+import MorphingText from "@/components/ui/MorphingText";
 
 const World = dynamic(() => import("@/components/ui/globe").then((mod) => mod.World), {
     ssr: false,
@@ -174,7 +175,12 @@ function GlobeSection() {
 
                     <div className="absolute -bottom-3 z-10 rounded-full border border-slate-200/10 bg-white/[0.04] px-4 py-1.5 backdrop-blur-md sm:bottom-0 sm:px-5 sm:py-2">
                         <span className="text-[10px] font-medium text-slate-300 sm:text-xs md:text-sm">
-                            سرور فعال: <strong className="text-cyan-400">{activeServer.name}</strong>
+                            سرور فعال:{" "}
+                            <MorphingText
+                                value={activeServer.name}
+                                className="font-bold text-cyan-400"
+                                duration={0.85}
+                            />
                         </span>
                     </div>
                 </div>

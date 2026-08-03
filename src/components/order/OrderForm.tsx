@@ -11,7 +11,7 @@ import StepVolumeSelection from "./steps/StepVolumeSelection";
 import StepContactInfo from "./steps/StepContactInfo";
 import StepCheckout from "./steps/StepCheckout";
 import StepPayment from "./steps/StepPayment";
-import { ALLOWED_VOLUMES, PRICING_DATA } from "@/constants/order";
+import { ALLOWED_DURATIONS, ALLOWED_VOLUMES, PRICING_DATA } from "@/constants/order";
 
 type ReceiptPayload = {
     payerName: string;
@@ -83,12 +83,12 @@ export default function OrderForm() {
 
     const [formData, setFormData] = useState({
         volume: initialVolume,
+        duration: ALLOWED_DURATIONS[0],
         fullName: "",
         contactInfo: "",
     });
 
-    const currentPricing = PRICING_DATA[formData.volume];
-    const totalPrice = currentPricing.price;
+    const totalPrice = PRICING_DATA[formData.volume][formData.duration];
 
     const themeBg = "bg-primary hover:bg-cyan-400 text-slate-900";
     const themeColor = "text-primary";
@@ -114,8 +114,8 @@ export default function OrderForm() {
         setCouponCode("");
         setAppliedCouponCode("");
         setCouponDiscount(0);
-        setPayablePrice(currentPricing?.price || 0);
-    }, [currentPricing?.price]);
+        setPayablePrice(totalPrice || 0);
+    }, [totalPrice]);
 
     const isValidEmail = (email: string) => {
         const value = email.trim();

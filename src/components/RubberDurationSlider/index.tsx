@@ -4,13 +4,13 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import { animate, motion, useMotionValue, useReducedMotion, useSpring, useTransform } from "framer-motion";
 import MorphingText from "@/components/ui/MorphingText";
 
-interface RubberVolumeSliderProps {
+interface RubberDurationSliderProps {
     allowedValues: number[];
     value: number;
     onChange: (value: number) => void;
 }
 
-export default function RubberVolumeSlider({ allowedValues, value, onChange }: RubberVolumeSliderProps) {
+export default function RubberDurationSlider({ allowedValues, value, onChange }: RubberDurationSliderProps) {
     const containerRef = useRef<HTMLDivElement>(null);
     const selectedValueRef = useRef(value);
     const hasPositionedHandleRef = useRef(false);
@@ -77,7 +77,6 @@ export default function RubberVolumeSlider({ allowedValues, value, onChange }: R
 
             const centerY = rect.top + rect.height / 2;
             let deltaY = e.clientY - centerY;
-
             const maxStretch = 25;
             deltaY = Math.max(-maxStretch, Math.min(deltaY, maxStretch));
             dragY.set(deltaY);
@@ -126,15 +125,15 @@ export default function RubberVolumeSlider({ allowedValues, value, onChange }: R
 
     return (
         <div
-            className="w-full px-2 mx-auto bg-transparent p-0 rounded-none border-0 shadow-none select-none "
+            className="w-full px-2 mx-auto bg-transparent p-0 rounded-none border-0 shadow-none select-none"
             dir="ltr"
         >
             <div className="flex justify-between items-center mb-6">
                 <div className="text-4xl font-black text-white flex items-baseline gap-1">
+                    <span className="text-sm text-primary font-bold mr-1">ماه</span>
                     <MorphingText value={value.toLocaleString("fa-IR")} />
-                    <span className="text-sm text-primary font-bold">GB</span>
                 </div>
-                <h3 className="text-xl font-semibold uppercase tracking-wider mb-1">حجم ترافیک</h3>
+                <h3 className="text-xl font-semibold uppercase tracking-wider mb-1">مدت زمان اشتراک</h3>
             </div>
 
             <div
@@ -143,14 +142,8 @@ export default function RubberVolumeSlider({ allowedValues, value, onChange }: R
                 onPointerDown={handlePointerDown}
             >
                 <svg className="absolute inset-0 w-full h-full pointer-events-none overflow-visible">
-                    <motion.path
-                        d={path}
-                        fill="none"
-                        stroke="#334155"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                    />
-                    <clipPath id="active-line-clip">
+                    <motion.path d={path} fill="none" stroke="#334155" strokeWidth="2" strokeLinecap="round" />
+                    <clipPath id="active-duration-clip">
                         <motion.rect x="0" y="-50" width={dragX} height="200" />
                     </clipPath>
                     <motion.path
@@ -159,7 +152,7 @@ export default function RubberVolumeSlider({ allowedValues, value, onChange }: R
                         stroke="#06b6d4"
                         strokeWidth="3"
                         strokeLinecap="round"
-                        clipPath="url(#active-line-clip)"
+                        clipPath="url(#active-duration-clip)"
                     />
                 </svg>
 

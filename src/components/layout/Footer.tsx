@@ -1,5 +1,6 @@
 import { Send, ShieldCheck, ShieldUser } from "lucide-react";
 import Image from "next/image";
+import AboutText from "./AboutText";
 
 export default function Footer() {
     return (
@@ -13,14 +14,7 @@ export default function Footer() {
                             <ShieldCheck className="w-5 h-5 text-primary" />
                             درباره Get Premium
                         </h3>
-                        <p className="text-slate-400 leading-relaxed text-justify max-w-3xl">
-                            در سال‌های اخیر، محدودیت‌ها، تحریم‌ها و افت کیفیت زیرساخت اینترنت ، دسترسی کاربران ایرانی به
-                            اینترنت بین‌الملل را با چالش های متعددی مواجه کرده است. در چنین شرایطی، دسترسی پایدار، آزاد
-                            و امن به سرویس های جهانی، به یک ضرورت تبدیل شده است. فروشگاه Get Premium با درک این نیاز شکل
-                            گرفته است تا راهکاری قابل اعتماد، جهت اتصال به اینترنت آزاد فراهم کند. ما تلاش کرده‌ایم با
-                            ارائه اتصالی با کیفیت و بهینه، امکان استفاده از اینترنت بین‌الملل را بدون نگرانی از
-                            محدودیت‌ها و اختلالات، برای کاربران فراهم کنیم.
-                        </p>
+                        <AboutText />
                     </div>
 
                     {/* بخش لینک‌های سریع */}

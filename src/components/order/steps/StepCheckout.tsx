@@ -41,10 +41,6 @@ export default function StepCheckout({
     themeBg,
     themeColor,
 }: Props) {
-    const BASE_PRICE_PER_GB = 25_000;
-    const calculatedBasePrice = formData.volume * BASE_PRICE_PER_GB;
-    const planDiscountAmount = Math.max(0, calculatedBasePrice - totalPrice);
-    const hasPlanDiscount = planDiscountAmount > 0;
     const hasCouponDiscount = couponDiscount > 0;
 
     const finalPayable = payablePrice || totalPrice;
@@ -152,24 +148,6 @@ export default function StepCheckout({
                        در صورت داشتن کد تخفیف، لطفاً آن را وارد نمایید و سپس بر روی گزینه ثبت کد تخفیف کلیک بفرمایید.
                     </p>
                 </div>
-
-                {hasPlanDiscount && (
-                    <>
-                        <div className="flex justify-between items-center text-sm pt-2">
-                            <span className="text-slate-400">ارزش واقعی سرویس:</span>
-                            <span className="text-slate-500 line-through">
-                                {calculatedBasePrice.toLocaleString("fa-IR")} تومان
-                            </span>
-                        </div>
-
-                        <div className="flex justify-between items-center text-sm bg-sky-500/10 px-3 py-2.5 rounded-lg border border-sky-500/20 -mx-1">
-                            <span className="text-sky-400 font-medium">سود شما از این خرید:</span>
-                            <span className="text-sky-400 font-bold">
-                                {planDiscountAmount.toLocaleString("fa-IR")} تومان
-                            </span>
-                        </div>
-                    </>
-                )}
 
                 <div className="pt-5 mt-2 border-t border-slate-700 border-dashed flex justify-between items-center">
                     <span className="text-slate-300 font-bold">مبلغ قابل پرداخت:</span>
