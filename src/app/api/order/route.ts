@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
-import { randomUUID } from "crypto";
 import { ALLOWED_DURATIONS, ALLOWED_VOLUMES, PRICING_DATA } from "@/constants/order";
 
 const dataFilePath = path.join(process.cwd(), "orders.json");
@@ -134,8 +133,13 @@ async function writeDiscountCodes(codes: DiscountCode[]) {
     await fs.writeFile(discountFilePath, JSON.stringify(codes, null, 2), "utf-8");
 }
 
-function buildOrderId() {
-    return `CN-${Date.now().toString().slice(-6)}-${randomUUID().slice(0, 8).toUpperCase()}`;
+function buildOrderId(existingIds: Set<string>) {
+    const seed = Date.now() % 1000000;
+    for (let offset = 0; offset < 1000000; offset += 1) {
+        const id = `CN-${String((seed + offset) % 1000000).padStart(6, "0")}`;
+        if (!existingIds.has(id)) return id;
+    }
+    throw new Error("No available order ID");
 }
 
 function applyDiscount(price: number, code: DiscountCode) {
@@ -188,11 +192,12 @@ export async function POST(req: Request) {
             }
 
             const orders = await readOrders();
+            const existingIds = new Set(orders.map((order) => order.id));
 
             const normalizedOrders: VpnOrder[] = [];
 
             for (const item of rawOrders) {
-                const id = normalizeText(item.id) || buildOrderId();
+                const id = normalizeText(item.id) || buildOrderId(existingIds);
                 const receipt = parseReceipt(item.receipt);
 
                 const originalPrice = normalizeNumber(item.originalPrice) || normalizeNumber(item.price) || 0;
@@ -223,6 +228,7 @@ export async function POST(req: Request) {
 
                 if (!order.fullName || !order.contactInfo || order.price < 0) continue;
                 normalizedOrders.push(order);
+                existingIds.add(id);
             }
 
             if (normalizedOrders.length === 0) {
@@ -325,7 +331,7 @@ export async function POST(req: Request) {
         }
 
         const newOrder: VpnOrder = {
-            id: buildOrderId(),
+            id: buildOrderId(new Set(orders.map((order) => order.id))),
             type: isNonEmptyString(data.type) ? data.type : "vpn",
             volume: data.volume,
             duration,

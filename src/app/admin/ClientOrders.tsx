@@ -243,7 +243,7 @@ function normalizeImportedRow(row: Record<string, unknown>): Order | null {
     const hasReceipt = receiptPayerName.length > 0 && receiptTrackingCode.length > 0 && receiptSourceBank.length > 0;
 
     return {
-        id: id || `CN-IMP-${crypto.randomUUID().toUpperCase()}`,
+        id: id || `CN-IMP-${Date.now().toString(36).slice(-5).toUpperCase()}`,
         type,
         volume,
         fullName,

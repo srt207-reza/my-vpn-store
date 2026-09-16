@@ -87,7 +87,7 @@ for (const type of ["percent", "fixed", "oversized fixed"]) {
         assert.equal(result.body.originalPrice, ctx.price);
         assert.equal(result.body.finalPrice, 0);
         assert.equal(result.body.discountAmount, ctx.price);
-        assert.match(result.body.orderId, /^CN-/);
+        assert.match(result.body.orderId, /^CN-\d{6}$/);
         const [order] = ctx.read("orders.json");
         assert.equal(order.id, result.body.orderId);
         assert.equal(order.price, 0);
@@ -159,6 +159,7 @@ test("imported rows without IDs receive distinct IDs and all survive", async (t)
     const saved = ctx.read("orders.json");
     assert.equal(saved.length, rows.length);
     assert.equal(new Set(saved.map(order => order.id)).size, rows.length);
+    for (const order of saved) assert.match(order.id, /^CN-\d{6}$/);
 });
 
 test("invoice preserves zero and success requires the saved order ID", (t) => {
