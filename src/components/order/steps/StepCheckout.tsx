@@ -28,7 +28,6 @@ type Props = {
 
 export default function StepCheckout({
     formData,
-    totalPrice,
     payablePrice,
     couponCode,
     couponDiscount,
@@ -43,7 +42,7 @@ export default function StepCheckout({
 }: Props) {
     const hasCouponDiscount = couponDiscount > 0;
 
-    const finalPayable = payablePrice || totalPrice;
+    const finalPayable = payablePrice;
 
     useEffect(() => {
         window.scrollTo(0,0)
@@ -93,6 +92,7 @@ export default function StepCheckout({
                     <div className="flex flex-col gap-3 sm:flex-row">
                         <input
                             value={couponCode}
+                            disabled={loading || couponApplying}
                             onChange={(e) => onCouponChange(e.target.value)}
                             placeholder="مثلاً: NEW20"
                             dir="rtl"
@@ -102,7 +102,7 @@ export default function StepCheckout({
                         <button
                             type="button"
                             onClick={onApplyCoupon}
-                            disabled={couponApplying}
+                            disabled={loading || couponApplying}
                             className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-sky-500/25 bg-sky-500/10 px-4 py-3 text-sm font-bold text-sky-400 transition-colors hover:bg-sky-500/15 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                             {couponApplying ? (
@@ -131,6 +131,7 @@ export default function StepCheckout({
                                 </span>
                                 <button
                                     type="button"
+                                    disabled={loading || couponApplying}
                                     onClick={() => {
                                         onCouponChange("");
                                     }}
@@ -158,11 +159,17 @@ export default function StepCheckout({
                         <span className="text-slate-400 text-sm mr-1">تومان</span>
                     </div>
                 </div>
+                {finalPayable === 0 && (
+                    <p className="text-sm leading-7 text-sky-400">
+                        مبلغ سفارش با تخفیف به‌طور کامل پوشش داده شده است و بدون نیاز به پرداخت ثبت می‌شود.
+                    </p>
+                )}
             </div>
 
             <div className="flex gap-3 pt-2">
                 <button
                     onClick={() => setStep(2)}
+                    disabled={loading || couponApplying}
                     className="px-6 cursor-pointer py-4 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 transition-colors"
                 >
                     اصلاح
@@ -170,13 +177,13 @@ export default function StepCheckout({
 
                 <button
                     onClick={handleSubmit}
-                    disabled={loading}
+                    disabled={loading || couponApplying}
                     className={`flex-1 cursor-pointer py-4 rounded-xl font-bold transition-all flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(6,182,212,0.3)] ${themeBg}`}
                 >
                     {loading ? (
                         <Loader2 className="w-5 h-5 animate-spin text-slate-900" />
                     ) : (
-                        "ثبت سفارش و پرداخت"
+                        finalPayable === 0 ? "ثبت سفارش رایگان" : "ثبت سفارش و پرداخت"
                     )}
                 </button>
             </div>

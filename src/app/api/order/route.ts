@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
+import { randomUUID } from "crypto";
+import { ALLOWED_DURATIONS, ALLOWED_VOLUMES, PRICING_DATA } from "@/constants/order";
 
 const dataFilePath = path.join(process.cwd(), "orders.json");
 const discountFilePath = path.join(process.cwd(), "discount-codes.json");
@@ -33,6 +35,7 @@ interface VpnOrder {
     id: string;
     type: string;
     volume: number;
+    duration?: number;
     fullName: string;
     contactInfo: string;
     price: number;
@@ -132,7 +135,7 @@ async function writeDiscountCodes(codes: DiscountCode[]) {
 }
 
 function buildOrderId() {
-    return `CN-${Date.now().toString().slice(-6)}`;
+    return `CN-${Date.now().toString().slice(-6)}-${randomUUID().slice(0, 8).toUpperCase()}`;
 }
 
 function applyDiscount(price: number, code: DiscountCode) {
@@ -185,7 +188,6 @@ export async function POST(req: Request) {
             }
 
             const orders = await readOrders();
-            const existingIds = new Set(orders.map((o) => o.id));
 
             const normalizedOrders: VpnOrder[] = [];
 
@@ -197,8 +199,9 @@ export async function POST(req: Request) {
 
                 const discountAmount = normalizeNumber(item.discountAmount) || 0;
                 const finalPrice =
-                    normalizeNumber(item.finalPrice) ||
-                    (discountAmount > 0 ? Math.max(0, originalPrice - discountAmount) : normalizeNumber(item.price));
+                    item.finalPrice !== undefined && item.finalPrice !== null && item.finalPrice !== ""
+                        ? normalizeNumber(item.finalPrice)
+                        : (discountAmount > 0 ? Math.max(0, originalPrice - discountAmount) : normalizeNumber(item.price));
 
                 const order: VpnOrder = {
                     id,
@@ -206,11 +209,11 @@ export async function POST(req: Request) {
                     volume: normalizeNumber(item.volume),
                     fullName: normalizeText(item.fullName),
                     contactInfo: normalizeText(item.contactInfo),
-                    price: finalPrice || normalizeNumber(item.price),
+                    price: finalPrice,
                     originalPrice: originalPrice || finalPrice || normalizeNumber(item.price),
                     discountAmount,
                     couponCode: normalizeCouponCode(item.couponCode),
-                    finalPrice: finalPrice || normalizeNumber(item.price),
+                    finalPrice,
                     status: isOrderStatus(item.status) ? item.status : "pending_payment",
                     receipt: receipt || undefined,
                     createdAt: normalizeText(item.createdAt) || new Date().toISOString(),
@@ -218,12 +221,19 @@ export async function POST(req: Request) {
                     importedFromExcel: true,
                 };
 
-                if (!order.fullName || !order.contactInfo || !order.price) continue;
+                if (!order.fullName || !order.contactInfo || order.price < 0) continue;
                 normalizedOrders.push(order);
             }
 
-            const merged = orders.filter((order) => !existingIds.has(order.id));
-            merged.push(...normalizedOrders);
+            if (normalizedOrders.length === 0) {
+                return NextResponse.json(
+                    { success: false, message: "هیچ سفارش معتبری برای وارد کردن پیدا نشد." },
+                    { status: 400 },
+                );
+            }
+            const mergedById = new Map(orders.map((order) => [order.id, order]));
+            for (const order of normalizedOrders) mergedById.set(order.id, order);
+            const merged = Array.from(mergedById.values());
 
             await writeOrders(merged);
 
@@ -243,8 +253,7 @@ export async function POST(req: Request) {
         if (
             !isPositiveNumber(data.volume) ||
             !isNonEmptyString(data.fullName) ||
-            !isNonEmptyString(data.contactInfo) ||
-            !isPositiveNumber(data.price)
+            !isNonEmptyString(data.contactInfo)
         ) {
             return NextResponse.json(
                 {
@@ -255,11 +264,12 @@ export async function POST(req: Request) {
             );
         }
 
-        if (!receipt) {
+        const duration = data.duration ?? ALLOWED_DURATIONS[0];
+        if (!ALLOWED_VOLUMES.includes(data.volume) || !ALLOWED_DURATIONS.includes(duration)) {
             return NextResponse.json(
                 {
                     success: false,
-                    message: "اطلاعات رسید پرداخت ناقص یا نامعتبر است.",
+                    message: "حجم یا مدت سرویس انتخاب‌شده معتبر نیست.",
                 },
                 { status: 400 },
             );
@@ -270,10 +280,11 @@ export async function POST(req: Request) {
         const now = new Date().toISOString();
 
         const rawCouponCode = normalizeCouponCode(data.couponCode);
-        const originalPrice = normalizeNumber(data.price);
+        const originalPrice = PRICING_DATA[data.volume][duration];
         let discountAmount = 0;
         let finalPrice = originalPrice;
         let appliedCouponCode: string | undefined;
+        let usedDiscount: DiscountCode | undefined;
 
         if (rawCouponCode) {
             const matched = discountCodes.find((item) => item.code.toUpperCase() === rawCouponCode);
@@ -292,8 +303,24 @@ export async function POST(req: Request) {
             finalPrice = result.finalPrice;
             appliedCouponCode = matched.code;
 
-            matched.usedCount += 1;
-            matched.updatedAt = now;
+            usedDiscount = matched;
+        }
+
+        if (data.paymentNotRequired === true && finalPrice !== 0) {
+            return NextResponse.json(
+                { success: false, message: "مبلغ سفارش تغییر کرده است. لطفاً کد تخفیف و مبلغ سفارش را دوباره بررسی کنید." },
+                { status: 409 },
+            );
+        }
+        if (finalPrice > 0 && !receipt) {
+            return NextResponse.json(
+                { success: false, message: "اطلاعات رسید پرداخت ناقص یا نامعتبر است." },
+                { status: 400 },
+            );
+        }
+        if (usedDiscount) {
+            usedDiscount.usedCount += 1;
+            usedDiscount.updatedAt = now;
             await writeDiscountCodes(discountCodes);
         }
 
@@ -301,6 +328,7 @@ export async function POST(req: Request) {
             id: buildOrderId(),
             type: isNonEmptyString(data.type) ? data.type : "vpn",
             volume: data.volume,
+            duration,
             fullName: data.fullName.trim(),
             contactInfo: data.contactInfo.trim(),
             price: finalPrice,
@@ -308,13 +336,13 @@ export async function POST(req: Request) {
             discountAmount,
             couponCode: appliedCouponCode,
             finalPrice,
-            status: "awaiting_receipt",
-            receipt: {
+            status: finalPrice === 0 ? "processing" : "awaiting_receipt",
+            receipt: finalPrice > 0 && receipt ? {
                 payerName: receipt.payerName,
                 trackingCode: receipt.trackingCode,
                 sourceBank: receipt.sourceBank,
                 submittedAt: receipt.submittedAt || now,
-            },
+            } : undefined,
             createdAt: now,
             updatedAt: now,
         };

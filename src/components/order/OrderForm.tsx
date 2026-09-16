@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { AnimatePresence } from "framer-motion";
@@ -71,14 +71,13 @@ export default function OrderForm() {
 
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
+    const submittingOrder = useRef(false);
     const [orderId, setOrderId] = useState("");
     const [supportLink] = useState("https://t.me/GetPremium_support");
 
-    const [discountCodes, setDiscountCodes] = useState<DiscountCode[]>([]);
     const [couponCode, setCouponCode] = useState("");
     const [appliedCouponCode, setAppliedCouponCode] = useState("");
     const [couponDiscount, setCouponDiscount] = useState(0);
-    const [payablePrice, setPayablePrice] = useState(0);
     const [couponApplying, setCouponApplying] = useState(false);
 
     const [formData, setFormData] = useState({
@@ -89,33 +88,16 @@ export default function OrderForm() {
     });
 
     const totalPrice = PRICING_DATA[formData.volume][formData.duration];
+    const payablePrice = Math.max(0, totalPrice - couponDiscount);
 
     const themeBg = "bg-primary hover:bg-cyan-400 text-slate-900";
     const themeColor = "text-primary";
 
     useEffect(() => {
-        const loadDiscountCodes = async () => {
-            try {
-                const res = await fetch("/api/discount-code");
-                const data = await res.json();
-
-                if (data.success) {
-                    setDiscountCodes(Array.isArray(data.codes) ? data.codes : []);
-                }
-            } catch {
-                // بی‌صدا رد می‌شود؛ کد تخفیف فقط یک قابلیت افزوده است
-            }
-        };
-
-        loadDiscountCodes();
-    }, []);
-
-    useEffect(() => {
         setCouponCode("");
         setAppliedCouponCode("");
         setCouponDiscount(0);
-        setPayablePrice(totalPrice || 0);
-    }, [totalPrice]);
+    }, [formData.volume, formData.duration]);
 
     const isValidEmail = (email: string) => {
         const value = email.trim();
@@ -174,6 +156,9 @@ const handleApplyCoupon = async () => {
         return;
     }
 
+    if (couponApplying || loading) return;
+    setAppliedCouponCode("");
+    setCouponDiscount(0);
     setCouponApplying(true);
     try {
         const normalizedCode = normalizeCouponCode(couponCode);
@@ -199,7 +184,6 @@ const handleApplyCoupon = async () => {
         if (!matched) {
             setAppliedCouponCode("");
             setCouponDiscount(0);
-            setPayablePrice(totalPrice);
             toast.error("کد تخفیف معتبر نیست.");
             return;
         }
@@ -207,7 +191,6 @@ const handleApplyCoupon = async () => {
         if (!matched.active) {
             setAppliedCouponCode("");
             setCouponDiscount(0);
-            setPayablePrice(totalPrice);
             toast.error("این کد تخفیف غیرفعال است.");
             return;
         }
@@ -215,7 +198,6 @@ const handleApplyCoupon = async () => {
         if (isExpired(matched.expiresAt)) {
             setAppliedCouponCode("");
             setCouponDiscount(0);
-            setPayablePrice(totalPrice);
             toast.error("این کد تخفیف منقضی شده است.");
             return;
         }
@@ -223,7 +205,6 @@ const handleApplyCoupon = async () => {
         if (typeof matched.maxUses === "number" && matched.usedCount >= matched.maxUses) {
             setAppliedCouponCode("");
             setCouponDiscount(0);
-            setPayablePrice(totalPrice);
             toast.error("این کد تخفیف دیگر قابل استفاده نیست.");
             return;
         }
@@ -231,7 +212,6 @@ const handleApplyCoupon = async () => {
         if (typeof matched.minOrderAmount === "number" && totalPrice < matched.minOrderAmount) {
             setAppliedCouponCode("");
             setCouponDiscount(0);
-            setPayablePrice(totalPrice);
             toast.error("مبلغ سفارش برای این کد تخفیف کافی نیست.");
             return;
         }
@@ -240,7 +220,6 @@ const handleApplyCoupon = async () => {
 
         setAppliedCouponCode(normalizedCode);
         setCouponDiscount(result.discountAmount);
-        setPayablePrice(result.finalPrice);
 
         toast.success("کد تخفیف اعمال شد.");
     } catch {
@@ -251,10 +230,21 @@ const handleApplyCoupon = async () => {
 };
 
     const handleContinueToPayment = () => {
-        setStep(4);
+        if (loading || couponApplying) return;
+        if (payablePrice === 0) {
+            void handleCreateOrder();
+        } else {
+            setStep(4);
+        }
     };
 
-    const handleCreateOrder = async (receiptData: ReceiptPayload) => {
+    const handleCreateOrder = async (receiptData?: ReceiptPayload) => {
+        if (submittingOrder.current || couponApplying || orderId) return;
+        if (!canProceedToNextStep) {
+            toast.error("لطفاً نام کامل و ایمیل معتبر وارد کنید.");
+            return;
+        }
+        submittingOrder.current = true;
         setLoading(true);
 
         try {
@@ -265,6 +255,7 @@ const handleApplyCoupon = async () => {
                     ...formData,
                     price: totalPrice,
                     couponCode: appliedCouponCode,
+                    paymentNotRequired: payablePrice === 0,
                     type: productType,
                     receipt: receiptData,
                 }),
@@ -274,13 +265,15 @@ const handleApplyCoupon = async () => {
 
             if (res.ok && data.success) {
                 setOrderId(data.orderId);
+                setStep(4);
                 toast.success("سفارش شما با موفقیت ثبت شد.");
             } else {
                 throw new Error(data.message || "خطا در ثبت اطلاعات");
             }
-        } catch (error: any) {
-            toast.error(error.message || "ارتباط با سرور برقرار نشد.");
+        } catch (error: unknown) {
+            toast.error(error instanceof Error ? error.message : "ارتباط با سرور برقرار نشد.");
         } finally {
+            submittingOrder.current = false;
             setLoading(false);
         }
     };
@@ -302,7 +295,7 @@ const handleApplyCoupon = async () => {
                         {[1, 2, 3].map((num) => (
                             <div key={num} className="flex items-center">
                                 <div
-                                    onClick={() => (num === 1 && step > 1 ? setStep(1) : undefined)}
+                                    onClick={() => (num === 1 && step > 1 && !loading && !couponApplying ? setStep(1) : undefined)}
                                     className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all 
                                         ${step >= num ? "bg-primary text-slate-900" : "bg-slate-800 text-slate-400"} 
                                         ${
@@ -356,7 +349,7 @@ const handleApplyCoupon = async () => {
                     <StepCheckout
                         formData={formData}
                         totalPrice={totalPrice}
-                        payablePrice={payablePrice || totalPrice}
+                        payablePrice={payablePrice}
                         couponCode={couponCode}
                         couponDiscount={couponDiscount}
                         couponApplying={couponApplying}
@@ -367,13 +360,12 @@ const handleApplyCoupon = async () => {
                             if (appliedCouponCode && normalized !== appliedCouponCode) {
                                 setAppliedCouponCode("");
                                 setCouponDiscount(0);
-                                setPayablePrice(totalPrice);
                             }
                         }}
                         onApplyCoupon={handleApplyCoupon}
                         setStep={setStep}
                         handleSubmit={handleContinueToPayment}
-                        loading={false}
+                        loading={loading}
                         themeBg={themeBg}
                         themeColor={themeColor}
                     />
@@ -382,7 +374,7 @@ const handleApplyCoupon = async () => {
                 {step === 4 && (
                     <StepPayment
                         orderId={orderId}
-                        totalPrice={payablePrice || totalPrice}
+                        totalPrice={payablePrice}
                         supportLink={supportLink}
                         themeColor={themeColor}
                         loading={loading}

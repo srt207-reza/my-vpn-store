@@ -80,7 +80,7 @@ export default function ReceiptForm({ orderId, loading = false, onSubmit, onBack
     const [trackingCode, setTrackingCode] = useState("");
     const [sourceBank, setSourceBank] = useState("");
     const [localLoading, setLocalLoading] = useState(false);
-    const [submitted, setSubmitted] = useState(false);
+    const submitted = Boolean(orderId);
     const [touched, setTouched] = useState({
         payerName: false,
         trackingCode: false,
@@ -152,7 +152,6 @@ export default function ReceiptForm({ orderId, loading = false, onSubmit, onBack
                 sourceBank,
             });
 
-            setSubmitted(true);
         } catch (err: any) {
             toast.error(err?.message || "خطایی رخ داد. دوباره تلاش کنید.");
         } finally {
